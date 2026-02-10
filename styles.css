@@ -9,7 +9,7 @@
 }
 
 * { box-sizing: border-box; }
-html, body { margin: 0; height: 100%; color: var(--text); background: var(--bg); }
+html, body { margin: 0; height: 100%; color: var(--text); background: var(--bg); overflow: hidden; }
 
 .topbar {
   display: flex;
@@ -26,12 +26,14 @@ html, body { margin: 0; height: 100%; color: var(--text); background: var(--bg);
   display: grid;
   grid-template-columns: 40% 8px 1fr;
   height: calc(100% - 53px);
+  overflow: hidden;
 }
 
 .left-pane, .right-pane {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  min-height: 0;
 }
 
 .left-pane { padding: 10px; }
@@ -39,6 +41,7 @@ html, body { margin: 0; height: 100%; color: var(--text); background: var(--bg);
 #dslInput {
   flex: 1;
   width: 100%;
+  min-height: 0;
   resize: none;
   border: 1px solid var(--border);
   border-radius: 6px;
