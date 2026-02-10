@@ -152,6 +152,29 @@ function validateAndBuild(blocks) {
     balloon.align = balloon.align || "center";
     balloon.fontSize = num(balloon.fontSize, 4);
     balloon.padding = num(balloon.padding, 2);
+
+    const tail = balloon.tail === undefined || balloon.tail === null || balloon.tail === "" ? "none" : String(balloon.tail);
+    const tailMatch = tail.match(/^(none|toActor\(([^()]+)\)|toPoint\(([^,]+),([^,]+)\))$/);
+    if (!tailMatch) {
+      throw new Error(`Line ${balloon._line}: balloon.tail の形式が不正です`);
+    }
+
+    if (tail.startsWith("toActor(")) {
+      const actorId = tailMatch[2]?.trim();
+      if (!dicts.actors.get(String(actorId))) {
+        throw new Error(`Line ${balloon._line}: 未定義 actor 参照 ${actorId}`);
+      }
+    }
+
+    if (tail.startsWith("toPoint(")) {
+      const x = Number(tailMatch[3]?.trim());
+      const y = Number(tailMatch[4]?.trim());
+      if (!Number.isFinite(x) || !Number.isFinite(y)) {
+        throw new Error(`Line ${balloon._line}: balloon.tail の形式が不正です`);
+      }
+    }
+
+    balloon.tail = tail;
   }
 
   for (const caption of scene.captions) {
