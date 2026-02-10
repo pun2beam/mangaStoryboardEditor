@@ -111,6 +111,8 @@ function validateAndBuild(blocks) {
     p.margin = num(p.margin, 5);
     p.unit = p.unit || "percent";
     p.bg = p.bg || "white";
+    p.stroke = p.stroke || "#c9ced6";
+    p.strokeWidth = num(p.strokeWidth, 2);
     if (!p.id || !p.size) throw new Error(`Line ${p._line}: page id,size は必須です`);
     if (p.size === "custom" && (typeof p.width !== "number" || typeof p.height !== "number")) {
       throw new Error(`Line ${p._line}: size:custom では width,height が必須です`);
@@ -258,6 +260,7 @@ function render(scene) {
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">
   <rect width="100%" height="100%" fill="${page.bg}"/>
+  <rect x="0" y="0" width="${w}" height="${h}" fill="none" stroke="${page.stroke}" stroke-width="${page.strokeWidth}"/>
   ${defs.length ? `<defs>${defs.join("")}</defs>` : ""}
   <g transform="translate(${viewState.panX},${viewState.panY}) scale(${viewState.scale})">${body.join("\n")}</g>
 </svg>`;
