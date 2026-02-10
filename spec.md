@@ -1,0 +1,476 @@
+# MangaStoryboardDSL 仕様書（ドラフト v0.1）
+
+## 1. 目的
+
+マンガ制作工程のうち、**ネーム（コマ割り・台詞・演出）**をテキストで記述し、**SVGとして即時プレビュー**するためのDSLを定義する。
+完全な作画は扱わず、**棒人間（簡易キャラクタ）**と簡易アイコン／吹き出し／効果音／キャプションで“状況が伝わる”ことを目的とする。
+webアプリとして作成し左ペインにDSLを入力し、そのDSLに基づいた描画を右ペインにする。
+
+---
+
+## 2. ファイル形式
+
+* 文字コード: UTF-8
+* 改行: LF/CRLFどちらも許容
+* 拡張子: `.msd`（例）※任意。実装側で選べるようにする
+* コメント: 行頭 `#` から行末まで
+
+---
+
+## 3. 構文（ブロック構文）
+
+本DSLは「**ブロック**」の列で構成される。
+
+### 3.1 ブロック基本形
+
+```
+<blockType>:
+  key:value
+  key:value
+```
+
+* `<blockType>` は識別子（例: `page`, `panel`, `actor`, `balloon`）
+* `:` の後に改行し、**2スペース以上**のインデントで `key:value`
+* ブロック間は空行があってもよい
+
+### 3.2 値の型
+
+* number: `12`, `3.14`, `-1`
+* string: `abc`, `こんにちは`（コロン `:` を含む場合はクォート推奨）
+* quoted string: `"a:b"` または `'a:b'`
+* bool: `true` / `false`
+* multiline string:
+
+  ```
+  text: |
+    1行目
+    2行目
+  ```
+
+### 3.3 IDと参照
+
+* 多くのブロックは `id` を持てる（必須/任意は後述）
+* 参照は `page:<id>` `panel:<id>` `actor:<id>` 等の「ID参照」または単に `panel: 3` のように型が自明なら単純参照でも可（実装で統一）
+* **未定義ID参照はエラー**
+
+---
+
+## 4. 座標系と単位
+
+### 4.1 基本座標
+
+* 既定は **ページ座標**（左上が原点）
+* x右方向+, y下方向+
+* `x,y,w,h` は **ページの内側（margin除外）を100×100とする百分率**を既定単位とする
+
+  * 例: `x:0, y:0, w:100, h:50` は上半分
+* オプションで `unit:px` をページに指定した場合はピクセル指定（数値をpxとみなす）
+
+### 4.2 Z順（重なり）
+
+SVG描画順は原則：
+
+1. `panel`（枠）
+2. `asset`（下絵画像）
+3. `actor`（棒人間）
+4. `balloon/caption/sfx`（文字・吹き出し）
+   ただし各ブロックは `z`（整数、既定0）を持て、`z`昇順でソートして描画する（同値はファイル登場順）。
+
+---
+
+## 5. ブロック定義
+
+### 5.1 `meta`（任意）
+
+作品全体のメタ情報。
+
+* `title`（任意）
+* `author`（任意）
+* `version`（任意）
+
+例:
+
+```
+meta:
+  title: テスト漫画
+  author: DEF
+  version: 0.1
+```
+
+---
+
+### 5.2 `page`（必須、複数可）
+
+ページ設定。最低1つ必要。
+
+必須:
+
+* `id`（一意）
+* `size`（例: `B5`, `A4`, `custom`）
+  任意:
+* `width`, `height`（`size:custom` の場合は必須）
+* `margin`（既定: 5）※百分率単位時は「内側領域を作るための割合」
+* `bleed`（既定: 0）
+* `unit`（`percent`/`px`、既定: `percent`）
+* `bg`（背景色、既定: `white`）
+
+例:
+
+```
+page:
+  id:p1
+  size:B5
+  margin:5
+  unit:percent
+```
+
+---
+
+### 5.3 `panel`（必須、複数可）
+
+コマ枠（矩形）。
+必須:
+
+* `id`
+* `page`（参照）
+* `x,y,w,h`
+  任意:
+* `radius`（角丸、既定0）
+* `stroke`（枠線色、既定`black`）
+* `strokeWidth`（既定1）
+* `fill`（既定`none`）
+* `gutter`（コマ間余白のヒント。描画には使わない/使ってもよい）
+
+例:
+
+```
+panel:
+  id:1
+  page:p1
+  x:0
+  y:0
+  w:60
+  h:60
+```
+
+---
+
+### 5.4 `actor`（任意）
+
+棒人間（簡易キャラクタ）をコマ内に配置。
+
+必須:
+
+* `id`
+* `panel`（参照）
+* `x,y`（足元の基準点を推奨）
+  任意:
+* `scale`（既定1.0）
+* `facing`（`left`/`right`、既定`right`）
+* `pose`（既定`stand`）
+* `emotion`（既定`neutral`）
+* `name`（任意、デバッグ用）
+* `lookAt`（`actor:<id>` または `point(x,y)`、任意）
+* `style`（後述 styleRef）
+
+#### pose（プリセット）
+
+実装必須プリセット（v0.1）:
+
+* `stand`, `run`, `sit`, `point`, `think`, `surprise`
+
+#### emotion（プリセット）
+
+実装必須（v0.1）:
+
+* `neutral`, `angry`, `sad`, `panic`, `smile`
+
+例:
+
+```
+actor:
+  id:a1
+  panel:1
+  x:20
+  y:55
+  scale:1.0
+  facing:right
+  pose:run
+  emotion:panic
+  name:主人公
+```
+
+---
+
+### 5.5 `balloon`（任意）
+
+吹き出し。
+
+必須:
+
+* `id`
+* `panel`
+* `x,y,w,h`
+* `text`
+  任意:
+* `shape`（`oval`/`box`/`thought`、既定`oval`）
+* `tail`（`none`/`toActor(<id>)`/`toPoint(x,y)`、既定`none`）
+* `fontSize`（既定: 4 ※percent単位時の相対値、px単位ならpx）
+* `padding`（既定: 2）
+* `align`（`left`/`center`/`right`、既定`center`）
+* `lineHeight`（既定: 1.2）
+* `maxCharsPerLine`（既定: 0=自動。簡易折返し用）
+
+例:
+
+```
+balloon:
+  id:b1
+  panel:1
+  x:5
+  y:5
+  w:35
+  h:18
+  tail:toActor(a1)
+  text: |
+    ヤバい！
+    遅刻だ！
+```
+
+---
+
+### 5.6 `caption`（任意）
+
+ナレーション枠／モノローグ枠。
+
+必須:
+
+* `id`
+* `panel`
+* `x,y,w,h`
+* `text`
+  任意:
+* `style`（`box`/`none`、既定`box`）
+* `fontSize`, `padding`, `align`, `lineHeight`（既定はballoon準拠）
+
+---
+
+### 5.7 `sfx`（任意）
+
+効果音テキスト（ドーン等）。
+
+必須:
+
+* `id`
+* `panel`
+* `x,y`
+* `text`
+  任意:
+* `scale`（既定1.0）
+* `rotate`（度、既定0）
+* `fontSize`（既定: 8）
+* `stroke`（文字縁取り色、任意）
+* `fill`（既定`black`）
+
+---
+
+### 5.8 `asset`（任意）
+
+下絵画像や参考画像を貼る（棒人間を将来置き換える用途）。
+
+必須:
+
+* `id`
+* `panel`
+* `x,y,w,h`
+* `src`（URLまたは相対パス。ブラウザ実装なら相対はpublic配下想定）
+  任意:
+* `opacity`（既定1.0）
+* `clipToPanel`（既定true）
+
+---
+
+### 5.9 `style`（任意）
+
+複数要素に共通するスタイル定義。
+必須:
+
+* `id`
+  任意:
+* `stroke`, `strokeWidth`, `fill`, `fontFamily`, `fontWeight`, `fontSize`
+
+各要素は `styleRef:<id>` を持てる（未定義ならエラー）。
+
+---
+
+## 6. バリデーション規則（v0.1）
+
+実装は最低限これを満たす。
+
+* `page` は1つ以上
+* 各 `id` は同一型内で一意（推奨: 全体で一意でもよい）
+* `panel` は参照先 `page` が存在する
+* `actor/balloon/caption/sfx/asset` は参照先 `panel` が存在する
+* `x,y,w,h`（必要なもの）は数値で、`w,h > 0`
+* `unit:percent` の場合、原則 `0..100` を推奨（範囲外は許容するが警告）
+* `tail:toActor(a1)` の参照先が存在する
+* `pose`/`emotion` が未対応値の場合、既定にフォールバック（か警告）
+
+---
+
+## 7. レンダリング規則（SVG）
+
+### 7.1 panel
+
+* `<rect>` で描画
+* `fill:none` が既定
+* `radius` は `rx/ry`
+
+### 7.2 actor（棒人間）
+
+* 頭: circle
+* 胴: line
+* 腕脚: line（poseプリセットごとに相対座標テンプレを定義）
+* `scale` は全体に適用
+* `facing` は左右反転（x方向スケール -1）
+* `emotion` は顔の記号（目・口の形）を切替（最小は口線だけで良い）
+
+### 7.3 balloon/caption
+
+* `shape:oval` は `<ellipse>` or `path`
+* `shape:box` は `<rect>`
+* `thought` は雲形（簡易で可：丸を複数重ねる、または楕円＋小円2個）
+* `tail` は `toActor` の場合、対象actorの頭または胴中心へ向けて線/三角形を生成
+
+### 7.4 テキスト
+
+* SVGの `<text>` は自動折返しが弱いので、実装側で改行位置を計算し `<tspan>` を並べる（簡易折返しで良い） ([MDNウェブドキュメント][2])
+
+---
+
+## 8. 例（1ページ・3コマ・棒人間）
+
+```
+meta:
+  title: テスト
+  author: DEF
+
+page:
+  id:p1
+  size:B5
+  margin:5
+  unit:percent
+
+panel:
+  id:1
+  page:p1
+  x:0
+  y:0
+  w:60
+  h:60
+
+panel:
+  id:2
+  page:p1
+  x:62
+  y:0
+  w:38
+  h:35
+
+panel:
+  id:3
+  page:p1
+  x:62
+  y:37
+  w:38
+  h:23
+
+actor:
+  id:a1
+  panel:1
+  x:20
+  y:55
+  pose:run
+  emotion:panic
+  facing:right
+  name:主人公
+
+actor:
+  id:a2
+  panel:1
+  x:50
+  y:55
+  pose:stand
+  emotion:angry
+  facing:left
+  name:先生
+
+balloon:
+  id:b1
+  panel:1
+  x:5
+  y:5
+  w:35
+  h:18
+  tail:toActor(a1)
+  text: |
+    ヤバい！
+    遅刻だ！
+
+caption:
+  id:c1
+  panel:2
+  x:5
+  y:5
+  w:30
+  h:10
+  text: 翌朝
+
+sfx:
+  id:s1
+  panel:3
+  x:10
+  y:15
+  rotate:-15
+  text: ドーン
+```
+
+---
+### 9. 画面要件
+### 9.1. レイアウト
+画面は左右2ペイン
+
+左：textarea（DSL入力）
+右：SVGプレビュー領域（スクロール可能）
+ペイン比率：初期 40% : 60%（真ん中をドラッグアンドドロップで変更可能）
+
+### 9.2.リアルタイム更新
+入力変更から 200ms程度のデバウンス後に再パース・再描画
+
+パースエラー時：
+
+右ペインは前回の成功描画を保持（またはエラー表示に切替：どちらか採用。推奨：前回保持＋上部にエラー帯）
+エラー内容（行番号・原因）を左下などに表示
+
+### 9.3.右ペイン操作（優先度：中）
+ズーム（Ctrl+ホイール）・パン（ドラッグ）をサポート（SVGをviewBoxで制御）
+「SVGとして保存」ボタン（SVG文字列ダウンロード）
+
+## 10. 互換性・バージョニング
+
+* `meta.version` または `specVersion`（追加してもよい）で仕様バージョンを明示
+* v0.1 は「ネーム＋棒人間」まで。将来拡張（カメラ、コマ変形、多角形コマ、キャラの関節自由度等）を想定
+
+---
+
+## 11. Codexに渡す実装タスク（最小）
+
+1. パーサ（ブロック＋key:value＋`|`複数行）
+2. AST（page/panel/actor/balloon/caption/sfx/asset/style）
+3. バリデーション
+4. SVGレンダラ（panel→actor→balloon/caption/sfx）
+5. HTMLプレビュー（textarea＋SVG表示）
+
+
+[1]: https://github.com/pun2beam/timelineSVGEditor/blob/main/spec.md "timelineSVGEditor/spec.md at main · pun2beam/timelineSVGEditor · GitHub"
+[2]: https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/text?utm_source=chatgpt.com "<text> - SVG - MDN Web Docs - Mozilla"
