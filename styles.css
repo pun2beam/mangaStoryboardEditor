@@ -24,7 +24,7 @@ html, body { margin: 0; height: 100%; color: var(--text); background: var(--bg);
 
 .split-root {
   display: grid;
-  grid-template-columns: 40% 8px 1fr;
+  grid-template-columns: 20% 8px 1fr;
   height: calc(100% - 53px);
   overflow: hidden;
 }
