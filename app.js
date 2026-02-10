@@ -284,7 +284,7 @@ function render(scene) {
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">
   <rect width="100%" height="100%" fill="${page.bg}"/>
-  <rect x="0" y="0" width="${w}" height="${h}" fill="none" stroke="${page.stroke}" stroke-width="${page.strokeWidth}"/>
+  <rect x="${inner.x}" y="${inner.y}" width="${inner.w}" height="${inner.h}" fill="none" stroke="${page.stroke}" stroke-width="${page.strokeWidth}"/>
   ${defs.length ? `<defs>${defs.join("")}</defs>` : ""}
   <g transform="translate(${viewState.panX},${viewState.panY}) scale(${viewState.scale})">${body.join("\n")}</g>
 </svg>`;
