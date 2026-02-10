@@ -151,6 +151,9 @@ function validateAndBuild(blocks) {
     balloon.align = balloon.align || "center";
     balloon.fontSize = num(balloon.fontSize, 4);
     balloon.padding = num(balloon.padding, 2);
+    if (typeof balloon.tail === "string") {
+      parseBalloonTail(balloon.tail, balloon._line);
+    }
   }
 
   for (const caption of scene.captions) {
@@ -318,18 +321,41 @@ function renderBalloon(balloon, panelRect, unit, actorMap, panelMap) {
   }
 
   let tail = "";
-  if (typeof balloon.tail === "string" && balloon.tail.startsWith("toActor(")) {
-    const id = balloon.tail.match(/^toActor\((.+)\)$/)?.[1];
+  const tailSpec = parseBalloonTail(balloon.tail);
+  if (tailSpec?.kind === "actor") {
+    const id = tailSpec.id;
     const actor = actorMap.get(String(id));
     if (actor) {
       const pRect = rectInPage(panelMap.get(String(actor.panel)), { x: 0, y: 0, w: panelRect.w + panelRect.x, h: panelRect.h + panelRect.y }, unit);
       const target = pointInPanel(actor.x, actor.y - 12, pRect, unit);
       tail = `<line x1="${r.x + r.w / 2}" y1="${r.y + r.h}" x2="${target.x}" y2="${target.y}" stroke="black"/>`;
     }
+  } else if (tailSpec?.kind === "point") {
+    const target = pointInPanel(tailSpec.x, tailSpec.y, panelRect, unit);
+    tail = `<line x1="${r.x + r.w / 2}" y1="${r.y + r.h}" x2="${target.x}" y2="${target.y}" stroke="black"/>`;
   }
 
   const text = renderText(balloon.text, r, balloon.fontSize, balloon.align, balloon.padding, unit, balloon.lineHeight);
   return `<g>${shape}${tail}${text}</g>`;
+}
+
+function parseBalloonTail(tail, line) {
+  if (typeof tail !== "string" || tail.trim() === "") return null;
+  const raw = tail.trim();
+
+  const actorMatch = raw.match(/^toActor\(([^()]+)\)$/);
+  if (actorMatch) return { kind: "actor", id: actorMatch[1].trim() };
+
+  const pointMatch = raw.match(/^toPoint\((-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\)$/);
+  if (pointMatch) {
+    return { kind: "point", x: Number(pointMatch[1]), y: Number(pointMatch[2]) };
+  }
+
+  if (raw.startsWith("toActor(") || raw.startsWith("toPoint(")) {
+    const prefix = line ? `Line ${line}: ` : "";
+    throw new Error(`${prefix}balloon.tail は toActor(id) または toPoint(x,y) 形式で指定してください`);
+  }
+  return null;
 }
 
 function renderCaption(caption, panelRect, unit) {

@@ -79,3 +79,16 @@ caption:
   w:30
   h:10
   text: 翌朝
+
+
+balloon:
+  id:b2
+  panel:1
+  x:58
+  y:8
+  w:35
+  h:18
+  shape:oval
+  tail:toPoint(82,88)
+  text: |
+    ここだ！
