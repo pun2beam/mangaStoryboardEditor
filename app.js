@@ -413,10 +413,10 @@ function renderBalloon(balloon, panelRect, unit, actorMap, panelMap, panelRects,
       const actorUnit = actorPage.page.unit;
       const targetYOffset = actorUnit === "px" ? BALLOON_TAIL_TARGET_Y_OFFSET.px : BALLOON_TAIL_TARGET_Y_OFFSET.percent;
       const target = pointInPanel(actor.x, actor.y - targetYOffset, pRect, actorUnit);
-      startx=r.x + r.w / 2;
-      starty=r.y + r.h;
-      endx=(startx+target.x)/2;
-      endy=(starty+target.y)/2;
+      const startx=r.x + r.w / 2;
+      const starty=r.y + r.h;
+      const endx=(startx+target.x)/2;
+      const endy=(starty+target.y)/2;
       
       tail = `<line x1="${startx}" y1="${starty}" x2="${endx}" y2="${endy}" stroke="black"/>`;
     }
