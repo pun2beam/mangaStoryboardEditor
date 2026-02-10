@@ -224,14 +224,13 @@ function num(value, fallback) {
 }
 
 function render(scene) {
-  const page = scene.pages[0];
-  const [w, h] = pageDimensions(page);
-  const inner = {
-    x: page.margin / 100 * w,
-    y: page.margin / 100 * h,
-    w: w * (1 - page.margin / 50),
-    h: h * (1 - page.margin / 50),
-  };
+  const pageLayouts = buildPageLayouts(scene);
+  const panelRects = new Map();
+  for (const panel of scene.panels) {
+    const pageLayout = pageLayouts.get(String(panel.page));
+    if (!pageLayout) continue;
+    panelRects.set(String(panel.id), rectInPage(panel, pageLayout.inner, pageLayout.page.unit));
+  }
 
   const panelMap = new Map(scene.panels.map((p) => [String(p.id), p]));
   const actorMap = new Map(scene.actors.map((a) => [String(a.id), a]));
@@ -250,12 +249,16 @@ function render(scene) {
 
   for (const entry of entries) {
     if (entry.kind === "panel") {
-      const r = rectInPage(entry.data, inner, page.unit);
+      const panelRect = panelRects.get(String(entry.data.id));
+      if (!panelRect) continue;
+      const r = panelRect;
       body.push(`<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="${entry.data.fill || "none"}" stroke="${entry.data.stroke || "black"}" stroke-width="${num(entry.data.strokeWidth, 3)}" rx="${num(entry.data.radius, 0)}" ry="${num(entry.data.radius, 0)}"/>`);
     } else if (entry.kind === "asset") {
       const panel = panelMap.get(String(entry.data.panel));
-      const panelRect = rectInPage(panel, inner, page.unit);
-      const box = withinPanel(entry.data, panelRect, page.unit);
+      const pageLayout = panel ? pageLayouts.get(String(panel.page)) : null;
+      const panelRect = panelRects.get(String(entry.data.panel));
+      if (!pageLayout || !panelRect) continue;
+      const box = withinPanel(entry.data, panelRect, pageLayout.page.unit);
       let clip = "";
       if (entry.data.clipToPanel) {
         const clipId = `clip-${entry.data.id}`;
@@ -265,29 +268,81 @@ function render(scene) {
       body.push(`<image x="${box.x}" y="${box.y}" width="${box.w}" height="${box.h}" href="${escapeXml(entry.data.src)}" opacity="${entry.data.opacity}"${clip}/>`);
     } else if (entry.kind === "actor") {
       const panel = panelMap.get(String(entry.data.panel));
-      const panelRect = rectInPage(panel, inner, page.unit);
-      body.push(renderActor(entry.data, panelRect, page.unit));
+      const pageLayout = panel ? pageLayouts.get(String(panel.page)) : null;
+      const panelRect = panelRects.get(String(entry.data.panel));
+      if (!pageLayout || !panelRect) continue;
+      body.push(renderActor(entry.data, panelRect, pageLayout.page.unit));
     } else if (entry.kind === "balloon") {
       const panel = panelMap.get(String(entry.data.panel));
-      const panelRect = rectInPage(panel, inner, page.unit);
-      body.push(renderBalloon(entry.data, panelRect, inner, page.unit, actorMap, panelMap));
+      const pageLayout = panel ? pageLayouts.get(String(panel.page)) : null;
+      const panelRect = panelRects.get(String(entry.data.panel));
+      if (!pageLayout || !panelRect) continue;
+      body.push(renderBalloon(entry.data, panelRect, pageLayout.page.unit, actorMap, panelMap, panelRects, pageLayouts));
     } else if (entry.kind === "caption") {
       const panel = panelMap.get(String(entry.data.panel));
-      const panelRect = rectInPage(panel, inner, page.unit);
-      body.push(renderCaption(entry.data, panelRect, page.unit));
+      const pageLayout = panel ? pageLayouts.get(String(panel.page)) : null;
+      const panelRect = panelRects.get(String(entry.data.panel));
+      if (!pageLayout || !panelRect) continue;
+      body.push(renderCaption(entry.data, panelRect, pageLayout.page.unit));
     } else if (entry.kind === "sfx") {
       const panel = panelMap.get(String(entry.data.panel));
-      const panelRect = rectInPage(panel, inner, page.unit);
-      body.push(renderSfx(entry.data, panelRect, page.unit));
+      const pageLayout = panel ? pageLayouts.get(String(panel.page)) : null;
+      const panelRect = panelRects.get(String(entry.data.panel));
+      if (!pageLayout || !panelRect) continue;
+      body.push(renderSfx(entry.data, panelRect, pageLayout.page.unit));
     }
   }
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">
-  <rect width="100%" height="100%" fill="${page.bg}"/>
-  <rect x="0" y="0" width="${w}" height="${h}" fill="none" stroke="${page.stroke}" stroke-width="${page.strokeWidth}"/>
+  const canvas = canvasBounds(pageLayouts);
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${canvas.w} ${canvas.h}" width="${canvas.w}" height="${canvas.h}">
+  ${renderPageFrames(pageLayouts)}
   ${defs.length ? `<defs>${defs.join("")}</defs>` : ""}
   <g transform="translate(${viewState.panX},${viewState.panY}) scale(${viewState.scale})">${body.join("\n")}</g>
 </svg>`;
+}
+
+function buildPageLayouts(scene) {
+  const layouts = new Map();
+  let offsetY = 0;
+  for (const page of scene.pages) {
+    const [w, h] = pageDimensions(page);
+    const frame = { x: 0, y: offsetY, w, h };
+    const inner = {
+      x: frame.x + page.margin / 100 * w,
+      y: frame.y + page.margin / 100 * h,
+      w: w * (1 - page.margin / 50),
+      h: h * (1 - page.margin / 50),
+    };
+
+    const panelsInPage = scene.panels.filter((panel) => String(panel.page) === String(page.id));
+    let maxY = frame.y + frame.h;
+    for (const panel of panelsInPage) {
+      const panelRect = rectInPage(panel, inner, page.unit);
+      maxY = Math.max(maxY, panelRect.y + panelRect.h);
+    }
+
+    layouts.set(String(page.id), { page, frame, inner, maxY });
+    offsetY = maxY + 1;
+  }
+  return layouts;
+}
+
+function renderPageFrames(pageLayouts) {
+  return Array.from(pageLayouts.values())
+    .map(({ page, frame }) => [
+      `<rect x="${frame.x}" y="${frame.y}" width="${frame.w}" height="${frame.h}" fill="${page.bg}"/>`,
+      `<rect x="${frame.x}" y="${frame.y}" width="${frame.w}" height="${frame.h}" fill="none" stroke="${page.stroke}" stroke-width="${page.strokeWidth}"/>`,
+    ].join(""))
+    .join("\n");
+}
+
+function canvasBounds(pageLayouts) {
+  const values = Array.from(pageLayouts.values());
+  return {
+    w: values.reduce((max, { frame }) => Math.max(max, frame.x + frame.w), 0),
+    h: values.reduce((max, { maxY }) => Math.max(max, maxY), 0),
+  };
 }
 
 function renderActor(actor, panelRect, unit) {
@@ -328,7 +383,7 @@ function emotionPath(emotion, s) {
   return `<line x1="${-s * 0.15}" y1="${mouthY}" x2="${s * 0.15}" y2="${mouthY}" stroke="black" stroke-width="1.5"/>`;
 }
 
-function renderBalloon(balloon, panelRect, inner, unit, actorMap, panelMap) {
+function renderBalloon(balloon, panelRect, unit, actorMap, panelMap, panelRects, pageLayouts) {
   const r = withinPanel(balloon, panelRect, unit);
   let shape = "";
   if (balloon.shape === "box") {
@@ -347,9 +402,15 @@ function renderBalloon(balloon, panelRect, inner, unit, actorMap, panelMap) {
     const actor = actorMap.get(String(id));
     if (actor) {
       const actorPanel = panelMap.get(String(actor.panel));
-      const pRect = rectInPage(actorPanel, inner, unit);
-      const targetYOffset = unit === "px" ? BALLOON_TAIL_TARGET_Y_OFFSET.px : BALLOON_TAIL_TARGET_Y_OFFSET.percent;
-      const target = pointInPanel(actor.x, actor.y - targetYOffset, pRect, unit);
+      const pRect = panelRects.get(String(actor.panel));
+      const actorPage = actorPanel ? pageLayouts.get(String(actorPanel.page)) : null;
+      if (!pRect || !actorPage) {
+        const text = renderText(balloon.text, r, balloon.fontSize, balloon.align, balloon.padding, unit, balloon.lineHeight);
+        return `<g>${shape}${text}</g>`;
+      }
+      const actorUnit = actorPage.page.unit;
+      const targetYOffset = actorUnit === "px" ? BALLOON_TAIL_TARGET_Y_OFFSET.px : BALLOON_TAIL_TARGET_Y_OFFSET.percent;
+      const target = pointInPanel(actor.x, actor.y - targetYOffset, pRect, actorUnit);
       tail = `<line x1="${r.x + r.w / 2}" y1="${r.y + r.h}" x2="${target.x}" y2="${target.y}" stroke="black"/>`;
     }
   } else if (typeof balloon.tail === "string" && balloon.tail.startsWith("toPoint(")) {
