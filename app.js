@@ -296,9 +296,11 @@ function render(scene) {
   const canvas = canvasBounds(pageLayouts);
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${canvas.w} ${canvas.h}" width="${canvas.w}" height="${canvas.h}">
-  ${renderPageFrames(pageLayouts)}
   ${defs.length ? `<defs>${defs.join("")}</defs>` : ""}
-  <g transform="translate(${viewState.panX},${viewState.panY}) scale(${viewState.scale})">${body.join("\n")}</g>
+  <g transform="translate(${viewState.panX},${viewState.panY}) scale(${viewState.scale})">
+    ${renderPageFrames(pageLayouts)}
+    ${body.join("\n")}
+  </g>
 </svg>`;
 }
 
