@@ -352,6 +352,14 @@ function renderBalloon(balloon, panelRect, inner, unit, actorMap, panelMap) {
       const target = pointInPanel(actor.x, actor.y - targetYOffset, pRect, unit);
       tail = `<line x1="${r.x + r.w / 2}" y1="${r.y + r.h}" x2="${target.x}" y2="${target.y}" stroke="black"/>`;
     }
+  } else if (typeof balloon.tail === "string" && balloon.tail.startsWith("toPoint(")) {
+    const match = balloon.tail.match(/^toPoint\(([^,]+),([^,]+)\)$/);
+    const x = Number(match?.[1]?.trim());
+    const y = Number(match?.[2]?.trim());
+    if (Number.isFinite(x) && Number.isFinite(y)) {
+      const target = pointInPanel(x, y, panelRect, unit);
+      tail = `<line x1="${r.x + r.w / 2}" y1="${r.y + r.h}" x2="${target.x}" y2="${target.y}" stroke="black"/>`;
+    }
   }
 
   const text = renderText(balloon.text, r, balloon.fontSize, balloon.align, balloon.padding, unit, balloon.lineHeight);
