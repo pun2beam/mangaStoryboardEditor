@@ -3,6 +3,7 @@ const DEFAULT_DSL_PATH = "./example.msd";
 const PAGE_SIZES = { B5: [1760, 2500], A4: [2480, 3508] };
 const ACTOR_TYPES = new Set(["stand", "run", "sit", "point", "think", "surprise"]);
 const EMOTIONS = new Set(["neutral", "angry", "sad", "panic", "smile"]);
+const BALLOON_TAIL_TARGET_Y_OFFSET = { px: 12, percent: 4 };
 
 const els = {
   input: document.getElementById("dslInput"),
@@ -246,7 +247,7 @@ function render(scene) {
     } else if (entry.kind === "balloon") {
       const panel = panelMap.get(String(entry.data.panel));
       const panelRect = rectInPage(panel, inner, page.unit);
-      body.push(renderBalloon(entry.data, panelRect, page.unit, actorMap, panelMap, scene));
+      body.push(renderBalloon(entry.data, panelRect, inner, page.unit, actorMap, panelMap));
     } else if (entry.kind === "caption") {
       const panel = panelMap.get(String(entry.data.panel));
       const panelRect = rectInPage(panel, inner, page.unit);
@@ -304,7 +305,7 @@ function emotionPath(emotion, s) {
   return `<line x1="${-s * 0.15}" y1="${mouthY}" x2="${s * 0.15}" y2="${mouthY}" stroke="black" stroke-width="1.5"/>`;
 }
 
-function renderBalloon(balloon, panelRect, unit, actorMap, panelMap) {
+function renderBalloon(balloon, panelRect, inner, unit, actorMap, panelMap) {
   const r = withinPanel(balloon, panelRect, unit);
   let shape = "";
   if (balloon.shape === "box") {
@@ -322,8 +323,10 @@ function renderBalloon(balloon, panelRect, unit, actorMap, panelMap) {
     const id = balloon.tail.match(/^toActor\((.+)\)$/)?.[1];
     const actor = actorMap.get(String(id));
     if (actor) {
-      const pRect = rectInPage(panelMap.get(String(actor.panel)), { x: 0, y: 0, w: panelRect.w + panelRect.x, h: panelRect.h + panelRect.y }, unit);
-      const target = pointInPanel(actor.x, actor.y - 12, pRect, unit);
+      const actorPanel = panelMap.get(String(actor.panel));
+      const pRect = rectInPage(actorPanel, inner, unit);
+      const targetYOffset = unit === "px" ? BALLOON_TAIL_TARGET_Y_OFFSET.px : BALLOON_TAIL_TARGET_Y_OFFSET.percent;
+      const target = pointInPanel(actor.x, actor.y - targetYOffset, pRect, unit);
       tail = `<line x1="${r.x + r.w / 2}" y1="${r.y + r.h}" x2="${target.x}" y2="${target.y}" stroke="black"/>`;
     }
   }
