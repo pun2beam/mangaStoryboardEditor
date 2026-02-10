@@ -7,11 +7,6 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <header class="topbar">
-      <h1>Manga Storyboard DSL Editor</h1>
-      <button id="downloadSvgBtn" type="button">SVGとして保存</button>
-    </header>
-
     <main class="split-root">
       <section class="left-pane">
         <label for="dslInput">DSL</label>
@@ -22,7 +17,12 @@
       <div id="resizer" class="resizer" role="separator" aria-orientation="vertical" aria-label="Resize panes"></div>
 
       <section class="right-pane">
-        <div id="banner" class="banner" hidden></div>
+        <div class="header">
+          <div id="banner" class="banner" hidden></div>
+          <div class="controls">
+            <button id="download-svg" type="button">SVGとして保存</button>
+          </div>
+        </div>
         <div id="previewViewport" class="preview-viewport">
           <div id="svgCanvas"></div>
         </div>
