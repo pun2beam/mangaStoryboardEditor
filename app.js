@@ -3,7 +3,7 @@ const DEFAULT_DSL_PATH = "./example.msd";
 const PAGE_SIZES = { B5: [1760, 2500], A4: [2480, 3508] };
 const ACTOR_TYPES = new Set(["stand", "run", "sit", "point", "think", "surprise"]);
 const EMOTIONS = new Set(["neutral", "angry", "sad", "panic", "smile"]);
-const BALLOON_TAIL_TARGET_Y_OFFSET = { px: 12, percent: 4 };
+const BALLOON_TAIL_TARGET_Y_OFFSET = { px: 12, percent: 0 };
 
 const els = {
   input: document.getElementById("dslInput"),
