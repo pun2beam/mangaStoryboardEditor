@@ -68,8 +68,24 @@ balloon:
   shape:thought 
   tail:toActor(a1)
   text: |
-    ヤバい！
-    遅刻だ！
+    君!
+    なぜマンガ用のDSLが必要なのか！
+    わかりますか！
+
+
+balloon:
+  id:b1
+  panel:1
+  x:40
+  y:15
+  w:35
+  h:20
+  shape:oval
+  tail:toActor(a2)
+  text: |
+    先生!
+    全く分かりません！
+    ！
 
 caption:
   id:c1
