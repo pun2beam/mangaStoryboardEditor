@@ -534,10 +534,11 @@ function renderBalloon(balloon, panelRect, unit, actorMap, panelMap, panelRects,
       const actorFeet = pointInPanel(actor.x, actor.y - targetYOffset, pRect, actorUnit);
       const actorScale = num(actor.scale, 1);
       const actorSize = 20 * actorScale;
+      const faceWidth = actorSize * 0.95;
       const actorRect = {
-        x: actorFeet.x - actorSize,
+        x: actorFeet.x - faceWidth / 2,
         y: actorFeet.y - actorSize * 2.7,
-        w: actorSize * 2,
+        w: faceWidth,
         h: actorSize * 2.7,
       };
       const mouthTarget = {
