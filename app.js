@@ -88,7 +88,7 @@ function parseValue(value) {
 function validateAndBuild(blocks) {
   const scene = { meta: {}, pages: [], panels: [], actors: [], objects: [], balloons: [], captions: [], sfx: [], assets: [], styles: [] };
   for (const b of blocks) {
-    const key = `${b.type}s`;
+    const key = b.type === "sfx" ? "sfx" : `${b.type}s`;
     if (b.type === "meta") {
       scene.meta = b.props;
       continue;
