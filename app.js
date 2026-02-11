@@ -415,8 +415,8 @@ function renderBalloon(balloon, panelRect, unit, actorMap, panelMap, panelRects,
       const target = pointInPanel(actor.x, actor.y - targetYOffset, pRect, actorUnit);
       const startx=r.x + r.w / 2;
       const starty=r.y + r.h;
-      const endx=(startx+target.x)/2;
-      const endy=(starty+target.y)/2;
+      const endx=(target.x);
+      const endy=(target.y);
       
       tail = `<line x1="${startx}" y1="${starty}" x2="${endx}" y2="${endy}" stroke="black"/>`;
     }
