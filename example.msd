@@ -1,6 +1,7 @@
 meta:
   title: テスト
   author: DEF
+  actor.name.visible: on
 
 page:
   id:p1

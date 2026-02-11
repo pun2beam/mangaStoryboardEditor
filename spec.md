@@ -87,6 +87,7 @@ SVG描画順は原則：
 * `title`（任意）
 * `author`（任意）
 * `version`（任意）
+* `actor.name.visible`（任意、`on`/`off`。`on` の場合、`actor.name` をキャラクターの上部に表示）
 
 例:
 
