@@ -543,13 +543,13 @@ function renderBalloon(balloon, panelRect, unit, actorMap, panelMap, panelRects,
   }
 
   const text = renderText(balloon.text, r, balloon.fontSize, balloon.align, balloon.padding, unit, balloon.lineHeight, "center");
-  return `<g>${shape}${tail}${text}</g>`;
+  return `<g>${tail}${shape}${text}</g>`;
 }
 
 function renderThoughtTailBubbles(balloonAnchor, targetAnchor, balloonRect) {
   const diameterBase = Math.max(6, Math.min(balloonRect.w, balloonRect.h) * 0.08);
   const radii = [diameterBase * 0.22, diameterBase * 0.33, diameterBase * 0.45];
-  const stops = [0.72, 0.52, 0.32];
+  const stops = [0.32, 0.52, 0.72];
 
   return stops
     .map((t, index) => {
