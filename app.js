@@ -486,13 +486,12 @@ function emotionPath(emotion, s) {
 function renderBalloon(balloon, panelRect, unit, actorMap, panelMap, panelRects, pageLayouts) {
   const r = withinPanel(balloon, panelRect, unit);
   const balloonCenter = { x: r.x + r.w / 2, y: r.y + r.h / 2 };
+  const isThoughtBalloon = balloon.shape === "thought";
   let shape = "";
   if (balloon.shape === "box") {
     shape = `<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="white" stroke="black"/>`;
-  } else if (balloon.shape === "thought") {
+  } else if (isThoughtBalloon) {
     shape = `<ellipse cx="${r.x + r.w / 2}" cy="${r.y + r.h / 2}" rx="${r.w / 2}" ry="${r.h / 2}" fill="white" stroke="black"/>`;
-    shape += `<circle cx="${r.x + r.w * 0.25}" cy="${r.y + r.h + 12}" r="5" fill="white" stroke="black"/>`;
-    shape += `<circle cx="${r.x + r.w * 0.2}" cy="${r.y + r.h + 22}" r="3" fill="white" stroke="black"/>`;
   } else {
     shape = `<ellipse cx="${r.x + r.w / 2}" cy="${r.y + r.h / 2}" rx="${r.w / 2}" ry="${r.h / 2}" fill="white" stroke="black"/>`;
   }
@@ -525,7 +524,9 @@ function renderBalloon(balloon, panelRect, unit, actorMap, panelMap, panelRects,
       const start = anchorPointOnRect(r, oppositeDirection(directionFromActor));
       const end = anchorPointOnRect(actorRect, directionFromActor);
 
-      tail = `<line x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="black"/>`;
+      tail = isThoughtBalloon
+        ? renderThoughtTailBubbles(start, end, r)
+        : `<line x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="black"/>`;
     }
   } else if (typeof balloon.tail === "string" && balloon.tail.startsWith("toPoint(")) {
     const match = balloon.tail.match(/^toPoint\(([^,]+),([^,]+)\)$/);
@@ -535,12 +536,28 @@ function renderBalloon(balloon, panelRect, unit, actorMap, panelMap, panelRects,
       const target = pointInPanel(x, y, panelRect, unit);
       const directionToTarget = resolveOctantDirection(balloonCenter, target);
       const start = anchorPointOnRect(r, directionToTarget);
-      tail = `<line x1="${start.x}" y1="${start.y}" x2="${target.x}" y2="${target.y}" stroke="black"/>`;
+      tail = isThoughtBalloon
+        ? renderThoughtTailBubbles(start, target, r)
+        : `<line x1="${start.x}" y1="${start.y}" x2="${target.x}" y2="${target.y}" stroke="black"/>`;
     }
   }
 
   const text = renderText(balloon.text, r, balloon.fontSize, balloon.align, balloon.padding, unit, balloon.lineHeight, "center");
   return `<g>${shape}${tail}${text}</g>`;
+}
+
+function renderThoughtTailBubbles(balloonAnchor, targetAnchor, balloonRect) {
+  const diameterBase = Math.max(6, Math.min(balloonRect.w, balloonRect.h) * 0.08);
+  const radii = [diameterBase * 0.22, diameterBase * 0.33, diameterBase * 0.45];
+  const stops = [0.72, 0.52, 0.32];
+
+  return stops
+    .map((t, index) => {
+      const x = targetAnchor.x + (balloonAnchor.x - targetAnchor.x) * t;
+      const y = targetAnchor.y + (balloonAnchor.y - targetAnchor.y) * t;
+      return `<circle cx="${x}" cy="${y}" r="${radii[index]}" fill="white" stroke="black"/>`;
+    })
+    .join("");
 }
 
 function resolveOctantDirection(from, to) {
