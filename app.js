@@ -4,6 +4,7 @@ const PAGE_SIZES = { B5: [1760, 2500], A4: [2480, 3508] };
 const ACTOR_TYPES = new Set(["stand", "run", "sit", "point", "think", "surprise"]);
 const EMOTIONS = new Set(["neutral", "angry", "sad", "panic", "smile"]);
 const EYE_TYPES = new Set(["right", "left", "up", "down", "cry", "close", "wink"]);
+const FACING_TYPES = new Set(["left", "right", "back"]);
 const BALLOON_TAIL_TARGET_Y_OFFSET = { px: 12, percent: 0 };
 
 const els = {
@@ -138,7 +139,7 @@ function validateAndBuild(blocks) {
     actor.pose = ACTOR_TYPES.has(actor.pose) ? actor.pose : "stand";
     actor.emotion = EMOTIONS.has(actor.emotion) ? actor.emotion : "neutral";
     actor.scale = num(actor.scale, 1);
-    actor.facing = actor.facing === "left" ? "left" : "right";
+    actor.facing = FACING_TYPES.has(actor.facing) ? actor.facing : "right";
     actor.eye = EYE_TYPES.has(actor.eye) ? actor.eye : "right";
     actor.x = num(actor.x, 0);
     actor.y = num(actor.y, 0);
@@ -399,8 +400,9 @@ function renderActor(actor, panelRect, unit, showActorName) {
   const mirror = actor.facing === "left" ? -1 : 1;
 
   const pose = poseSegments(actor.pose, s);
-  const eye = eyePath(actor.eye, s);
-  const emotion = emotionPath(actor.emotion, s);
+  const faceMarkup = actor.facing === "back"
+    ? ""
+    : `${eyePath(actor.eye, s)}${emotionPath(actor.emotion, s)}`;
 
   const nameLabel = showActorName && actor.name
     ? `<text x="0" y="${-s * 2.9}" font-size="${Math.max(10, s * 0.55)}" text-anchor="middle" dominant-baseline="auto" fill="black">${escapeXml(String(actor.name))}</text>`
@@ -411,8 +413,7 @@ function renderActor(actor, panelRect, unit, showActorName) {
       <circle cx="0" cy="${-s * 2.2}" r="${s * 0.45}" fill="none" stroke="black" stroke-width="2"/>
       <line x1="0" y1="${-s * 1.7}" x2="0" y2="${-s * 0.8}" stroke="black" stroke-width="2"/>
       ${pose}
-      ${eye}
-      ${emotion}
+      ${faceMarkup}
     </g>
     ${nameLabel}
   </g>`;

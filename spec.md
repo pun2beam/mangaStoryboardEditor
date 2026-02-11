@@ -167,7 +167,7 @@ panel:
 * `x,y`（足元の基準点を推奨）
   任意:
 * `scale`（既定1.0）
-* `facing`（`left`/`right`、既定`right`）
+* `facing`（`left`/`right`/`back`、既定`right`）
 * `pose`（既定`stand`）
 * `emotion`（既定`neutral`）
 * `name`（任意、デバッグ用）
@@ -335,7 +335,7 @@ balloon:
 * 胴: line
 * 腕脚: line（poseプリセットごとに相対座標テンプレを定義）
 * `scale` は全体に適用
-* `facing` は左右反転（x方向スケール -1）
+* `facing` は `left` で左右反転（x方向スケール -1）、`right` は通常向き、`back` は後ろ向き（目・口は描画しない）
 * `emotion` は顔の記号（目・口の形）を切替（最小は口線だけで良い）
 
 ### 7.3 balloon/caption
