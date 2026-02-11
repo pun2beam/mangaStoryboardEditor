@@ -50,7 +50,7 @@ function parseDsl(text) {
         continue;
       }
 
-      const kv = bodyRaw.match(/^\s{2,}([\w-]+)\s*:\s*(.*)$/);
+      const kv = bodyRaw.match(/^\s{2,}([\w.-]+)\s*:\s*(.*)$/);
       if (!kv) throw new Error(`Line ${i + 1}: key:value 形式ではありません`);
       const [, key, rawValue] = kv;
 
@@ -221,6 +221,10 @@ function num(value, fallback) {
   return typeof value === "number" ? value : fallback;
 }
 
+function isOn(value) {
+  return typeof value === "string" && value.toLowerCase() === "on";
+}
+
 function parseSizedValue(value, fallbackValue, defaultUnit) {
   if (value === undefined || value === null || value === "") return { value: fallbackValue, unit: defaultUnit };
   if (typeof value === "number") return { value, unit: defaultUnit };
@@ -243,6 +247,7 @@ function pUnit(item, dicts, refKey) {
 }
 
 function render(scene) {
+  const showActorName = isOn(scene.meta?.["actor.name.visible"]);
   const pageLayouts = buildPageLayouts(scene);
   const panelRects = new Map();
   for (const panel of scene.panels) {
@@ -308,7 +313,7 @@ function render(scene) {
       const pageLayout = panel ? pageLayouts.get(String(panel.page)) : null;
       const panelRect = panelRects.get(String(entry.data.panel));
       if (!pageLayout || !panelRect) continue;
-      const actorMarkup = renderActor(entry.data, panelRect, pageLayout.page.unit);
+      const actorMarkup = renderActor(entry.data, panelRect, pageLayout.page.unit, showActorName);
       body.push(clipWhenBehindPanel(entry, panel, panelRect, actorMarkup));
     } else if (entry.kind === "balloon") {
       const panel = panelMap.get(String(entry.data.panel));
@@ -388,7 +393,7 @@ function canvasBounds(pageLayouts) {
   };
 }
 
-function renderActor(actor, panelRect, unit) {
+function renderActor(actor, panelRect, unit, showActorName) {
   const p = pointInPanel(actor.x, actor.y, panelRect, unit);
   const s = 20 * actor.scale;
   const mirror = actor.facing === "left" ? -1 : 1;
@@ -397,12 +402,19 @@ function renderActor(actor, panelRect, unit) {
   const eye = eyePath(actor.eye, s);
   const emotion = emotionPath(actor.emotion, s);
 
-  return `<g transform="translate(${p.x},${p.y}) scale(${mirror},1)">
-    <circle cx="0" cy="${-s * 2.2}" r="${s * 0.45}" fill="none" stroke="black" stroke-width="2"/>
-    <line x1="0" y1="${-s * 1.7}" x2="0" y2="${-s * 0.8}" stroke="black" stroke-width="2"/>
-    ${pose}
-    ${eye}
-    ${emotion}
+  const nameLabel = showActorName && actor.name
+    ? `<text x="0" y="${-s * 2.9}" font-size="${Math.max(10, s * 0.55)}" text-anchor="middle" dominant-baseline="auto" fill="black">${escapeXml(String(actor.name))}</text>`
+    : "";
+
+  return `<g transform="translate(${p.x},${p.y})">
+    <g transform="scale(${mirror},1)">
+      <circle cx="0" cy="${-s * 2.2}" r="${s * 0.45}" fill="none" stroke="black" stroke-width="2"/>
+      <line x1="0" y1="${-s * 1.7}" x2="0" y2="${-s * 0.8}" stroke="black" stroke-width="2"/>
+      ${pose}
+      ${eye}
+      ${emotion}
+    </g>
+    ${nameLabel}
   </g>`;
 }
 
