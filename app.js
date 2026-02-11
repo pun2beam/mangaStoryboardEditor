@@ -498,7 +498,7 @@ function renderBalloon(balloon, panelRect, unit, actorMap, panelMap, panelRects,
       const pRect = panelRects.get(String(actor.panel));
       const actorPage = actorPanel ? pageLayouts.get(String(actorPanel.page)) : null;
       if (!pRect || !actorPage) {
-        const text = renderText(balloon.text, r, balloon.fontSize, balloon.align, balloon.padding, unit, balloon.lineHeight);
+        const text = renderText(balloon.text, r, balloon.fontSize, balloon.align, balloon.padding, unit, balloon.lineHeight, "center");
         return `<g>${shape}${text}</g>`;
       }
       const actorUnit = actorPage.page.unit;
@@ -531,7 +531,7 @@ function renderBalloon(balloon, panelRect, unit, actorMap, panelMap, panelRects,
     }
   }
 
-  const text = renderText(balloon.text, r, balloon.fontSize, balloon.align, balloon.padding, unit, balloon.lineHeight);
+  const text = renderText(balloon.text, r, balloon.fontSize, balloon.align, balloon.padding, unit, balloon.lineHeight, "center");
   return `<g>${shape}${tail}${text}</g>`;
 }
 
@@ -599,13 +599,17 @@ function renderSfx(sfx, panelRect, unit) {
   return `<text x="${p.x}" y="${p.y}" font-size="${fontSize}" transform="rotate(${sfx.rotate} ${p.x} ${p.y}) scale(${sfx.scale})" fill="${sfx.fill}" stroke="${sfx.stroke || "none"}" font-weight="700">${escapeXml(sfx.text)}</text>`;
 }
 
-function renderText(text, rect, fontSize, align, padding, unit, lineHeight = 1.2) {
+function renderText(text, rect, fontSize, align, padding, unit, lineHeight = 1.2, verticalAlign = "top") {
   const lines = String(text).split("\n");
   const x = align === "left" ? rect.x + sizeInUnit(padding, rect, unit, "x") : align === "right" ? rect.x + rect.w - sizeInUnit(padding, rect, unit, "x") : rect.x + rect.w / 2;
   const anchor = align === "left" ? "start" : align === "right" ? "end" : "middle";
   const sizeSpec = normalizeTextSize(fontSize, unit);
   const baseSize = sizeSpec.unit === "percent" ? sizeSpec.value / 100 * rect.w : sizeSpec.value;
-  const y0 = rect.y + baseSize + sizeInUnit(padding, rect, unit, "y");
+  const paddingY = sizeInUnit(padding, rect, unit, "y");
+  const totalTextHeight = baseSize + (lines.length - 1) * baseSize * lineHeight;
+  const y0 = verticalAlign === "center"
+    ? rect.y + paddingY + (rect.h - paddingY * 2 - totalTextHeight) / 2 + baseSize
+    : rect.y + baseSize + paddingY;
   const tspans = lines.map((line, i) => `<tspan x="${x}" dy="${i === 0 ? 0 : baseSize * lineHeight}">${escapeXml(line)}</tspan>`).join("");
   return `<text x="${x}" y="${y0}" font-size="${baseSize}" text-anchor="${anchor}">${tspans}</text>`;
 }
