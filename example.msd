@@ -21,7 +21,7 @@ panel:
 panel:
   id:2
   page:p1
-  x:40
+  x:0
   y:31
   w:60
   h:23
@@ -30,7 +30,7 @@ panel:
 panel:
   id:3
   page:p1
-  x:40
+  x:0
   y:55
   w:60
   h:23
@@ -39,7 +39,7 @@ panel:
 panel:
   id:4
   page:p1
-  x:40
+  x:0
   y:79
   w:60
   h:23
@@ -48,7 +48,7 @@ panel:
 panel:
   id:5
   page:p1
-  x:0
+  x:62
   y:31
   w:38
   h:50
@@ -57,7 +57,7 @@ panel:
 panel:
   id:6
   page:p1
-  x:0
+  x:62
   y:82
   w:38
   h:20
@@ -363,7 +363,7 @@ balloon:
 actor:
   id:a9
   panel:6
-  x:60
+  x:40
   y:100
   z:-1
   scale:7
@@ -375,7 +375,7 @@ actor:
 object:
   id:o3
   panel:6
-  x:75
+  x:15
   y:60
   w:10
   h:10
@@ -385,7 +385,7 @@ object:
 balloon:
   id:b9
   panel:6
-  x:-3
+  x:67
   y:20
   w:40
   h:40
@@ -394,19 +394,29 @@ balloon:
   tail:toPoint(50,35)
   fontsize:25px
   text: |
-    最後まで話に
-    絡まない
-    私の存在意義は。
-    何だろう...
+    そう簡単に
+    上手くいくかな...
 
+
+sfx:
+  id:1
+  panel:1
+  x:0
+  y:-5
+  text:導入：何が目的?
+  scale:1
+  fontSize:5
+  rotate:0
+  stroke:#000000
+  fill:#a0f0a0
 
 caption:
   id:c2
   panel:6
-  x:3
+  x:66
   y:77
-  w:17
+  w:32
   h:20
   fontsize:60px
   text: |
-    終
+    つづく
