@@ -339,7 +339,7 @@ object:
   text:|
     　　　　LLM　　　　　　
     　　↗　↕　　　　　　
-    人間 ↔ DSL↔変換↔ SVG
+    人間 ↔ DSL→変換→SVG
 
 
 balloon:
