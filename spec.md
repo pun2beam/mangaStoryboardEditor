@@ -215,7 +215,8 @@ actor:
   任意:
 * `shape`（`oval`/`box`/`thought`、既定`oval`）
 * `tail`（`none`/`toActor(<id>)`/`toPoint(x,y)`、既定`none`）
-* `fontSize`（既定: 4 ※percent単位時の相対値、px単位ならpx）
+* `fontsize`（既定: `4`。`12px` / `4%` / `4` のように指定可能。単位省略時はpageの`unit`を使用）
+* `fontSize`（後方互換。既定: 4 ※percent単位時の相対値、px単位ならpx）
 * `padding`（既定: 2）
 * `align`（`left`/`center`/`right`、既定`center`）
 * `lineHeight`（既定: 1.2）
@@ -232,6 +233,7 @@ balloon:
   w:35
   h:18
   tail:toActor(a1)
+  fontsize:12px
   text: |
     ヤバい！
     遅刻だ！
@@ -413,6 +415,7 @@ balloon:
   w:35
   h:18
   tail:toActor(a1)
+  fontsize:4%
   text: |
     ヤバい！
     遅刻だ！
