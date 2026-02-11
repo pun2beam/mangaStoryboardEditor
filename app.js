@@ -246,6 +246,23 @@ function render(scene) {
 
   const defs = [];
   const body = [];
+  const panelClipIds = new Map();
+
+  function getPanelClipId(panelId, panelRect) {
+    const key = String(panelId);
+    if (panelClipIds.has(key)) return panelClipIds.get(key);
+    const clipId = `panel-clip-${key}`;
+    defs.push(`<clipPath id="${clipId}"><rect x="${panelRect.x}" y="${panelRect.y}" width="${panelRect.w}" height="${panelRect.h}"/></clipPath>`);
+    panelClipIds.set(key, clipId);
+    return clipId;
+  }
+
+  function clipWhenBehindPanel(entry, panel, panelRect, markup) {
+    const panelZ = panel.z ?? 0;
+    if (entry.z >= panelZ) return markup;
+    const clipId = getPanelClipId(panel.id, panelRect);
+    return `<g clip-path="url(#${clipId})">${markup}</g>`;
+  }
 
   for (const entry of entries) {
     if (entry.kind === "panel") {
@@ -265,31 +282,36 @@ function render(scene) {
         defs.push(`<clipPath id="${clipId}"><rect x="${panelRect.x}" y="${panelRect.y}" width="${panelRect.w}" height="${panelRect.h}"/></clipPath>`);
         clip = ` clip-path="url(#${clipId})"`;
       }
-      body.push(`<image x="${box.x}" y="${box.y}" width="${box.w}" height="${box.h}" href="${escapeXml(entry.data.src)}" opacity="${entry.data.opacity}"${clip}/>`);
+      const imageMarkup = `<image x="${box.x}" y="${box.y}" width="${box.w}" height="${box.h}" href="${escapeXml(entry.data.src)}" opacity="${entry.data.opacity}"${clip}/>`;
+      body.push(clipWhenBehindPanel(entry, panel, panelRect, imageMarkup));
     } else if (entry.kind === "actor") {
       const panel = panelMap.get(String(entry.data.panel));
       const pageLayout = panel ? pageLayouts.get(String(panel.page)) : null;
       const panelRect = panelRects.get(String(entry.data.panel));
       if (!pageLayout || !panelRect) continue;
-      body.push(renderActor(entry.data, panelRect, pageLayout.page.unit));
+      const actorMarkup = renderActor(entry.data, panelRect, pageLayout.page.unit);
+      body.push(clipWhenBehindPanel(entry, panel, panelRect, actorMarkup));
     } else if (entry.kind === "balloon") {
       const panel = panelMap.get(String(entry.data.panel));
       const pageLayout = panel ? pageLayouts.get(String(panel.page)) : null;
       const panelRect = panelRects.get(String(entry.data.panel));
       if (!pageLayout || !panelRect) continue;
-      body.push(renderBalloon(entry.data, panelRect, pageLayout.page.unit, actorMap, panelMap, panelRects, pageLayouts));
+      const balloonMarkup = renderBalloon(entry.data, panelRect, pageLayout.page.unit, actorMap, panelMap, panelRects, pageLayouts);
+      body.push(clipWhenBehindPanel(entry, panel, panelRect, balloonMarkup));
     } else if (entry.kind === "caption") {
       const panel = panelMap.get(String(entry.data.panel));
       const pageLayout = panel ? pageLayouts.get(String(panel.page)) : null;
       const panelRect = panelRects.get(String(entry.data.panel));
       if (!pageLayout || !panelRect) continue;
-      body.push(renderCaption(entry.data, panelRect, pageLayout.page.unit));
+      const captionMarkup = renderCaption(entry.data, panelRect, pageLayout.page.unit);
+      body.push(clipWhenBehindPanel(entry, panel, panelRect, captionMarkup));
     } else if (entry.kind === "sfx") {
       const panel = panelMap.get(String(entry.data.panel));
       const pageLayout = panel ? pageLayouts.get(String(panel.page)) : null;
       const panelRect = panelRects.get(String(entry.data.panel));
       if (!pageLayout || !panelRect) continue;
-      body.push(renderSfx(entry.data, panelRect, pageLayout.page.unit));
+      const sfxMarkup = renderSfx(entry.data, panelRect, pageLayout.page.unit);
+      body.push(clipWhenBehindPanel(entry, panel, panelRect, sfxMarkup));
     }
   }
 
