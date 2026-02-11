@@ -59,12 +59,8 @@ function parseDsl(text) {
         const multi = [];
         while (i < lines.length) {
           const m = lines[i];
-          if (!/^\s{4,}/.test(m) && m.trim() !== "") break;
-          if (m.trim() === "") {
-            multi.push("");
-          } else {
-            multi.push(m.replace(/^\s{4}/, ""));
-          }
+          if (!/^\s{4,}/.test(m)) break;
+          multi.push(m.replace(/^\s{4}/, ""));
           i += 1;
         }
         block.props[key] = multi.join("\n");
