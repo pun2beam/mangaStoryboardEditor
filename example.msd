@@ -51,7 +51,16 @@ panel:
   x:0
   y:31
   w:38
-  h:35
+  h:50
+  radius:20
+
+panel:
+  id:6
+  page:p1
+  x:0
+  y:82
+  w:38
+  h:20
   radius:20
 
 actor:
@@ -63,7 +72,7 @@ actor:
   pose:point
   emotion:neutral
   facing:right
-  name:博士
+  name:ほげ君
 
 actor:
   id:a2
@@ -74,7 +83,7 @@ actor:
   pose:stand
   emotion:panic
   facing:left
-  name:助手A
+  name:ひげ君
 
 actor:
   id:a3
@@ -87,7 +96,7 @@ actor:
   emotion:smile
   facing:right
   eye:down
-  name:助手B
+  name:ふげ君
 
 balloon:
   id:b1
@@ -101,7 +110,7 @@ balloon:
   tail:toActor(a1)
   fontsize:25px
   text: |
-    なぜマンガ用のDSLを作成したのか
+    なぜマンガ用のDSL(※1)を作成したのか
     わかりますか?
 
 balloon:
@@ -132,6 +141,20 @@ balloon:
   text: |
     おなかすいたなぁ
 
+caption:
+  id:c1
+  panel:1
+  x:-3
+  y:75
+  w:17
+  h:18
+  fontsize:20px
+  text: |
+    ※1：DSL
+    (Domain Specific language)
+    特定のタスク向けに設計され
+    たコンピュータ言語。
+
 actor:
   id:a4
   panel:2
@@ -142,7 +165,7 @@ actor:
   pose:point
   emotion:neutral
   facing:right
-  name:先生
+  name:ほげ君
 
 balloon:
   id:b4
@@ -172,7 +195,7 @@ actor:
   pose:point
   emotion:neutral
   facing:left
-  name:助手A
+  name:ひげ君
 
 balloon:
   id:b5
@@ -205,7 +228,7 @@ actor:
   pose:neutral
   emotion:neutral
   facing:right
-  name:博士
+  name:ほげ君
 
 actor:
   id:a7
@@ -217,7 +240,7 @@ actor:
   pose:neutral
   emotion:neutral
   facing:back
-  name:助手A
+  name:ひげ君
 
 actor:
   id:a8
@@ -227,9 +250,9 @@ actor:
   z:-1
   scale:6
   pose:neutral
-  emotion:neutral
+  emotion:smile
   facing:right
-  name:助手B
+  name:ふげ君
 
 balloon:
   id:b6
@@ -276,13 +299,114 @@ balloon:
   text: |
     確か冷蔵庫に...
 
-caption:
-  id:c1
+object:
+  id:o1
+  panel:4
+  x:80
+  y:80
+  w:10
+  h:20
+  fontsize:25
+  text:冷蔵庫
+
+balloon:
+  id:b7
   panel:5
   x:5
-  y:5
-  w:30
-  h:10
+  y:8
+  w:90
+  h:28
+  z:1
+  shape:oval
   fontsize:25px
   text: |
-    翌朝
+    つまり、LLMに直接ネームを(SVGとして)
+    作成してもらうと修正がしにくい為、
+    ある程度人間にも修正しやすい形
+    の中間データとして出力する為の
+    DSLを作成したってわけ。
+
+object:
+  id:o2
+  panel:5
+  x:47
+  y:35
+  w:10
+  h:20
+  shape:none
+  border:2px
+  fontsize:65
+  text:|
+    　　　　LLM　　　　　　
+    　　↗　↕　　　　　　
+    人間 ↔ DSL↔変換↔ SVG
+
+
+balloon:
+  id:b8
+  panel:5
+  x:5
+  y:58
+  w:90
+  h:28
+  z:1
+  shape:oval
+  fontsize:25px
+  text: |
+    なるほどLLMとの共同作業の為の中間言語
+    ってわけですね。確かにいくつかためれば
+    テンプレートとして使いまわせるかも。
+    ゆくゆくは実際の画像から逆にDSL変換も
+    できれば構造的な解析&学習もできるように
+    なるかもしれませんね。
+
+actor:
+  id:a9
+  panel:6
+  x:60
+  y:100
+  z:-1
+  scale:7
+  pose:neutral
+  emotion:smile
+  facing:right
+  name:ふげ君
+
+object:
+  id:o1
+  panel:6
+  x:75
+  y:60
+  w:10
+  h:10
+  fontsize:25
+  text:ケーキ
+
+balloon:
+  id:b7
+  panel:6
+  x:-3
+  y:20
+  w:40
+  h:40
+  z:1
+  shape:thought 
+  tail:toPoint(50,35)
+  fontsize:25px
+  text: |
+    最後まで話に
+    絡まない
+    私の存在意義は。
+    何だろう-..
+
+
+caption:
+  id:c1
+  panel:6
+  x:3
+  y:77
+  w:17
+  h:20
+  fontsize:60px
+  text: |
+    終
