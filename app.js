@@ -387,6 +387,7 @@ function emotionPath(emotion, s) {
 
 function renderBalloon(balloon, panelRect, unit, actorMap, panelMap, panelRects, pageLayouts) {
   const r = withinPanel(balloon, panelRect, unit);
+  const balloonCenter = { x: r.x + r.w / 2, y: r.y + r.h / 2 };
   let shape = "";
   if (balloon.shape === "box") {
     shape = `<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="white" stroke="black"/>`;
@@ -412,13 +413,21 @@ function renderBalloon(balloon, panelRect, unit, actorMap, panelMap, panelRects,
       }
       const actorUnit = actorPage.page.unit;
       const targetYOffset = actorUnit === "px" ? BALLOON_TAIL_TARGET_Y_OFFSET.px : BALLOON_TAIL_TARGET_Y_OFFSET.percent;
-      const target = pointInPanel(actor.x, actor.y - targetYOffset, pRect, actorUnit);
-      const startx=r.x + r.w / 2;
-      const starty=r.y + r.h;
-      const endx=(target.x);
-      const endy=(target.y);
-      
-      tail = `<line x1="${startx}" y1="${starty}" x2="${endx}" y2="${endy}" stroke="black"/>`;
+      const actorFeet = pointInPanel(actor.x, actor.y - targetYOffset, pRect, actorUnit);
+      const actorScale = num(actor.scale, 1);
+      const actorSize = 20 * actorScale;
+      const actorRect = {
+        x: actorFeet.x - actorSize,
+        y: actorFeet.y - actorSize * 2.7,
+        w: actorSize * 2,
+        h: actorSize * 2.7,
+      };
+      const actorCenter = { x: actorRect.x + actorRect.w / 2, y: actorRect.y + actorRect.h / 2 };
+      const directionFromActor = resolveOctantDirection(actorCenter, balloonCenter);
+      const start = anchorPointOnRect(r, oppositeDirection(directionFromActor));
+      const end = anchorPointOnRect(actorRect, directionFromActor);
+
+      tail = `<line x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="black"/>`;
     }
   } else if (typeof balloon.tail === "string" && balloon.tail.startsWith("toPoint(")) {
     const match = balloon.tail.match(/^toPoint\(([^,]+),([^,]+)\)$/);
@@ -426,12 +435,65 @@ function renderBalloon(balloon, panelRect, unit, actorMap, panelMap, panelRects,
     const y = Number(match?.[2]?.trim());
     if (Number.isFinite(x) && Number.isFinite(y)) {
       const target = pointInPanel(x, y, panelRect, unit);
-      tail = `<line x1="${r.x + r.w / 2}" y1="${r.y + r.h}" x2="${target.x}" y2="${target.y}" stroke="black"/>`;
+      const directionToTarget = resolveOctantDirection(balloonCenter, target);
+      const start = anchorPointOnRect(r, directionToTarget);
+      tail = `<line x1="${start.x}" y1="${start.y}" x2="${target.x}" y2="${target.y}" stroke="black"/>`;
     }
   }
 
   const text = renderText(balloon.text, r, balloon.fontSize, balloon.align, balloon.padding, unit, balloon.lineHeight);
   return `<g>${shape}${tail}${text}</g>`;
+}
+
+function resolveOctantDirection(from, to) {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const xDir = Math.abs(dx) < 1e-6 ? 0 : dx > 0 ? 1 : -1;
+  const yDir = Math.abs(dy) < 1e-6 ? 0 : dy > 0 ? 1 : -1;
+  const absX = Math.abs(dx);
+  const absY = Math.abs(dy);
+
+  if (xDir === 0 && yDir === 0) return "bottom";
+  if (xDir === 0) return yDir > 0 ? "bottom" : "top";
+  if (yDir === 0) return xDir > 0 ? "right" : "left";
+
+  if (absX > absY * 1.5) return xDir > 0 ? "right" : "left";
+  if (absY > absX * 1.5) return yDir > 0 ? "bottom" : "top";
+
+  if (xDir > 0 && yDir > 0) return "bottomRight";
+  if (xDir > 0 && yDir < 0) return "topRight";
+  if (xDir < 0 && yDir > 0) return "bottomLeft";
+  return "topLeft";
+}
+
+function oppositeDirection(direction) {
+  const opposites = {
+    top: "bottom",
+    bottom: "top",
+    left: "right",
+    right: "left",
+    topLeft: "bottomRight",
+    topRight: "bottomLeft",
+    bottomLeft: "topRight",
+    bottomRight: "topLeft",
+  };
+  return opposites[direction] || "bottom";
+}
+
+function anchorPointOnRect(rect, direction) {
+  const cx = rect.x + rect.w / 2;
+  const cy = rect.y + rect.h / 2;
+  const anchors = {
+    top: { x: cx, y: rect.y },
+    bottom: { x: cx, y: rect.y + rect.h },
+    left: { x: rect.x, y: cy },
+    right: { x: rect.x + rect.w, y: cy },
+    topLeft: { x: rect.x, y: rect.y },
+    topRight: { x: rect.x + rect.w, y: rect.y },
+    bottomLeft: { x: rect.x, y: rect.y + rect.h },
+    bottomRight: { x: rect.x + rect.w, y: rect.y + rect.h },
+  };
+  return anchors[direction] || anchors.bottom;
 }
 
 function renderCaption(caption, panelRect, unit) {
