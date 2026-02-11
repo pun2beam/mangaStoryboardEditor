@@ -373,7 +373,7 @@ actor:
   name:ふげ君
 
 object:
-  id:o1
+  id:o3
   panel:6
   x:75
   y:60
@@ -383,7 +383,7 @@ object:
   text:ケーキ
 
 balloon:
-  id:b7
+  id:b9
   panel:6
   x:-3
   y:20
@@ -401,7 +401,7 @@ balloon:
 
 
 caption:
-  id:c1
+  id:c2
   panel:6
   x:3
   y:77
