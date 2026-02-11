@@ -386,13 +386,15 @@ function renderActor(actor, panelRect, unit) {
 }
 
 function poseSegments(pose, s) {
+  const shoulderY = -s * 1.5;
+  const hipY = -s * 0.8;
   const sets = {
-    stand: [[0, -s * 1.3, -s * 0.55, -s * 1], [0, -s * 1.3, s * 0.55, -s * 1], [0, -s * 0.8, -s * 0.45, 0], [0, -s * 0.8, s * 0.45, 0]],
-    run: [[0, -s * 1.3, s * 0.7, -s * 1.1], [0, -s * 1.25, -s * 0.3, -s * 0.6], [0, -s * 0.8, -s * 0.9, -s * 0.2], [0, -s * 0.8, s * 0.8, 0]],
-    sit: [[0, -s * 1.3, s * 0.4, -s * 1.1], [0, -s * 1.3, -s * 0.45, -s * 1], [0, -s * 0.8, s * 0.6, -s * 0.5], [s * 0.6, -s * 0.5, s * 1, -s * 0.5]],
-    point: [[0, -s * 1.3, s * 0.9, -s * 1.5], [0, -s * 1.3, -s * 0.45, -s * 1], [0, -s * 0.8, -s * 0.45, 0], [0, -s * 0.8, s * 0.45, 0]],
-    think: [[0, -s * 1.3, s * 0.2, -s * 1.7], [0, -s * 1.3, -s * 0.5, -s], [0, -s * 0.8, -s * 0.35, 0], [0, -s * 0.8, s * 0.35, 0]],
-    surprise: [[0, -s * 1.3, s * 0.9, -s * 1.7], [0, -s * 1.3, -s * 0.9, -s * 1.7], [0, -s * 0.8, -s * 0.6, 0], [0, -s * 0.8, s * 0.6, 0]],
+    stand: [[0, shoulderY, -s * 0.55, -s * 1], [0, shoulderY, s * 0.55, -s * 1], [0, hipY, -s * 0.45, 0], [0, hipY, s * 0.45, 0]],
+    run: [[0, shoulderY, s * 0.7, -s * 1.1], [0, shoulderY, -s * 0.3, -s * 0.6], [0, hipY, -s * 0.9, -s * 0.2], [0, hipY, s * 0.8, 0]],
+    sit: [[0, shoulderY, s * 0.4, -s * 1.1], [0, shoulderY, -s * 0.45, -s * 1], [0, hipY, s * 0.6, -s * 0.5], [s * 0.6, -s * 0.5, s * 1, -s * 0.5]],
+    point: [[0, shoulderY, s * 0.9, -s * 1.5], [0, shoulderY, -s * 0.45, -s * 1], [0, hipY, -s * 0.45, 0], [0, hipY, s * 0.45, 0]],
+    think: [[0, shoulderY, s * 0.2, -s * 1.7], [0, shoulderY, -s * 0.5, -s], [0, hipY, -s * 0.35, 0], [0, hipY, s * 0.35, 0]],
+    surprise: [[0, shoulderY, s * 0.9, -s * 1.7], [0, shoulderY, -s * 0.9, -s * 1.7], [0, hipY, -s * 0.6, 0], [0, hipY, s * 0.6, 0]],
   };
   return sets[pose].map(([x1, y1, x2, y2]) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="black" stroke-width="2"/>`).join("");
 }
