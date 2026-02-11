@@ -3,6 +3,7 @@ const DEFAULT_DSL_PATH = "./example.msd";
 const PAGE_SIZES = { B5: [1760, 2500], A4: [2480, 3508] };
 const ACTOR_TYPES = new Set(["stand", "run", "sit", "point", "think", "surprise"]);
 const EMOTIONS = new Set(["neutral", "angry", "sad", "panic", "smile"]);
+const EYE_TYPES = new Set(["right", "left", "up", "down", "cry", "close", "wink"]);
 const BALLOON_TAIL_TARGET_Y_OFFSET = { px: 12, percent: 0 };
 
 const els = {
@@ -142,6 +143,7 @@ function validateAndBuild(blocks) {
     actor.emotion = EMOTIONS.has(actor.emotion) ? actor.emotion : "neutral";
     actor.scale = num(actor.scale, 1);
     actor.facing = actor.facing === "left" ? "left" : "right";
+    actor.eye = EYE_TYPES.has(actor.eye) ? actor.eye : "right";
     actor.x = num(actor.x, 0);
     actor.y = num(actor.y, 0);
   }
@@ -375,12 +377,14 @@ function renderActor(actor, panelRect, unit) {
   const mirror = actor.facing === "left" ? -1 : 1;
 
   const pose = poseSegments(actor.pose, s);
+  const eye = eyePath(actor.eye, s);
   const emotion = emotionPath(actor.emotion, s);
 
   return `<g transform="translate(${p.x},${p.y}) scale(${mirror},1)">
     <circle cx="0" cy="${-s * 2.2}" r="${s * 0.45}" fill="none" stroke="black" stroke-width="2"/>
     <line x1="0" y1="${-s * 1.7}" x2="0" y2="${-s * 0.8}" stroke="black" stroke-width="2"/>
     ${pose}
+    ${eye}
     ${emotion}
   </g>`;
 }
@@ -399,6 +403,47 @@ function poseSegments(pose, s) {
   return sets[pose].map(([x1, y1, x2, y2]) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="black" stroke-width="2"/>`).join("");
 }
 
+
+function eyePath(eye, s) {
+  const headY = -s * 2.2;
+  const eyeY = headY - s * 0.04;
+  const leftX = -s * 0.14;
+  const rightX = s * 0.14;
+  const eyeRadius = s * 0.05;
+
+  const openEyes = (leftDx = 0, leftDy = 0, rightDx = 0, rightDy = 0) => [
+    `<circle cx="${leftX}" cy="${eyeY}" r="${eyeRadius}" fill="white" stroke="black" stroke-width="1"/>`,
+    `<circle cx="${rightX}" cy="${eyeY}" r="${eyeRadius}" fill="white" stroke="black" stroke-width="1"/>`,
+    `<circle cx="${leftX + leftDx}" cy="${eyeY + leftDy}" r="${eyeRadius * 0.45}" fill="black"/>`,
+    `<circle cx="${rightX + rightDx}" cy="${eyeY + rightDy}" r="${eyeRadius * 0.45}" fill="black"/>`,
+  ].join("");
+
+  if (eye === "left") return openEyes(-s * 0.018, 0, -s * 0.018, 0);
+  if (eye === "up") return openEyes(0, -s * 0.018, 0, -s * 0.018);
+  if (eye === "down") return openEyes(0, s * 0.018, 0, s * 0.018);
+  if (eye === "cry") {
+    return [
+      openEyes(0, s * 0.015, 0, s * 0.015),
+      `<line x1="${leftX}" y1="${eyeY + eyeRadius}" x2="${leftX}" y2="${eyeY + s * 0.2}" stroke="#4fa3ff" stroke-width="1.4"/>`,
+      `<line x1="${rightX}" y1="${eyeY + eyeRadius}" x2="${rightX}" y2="${eyeY + s * 0.2}" stroke="#4fa3ff" stroke-width="1.4"/>`,
+    ].join("");
+  }
+  if (eye === "close") {
+    return [
+      `<line x1="${leftX - s * 0.06}" y1="${eyeY}" x2="${leftX + s * 0.06}" y2="${eyeY}" stroke="black" stroke-width="1.5"/>`,
+      `<line x1="${rightX - s * 0.06}" y1="${eyeY}" x2="${rightX + s * 0.06}" y2="${eyeY}" stroke="black" stroke-width="1.5"/>`,
+    ].join("");
+  }
+  if (eye === "wink") {
+    return [
+      `<line x1="${leftX - s * 0.06}" y1="${eyeY}" x2="${leftX + s * 0.06}" y2="${eyeY}" stroke="black" stroke-width="1.5"/>`,
+      `<circle cx="${rightX}" cy="${eyeY}" r="${eyeRadius}" fill="white" stroke="black" stroke-width="1"/>`,
+      `<circle cx="${rightX}" cy="${eyeY}" r="${eyeRadius * 0.45}" fill="black"/>`,
+    ].join("");
+  }
+
+  return openEyes(s * 0.018, 0, s * 0.018, 0);
+}
 function emotionPath(emotion, s) {
   const y = -s * 2.2;
   const mouthY = y + s * 0.3;
