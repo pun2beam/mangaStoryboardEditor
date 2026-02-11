@@ -84,7 +84,7 @@ actor:
   pose:point
   emotion:neutral
   facing:right
-  name:ほげ君
+  name:Hoge君
 
 actor:
   id:a2
@@ -95,20 +95,20 @@ actor:
   pose:stand
   emotion:panic
   facing:left
-  name:ひげ君
+  name:Hige君
 
 actor:
   id:a3
   panel:1
   x:98
-  y:165
+  y:180
   z:-1
   scale:20
   pose:think
   emotion:smile
   facing:right
   eye:down
-  name:ふげ君
+  name:Huge君
 
 balloon:
   id:b1
@@ -177,7 +177,7 @@ actor:
   pose:point
   emotion:neutral
   facing:right
-  name:ほげ君
+  name:Hoge君
 
 balloon:
   id:b4
@@ -207,7 +207,7 @@ actor:
   pose:point
   emotion:neutral
   facing:left
-  name:ひげ君
+  name:Hige君
 
 balloon:
   id:b5
@@ -240,7 +240,7 @@ actor:
   pose:neutral
   emotion:neutral
   facing:right
-  name:ほげ君
+  name:Hoge君
 
 actor:
   id:a7
@@ -252,7 +252,7 @@ actor:
   pose:neutral
   emotion:neutral
   facing:back
-  name:ひげ君
+  name:Hige君
 
 actor:
   id:a8
@@ -264,7 +264,7 @@ actor:
   pose:neutral
   emotion:smile
   facing:right
-  name:ふげ君
+  name:Huge君
 
 balloon:
   id:b6
@@ -382,7 +382,7 @@ actor:
   pose:neutral
   emotion:smile
   facing:right
-  name:ふげ君
+  name:Huge君
 
 object:
   id:o3
