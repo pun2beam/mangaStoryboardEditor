@@ -68,6 +68,7 @@ actor:
   pose:think
   emotion:smile
   facing:right
+  eye:down
   name:人
 
 balloon:
@@ -87,7 +88,7 @@ balloon:
 
 
 balloon:
-  id:b1
+  id:b2
   panel:1
   x:40
   y:15
@@ -99,6 +100,18 @@ balloon:
     先生!
     全く分かりません！
     ！
+
+balloon:
+  id:b3
+  panel:1
+  x:65
+  y:65
+  w:20
+  h:20
+  shape:thought 
+  tail:toPoint(88,65)
+  text: |
+    おなかすいたなぁ
 
 caption:
   id:c1
