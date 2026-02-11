@@ -69,7 +69,6 @@ actor:
   id:a2
   panel:1
   x:50
-  y:55
   y:90
   scale:5
   pose:stand
@@ -200,13 +199,13 @@ actor:
   id:a6
   panel:4
   x:10
-  y:30
+  y:37
   z:-1
   scale:3
   pose:neutral
   emotion:neutral
   facing:right
-  name:先生
+  name:博士
 
 actor:
   id:a7
@@ -219,6 +218,18 @@ actor:
   emotion:neutral
   facing:back
   name:助手A
+
+actor:
+  id:a8
+  panel:4
+  x:50
+  y:150
+  z:-1
+  scale:6
+  pose:neutral
+  emotion:neutral
+  facing:right
+  name:助手B
 
 balloon:
   id:b6
@@ -250,6 +261,20 @@ balloon:
     これは、LLM用なんです。
     要はDSLとしてLLMに出力してもらい
     ネームを作成しようと。
+
+balloon:
+  id:b7
+  panel:4
+  x:10
+  y:75
+  w:25
+  h:18
+  z:1
+  shape:thought 
+  tail:toPoint(45,95)
+  fontsize:25px
+  text: |
+    確か冷蔵庫に...
 
 caption:
   id:c1
