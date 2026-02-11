@@ -540,10 +540,13 @@ function renderBalloon(balloon, panelRect, unit, actorMap, panelMap, panelRects,
         w: actorSize * 2,
         h: actorSize * 2.7,
       };
-      const actorCenter = { x: actorRect.x + actorRect.w / 2, y: actorRect.y + actorRect.h / 2 };
-      const directionFromActor = resolveOctantDirection(actorCenter, balloonCenter);
-      const start = anchorPointOnRect(r, oppositeDirection(directionFromActor));
-      const end = anchorPointOnRect(actorRect, directionFromActor);
+      const mouthTarget = {
+        x: actorFeet.x,
+        y: actorFeet.y - actorSize * 1.9,
+      };
+      const directionToMouth = resolveOctantDirection(balloonCenter, mouthTarget);
+      const start = anchorPointOnRect(r, directionToMouth);
+      const end = anchorPointOnRectTowardPoint(actorRect, mouthTarget, start);
 
       tail = isThoughtBalloon
         ? renderThoughtTailBubbles(start, end, r)
@@ -602,19 +605,6 @@ function resolveOctantDirection(from, to) {
   return "topLeft";
 }
 
-function oppositeDirection(direction) {
-  const opposites = {
-    top: "bottom",
-    bottom: "top",
-    left: "right",
-    right: "left",
-    topLeft: "bottomRight",
-    topRight: "bottomLeft",
-    bottomLeft: "topRight",
-    bottomRight: "topLeft",
-  };
-  return opposites[direction] || "bottom";
-}
 
 function anchorPointOnRect(rect, direction) {
   const cx = rect.x + rect.w / 2;
@@ -630,6 +620,47 @@ function anchorPointOnRect(rect, direction) {
     bottomRight: { x: rect.x + rect.w, y: rect.y + rect.h },
   };
   return anchors[direction] || anchors.bottom;
+}
+
+function anchorPointOnRectTowardPoint(rect, fromPoint, towardPoint) {
+  const dx = towardPoint.x - fromPoint.x;
+  const dy = towardPoint.y - fromPoint.y;
+  const epsilon = 1e-6;
+
+  if (Math.abs(dx) < epsilon && Math.abs(dy) < epsilon) {
+    return { x: fromPoint.x, y: fromPoint.y };
+  }
+
+  const candidates = [];
+  const pushCandidate = (t, x, y) => {
+    if (t <= epsilon) return;
+    if (x < rect.x - epsilon || x > rect.x + rect.w + epsilon) return;
+    if (y < rect.y - epsilon || y > rect.y + rect.h + epsilon) return;
+    candidates.push({ t, x, y });
+  };
+
+  if (Math.abs(dx) >= epsilon) {
+    const leftT = (rect.x - fromPoint.x) / dx;
+    pushCandidate(leftT, rect.x, fromPoint.y + dy * leftT);
+    const rightT = (rect.x + rect.w - fromPoint.x) / dx;
+    pushCandidate(rightT, rect.x + rect.w, fromPoint.y + dy * rightT);
+  }
+
+  if (Math.abs(dy) >= epsilon) {
+    const topT = (rect.y - fromPoint.y) / dy;
+    pushCandidate(topT, fromPoint.x + dx * topT, rect.y);
+    const bottomT = (rect.y + rect.h - fromPoint.y) / dy;
+    pushCandidate(bottomT, fromPoint.x + dx * bottomT, rect.y + rect.h);
+  }
+
+  if (candidates.length === 0) {
+    const fallbackDirection = resolveOctantDirection(fromPoint, towardPoint);
+    return anchorPointOnRect(rect, fallbackDirection);
+  }
+
+  candidates.sort((a, b) => a.t - b.t);
+  const closest = candidates[0];
+  return { x: closest.x, y: closest.y };
 }
 
 function renderCaption(caption, panelRect, unit) {
