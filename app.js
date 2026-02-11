@@ -179,7 +179,7 @@ function validateAndBuild(blocks) {
     requireFields(caption, ["x", "y", "w", "h", "text"], "caption");
     caption.style = caption.style || "box";
     caption.align = caption.align || "center";
-    caption.fontSize = num(caption.fontSize, 4);
+    caption.fontSize = parseSizedValue(caption.fontsize ?? caption.fontSize, 4, pUnit(caption, dicts, "panel"));
     caption.padding = num(caption.padding, 2);
   }
 
