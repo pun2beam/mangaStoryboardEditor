@@ -152,7 +152,7 @@ function validateAndBuild(blocks) {
     requireFields(balloon, ["x", "y", "w", "h", "text"], "balloon");
     balloon.shape = balloon.shape || "oval";
     balloon.align = balloon.align || "center";
-    balloon.fontSize = num(balloon.fontSize, 4);
+    balloon.fontSize = parseSizedValue(balloon.fontsize ?? balloon.fontSize, 4, pUnit(balloon, dicts, "panel"));
     balloon.padding = num(balloon.padding, 2);
 
     const tail = balloon.tail === undefined || balloon.tail === null || balloon.tail === "" ? "none" : String(balloon.tail);
@@ -223,6 +223,27 @@ function requireFields(obj, fields, type) {
 
 function num(value, fallback) {
   return typeof value === "number" ? value : fallback;
+}
+
+function parseSizedValue(value, fallbackValue, defaultUnit) {
+  if (value === undefined || value === null || value === "") return { value: fallbackValue, unit: defaultUnit };
+  if (typeof value === "number") return { value, unit: defaultUnit };
+  if (typeof value !== "string") return { value: fallbackValue, unit: defaultUnit };
+
+  const trimmed = value.trim();
+  const match = trimmed.match(/^(-?\d+(?:\.\d+)?)(px|%)?$/);
+  if (!match) return { value: fallbackValue, unit: defaultUnit };
+  const parsed = Number(match[1]);
+  if (!Number.isFinite(parsed)) return { value: fallbackValue, unit: defaultUnit };
+  const unit = match[2] === "%" ? "percent" : match[2] === "px" ? "px" : defaultUnit;
+  return { value: parsed, unit };
+}
+
+function pUnit(item, dicts, refKey) {
+  const ref = dicts[`${refKey}s`]?.get(String(item[refKey]));
+  if (!ref) return "percent";
+  const page = dicts.pages.get(String(ref.page));
+  return page?.unit === "px" ? "px" : "percent";
 }
 
 function render(scene) {
@@ -582,10 +603,18 @@ function renderText(text, rect, fontSize, align, padding, unit, lineHeight = 1.2
   const lines = String(text).split("\n");
   const x = align === "left" ? rect.x + sizeInUnit(padding, rect, unit, "x") : align === "right" ? rect.x + rect.w - sizeInUnit(padding, rect, unit, "x") : rect.x + rect.w / 2;
   const anchor = align === "left" ? "start" : align === "right" ? "end" : "middle";
-  const baseSize = unit === "percent" ? fontSize / 100 * rect.w : fontSize;
+  const sizeSpec = normalizeTextSize(fontSize, unit);
+  const baseSize = sizeSpec.unit === "percent" ? sizeSpec.value / 100 * rect.w : sizeSpec.value;
   const y0 = rect.y + baseSize + sizeInUnit(padding, rect, unit, "y");
   const tspans = lines.map((line, i) => `<tspan x="${x}" dy="${i === 0 ? 0 : baseSize * lineHeight}">${escapeXml(line)}</tspan>`).join("");
   return `<text x="${x}" y="${y0}" font-size="${baseSize}" text-anchor="${anchor}">${tspans}</text>`;
+}
+
+function normalizeTextSize(fontSize, defaultUnit) {
+  if (typeof fontSize === "object" && fontSize && typeof fontSize.value === "number") {
+    return { value: fontSize.value, unit: fontSize.unit === "px" ? "px" : "percent" };
+  }
+  return { value: num(fontSize, 4), unit: defaultUnit };
 }
 
 function rectInPage(box, inner, unit) {
