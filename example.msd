@@ -3,6 +3,18 @@ meta:
   author: DEF
   actor.name.visible: on
 
+sfx:
+  id:1
+  panel:1
+  x:0
+  y:-5
+  text:導入：何が目的?
+  scale:1
+  fontSize:5
+  rotate:0
+  stroke:#000000
+  fill:#a0f0a0
+
 page:
   id:p1
   size:B5
@@ -398,17 +410,6 @@ balloon:
     上手くいくかな...
 
 
-sfx:
-  id:1
-  panel:1
-  x:0
-  y:-5
-  text:導入：何が目的?
-  scale:1
-  fontSize:5
-  rotate:0
-  stroke:#000000
-  fill:#a0f0a0
 
 caption:
   id:c2
