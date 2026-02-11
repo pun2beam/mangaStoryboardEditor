@@ -86,7 +86,7 @@ function parseValue(value) {
 }
 
 function validateAndBuild(blocks) {
-  const scene = { meta: {}, pages: [], panels: [], actors: [], balloons: [], captions: [], sfx: [], assets: [], styles: [] };
+  const scene = { meta: {}, pages: [], panels: [], actors: [], objects: [], balloons: [], captions: [], sfx: [], assets: [], styles: [] };
   for (const b of blocks) {
     const key = `${b.type}s`;
     if (b.type === "meta") {
@@ -124,7 +124,7 @@ function validateAndBuild(blocks) {
     if (panel.w <= 0 || panel.h <= 0) throw new Error(`Line ${panel._line}: panel w/h は正数`);
   }
 
-  const inPanelItems = ["actors", "balloons", "captions", "sfx", "assets"];
+  const inPanelItems = ["actors", "objects", "balloons", "captions", "sfx", "assets"];
   for (const type of inPanelItems) {
     for (const item of scene[type]) {
       requireFields(item, ["id", "panel"], type.slice(0, -1));
@@ -143,6 +143,18 @@ function validateAndBuild(blocks) {
     actor.eye = EYE_TYPES.has(actor.eye) ? actor.eye : "right";
     actor.x = num(actor.x, 0);
     actor.y = num(actor.y, 0);
+  }
+
+  for (const object of scene.objects) {
+    requireFields(object, ["x", "y", "text"], "object");
+    object.w = num(object.w ?? object.width, 10);
+    object.h = num(object.h ?? object.height, 10);
+    if (object.w <= 0 || object.h <= 0) throw new Error(`Line ${object._line}: object width/height は正数`);
+    object.shape = ["rect", "circle", "none"].includes(String(object.shape)) ? String(object.shape) : "rect";
+    object.border = parseSizedValue(object.border, 1, pUnit(object, dicts, "panel"));
+    object.fontSize = parseSizedValue(object.fontsize ?? object.fontSize, 4, pUnit(object, dicts, "panel"));
+    object.align = object.align || "center";
+    object.padding = num(object.padding, 2);
   }
 
   for (const balloon of scene.balloons) {
@@ -264,6 +276,7 @@ function render(scene) {
   for (const p of scene.panels) entries.push({ kind: "panel", z: p.z ?? 0, order: p._order, data: p });
   for (const a of scene.assets) entries.push({ kind: "asset", z: a.z ?? 0, order: a._order, data: a });
   for (const a of scene.actors) entries.push({ kind: "actor", z: a.z ?? 0, order: a._order, data: a });
+  for (const o of scene.objects) entries.push({ kind: "object", z: o.z ?? 0, order: o._order, data: o });
   for (const b of scene.balloons) entries.push({ kind: "balloon", z: b.z ?? 0, order: b._order, data: b });
   for (const c of scene.captions) entries.push({ kind: "caption", z: c.z ?? 0, order: c._order, data: c });
   for (const s of scene.sfx) entries.push({ kind: "sfx", z: s.z ?? 0, order: s._order, data: s });
@@ -316,6 +329,13 @@ function render(scene) {
       if (!pageLayout || !panelRect) continue;
       const actorMarkup = renderActor(entry.data, panelRect, pageLayout.page.unit, showActorName);
       body.push(clipWhenBehindPanel(entry, panel, panelRect, actorMarkup));
+    } else if (entry.kind === "object") {
+      const panel = panelMap.get(String(entry.data.panel));
+      const pageLayout = panel ? pageLayouts.get(String(panel.page)) : null;
+      const panelRect = panelRects.get(String(entry.data.panel));
+      if (!pageLayout || !panelRect) continue;
+      const objectMarkup = renderObject(entry.data, panelRect, pageLayout.page.unit);
+      body.push(clipWhenBehindPanel(entry, panel, panelRect, objectMarkup));
     } else if (entry.kind === "balloon") {
       const panel = panelMap.get(String(entry.data.panel));
       const pageLayout = panel ? pageLayouts.get(String(panel.page)) : null;
@@ -623,6 +643,23 @@ function renderSfx(sfx, panelRect, unit) {
   const p = pointInPanel(sfx.x, sfx.y, panelRect, unit);
   const fontSize = unit === "percent" ? sfx.fontSize / 100 * panelRect.w : sfx.fontSize;
   return `<text x="${p.x}" y="${p.y}" font-size="${fontSize}" transform="rotate(${sfx.rotate} ${p.x} ${p.y}) scale(${sfx.scale})" fill="${sfx.fill}" stroke="${sfx.stroke || "none"}" font-weight="700">${escapeXml(sfx.text)}</text>`;
+}
+
+function renderObject(object, panelRect, unit) {
+  const r = withinPanel({ ...object, w: object.w, h: object.h }, panelRect, unit);
+  const border = normalizeTextSize(object.border, unit);
+  const borderWidth = border.unit === "percent" ? sizeInUnit(border.value, r, "percent", "x") : border.value;
+  let shape = "";
+
+  if (object.shape === "rect") {
+    shape = `<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="none" stroke="black" stroke-width="${borderWidth}"/>`;
+  } else if (object.shape === "circle") {
+    const radius = Math.min(r.w, r.h) / 2;
+    shape = `<circle cx="${r.x + r.w / 2}" cy="${r.y + r.h / 2}" r="${radius}" fill="none" stroke="black" stroke-width="${borderWidth}"/>`;
+  }
+
+  const text = renderText(object.text, r, object.fontSize, object.align, object.padding, unit, object.lineHeight, "center");
+  return `<g>${shape}${text}</g>`;
 }
 
 function renderText(text, rect, fontSize, align, padding, unit, lineHeight = 1.2, verticalAlign = "top") {
