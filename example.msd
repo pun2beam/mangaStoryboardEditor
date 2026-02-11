@@ -81,9 +81,10 @@ balloon:
   z:1
   shape:thought 
   tail:toActor(a1)
+  fontsize:25px
   text: |
-    君!
-    なぜマンガ用のDSLが必要なのか！
+    
+    なぜマンガ用のDSLが必要なのか
     わかりますか！
 
 
@@ -96,10 +97,12 @@ balloon:
   h:20
   shape:oval
   tail:toActor(a2)
+  fontsize:25px
   text: |
-    先生!
-    全く分かりません！
-    ！
+    
+    うーん。
+    ネームが書きやすくなるから?
+    
 
 balloon:
   id:b3
@@ -110,7 +113,9 @@ balloon:
   h:20
   shape:thought 
   tail:toPoint(88,65)
+  fontsize:25px
   text: |
+    
     おなかすいたなぁ
 
 caption:
