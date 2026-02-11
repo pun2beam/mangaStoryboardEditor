@@ -58,13 +58,26 @@ actor:
   facing:left
   name:先生
 
+actor:
+  id:a3
+  panel:1
+  x:98
+  y:170
+  z:-1
+  scale:20
+  pose:think
+  emotion:smile
+  facing:right
+  name:人
+
 balloon:
   id:b1
   panel:1
-  x:5
+  x:-5
   y:5
   w:35
   h:18
+  z:1
   shape:thought 
   tail:toActor(a1)
   text: |
