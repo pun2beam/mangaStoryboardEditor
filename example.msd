@@ -45,7 +45,7 @@ actor:
   pose:run
   emotion:panic
   facing:right
-  name:主人公
+  name:先生
 
 actor:
   id:a2
@@ -57,20 +57,20 @@ actor:
   pose:stand
   emotion:angry
   facing:left
-  name:先生
+  name:生徒
 
 actor:
   id:a3
   panel:1
   x:98
-  y:170
+  y:165
   z:-1
   scale:20
   pose:think
   emotion:smile
   facing:right
   eye:down
-  name:人
+  name:謎人間
 
 balloon:
   id:b1
@@ -84,10 +84,8 @@ balloon:
   tail:toActor(a1)
   fontsize:25px
   text: |
-    
     なぜマンガ用のDSLが必要なのか
     わかりますか！
-
 
 balloon:
   id:b2
@@ -100,10 +98,9 @@ balloon:
   tail:toActor(a2)
   fontsize:25px
   text: |
-    
     うーん。
-    ネームが書きやすくなるから?
-    
+    ネームが書きやすくなるから
+    ですか?
 
 balloon:
   id:b3
@@ -116,7 +113,6 @@ balloon:
   tail:toPoint(88,65)
   fontsize:25px
   text: |
-    
     おなかすいたなぁ
 
 caption:
@@ -126,4 +122,5 @@ caption:
   y:5
   w:30
   h:10
+  fontsize:25px
   text: 翌朝
