@@ -49,6 +49,7 @@ function parseDsl(text) {
       const kv = bodyRaw.match(/^\s{2,}([\w.-]+)\s*:\s*(.*)$/);
       if (!kv) throw new Error(`Line ${i + 1}: key:value 形式ではありません`);
       const [, key, rawValue] = kv;
+      const keyIndent = indentWidth(bodyRaw);
       if (rawValue === "|") {
         i += 1;
         const multi = [];
@@ -61,12 +62,75 @@ function parseDsl(text) {
         block.props[key] = multi.join("\n");
         continue;
       }
+      if (rawValue === "" && hasListAtIndent(lines, i + 1, keyIndent)) {
+        const parsed = parseListOfObjects(lines, i + 1, keyIndent);
+        block.props[key] = parsed.value;
+        i = parsed.nextIndex;
+        continue;
+      }
       block.props[key] = parseValue(rawValue.trim());
       i += 1;
     }
     blocks.push(block);
   }
   return blocks;
+}
+function indentWidth(line) {
+  const m = line.match(/^\s*/);
+  return m ? m[0].length : 0;
+}
+function hasListAtIndent(lines, startIndex, keyIndent) {
+  for (let i = startIndex; i < lines.length; i += 1) {
+    const line = lines[i];
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const indent = indentWidth(line);
+    if (indent <= keyIndent) return false;
+    return /^\s*-\s*/.test(line);
+  }
+  return false;
+}
+function parseListOfObjects(lines, startIndex, keyIndent) {
+  const list = [];
+  let i = startIndex;
+  while (i < lines.length) {
+    const line = lines[i];
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) {
+      i += 1;
+      continue;
+    }
+    const indent = indentWidth(line);
+    if (indent <= keyIndent) break;
+    const itemMatch = line.match(/^\s*-\s*(.*)$/);
+    if (!itemMatch) throw new Error(`Line ${i + 1}: attachments の配列形式が不正です`);
+    const item = {};
+    const inline = itemMatch[1].trim();
+    if (inline) {
+      const inlineKv = inline.match(/^([\w.-]+)\s*:\s*(.*)$/);
+      if (!inlineKv) throw new Error(`Line ${i + 1}: 配列要素の key:value 形式が不正です`);
+      item[inlineKv[1]] = parseValue(inlineKv[2].trim());
+    }
+    const itemIndent = indent;
+    i += 1;
+    while (i < lines.length) {
+      const child = lines[i];
+      const childTrimmed = child.trim();
+      if (!childTrimmed || childTrimmed.startsWith("#")) {
+        i += 1;
+        continue;
+      }
+      const childIndent = indentWidth(child);
+      if (childIndent <= itemIndent) break;
+      if (/^\s*-\s*/.test(child)) break;
+      const childKv = child.match(/^\s+([\w.-]+)\s*:\s*(.*)$/);
+      if (!childKv) throw new Error(`Line ${i + 1}: 配列要素の key:value 形式が不正です`);
+      item[childKv[1]] = parseValue(childKv[2].trim());
+      i += 1;
+    }
+    list.push(item);
+  }
+  return { value: list, nextIndex: i };
 }
 function parseValue(value) {
   if (value === "true") return true;
@@ -110,7 +174,7 @@ function validateAndBuild(blocks) {
     if (!dicts.pages.get(String(panel.page))) throw new Error(`Line ${panel._line}: 未定義 page 参照 ${panel.page}`);
     if (panel.w <= 0 || panel.h <= 0) throw new Error(`Line ${panel._line}: panel w/h は正数`);
   }
-  const inPanelItems = ["actors", "objects", "balloons", "captions", "sfx", "assets"];
+  const inPanelItems = ["actors", "objects", "balloons", "captions", "sfx"];
   for (const type of inPanelItems) {
     for (const item of scene[type]) {
       requireFields(item, ["id", "panel"], type.slice(0, -1));
@@ -128,6 +192,7 @@ function validateAndBuild(blocks) {
     actor.eye = EYE_TYPES.has(actor.eye) ? actor.eye : "right";
     actor.x = num(actor.x, 0);
     actor.y = num(actor.y, 0);
+    actor.attachments = normalizeAttachments(actor.attachments, actor._line);
   }
   for (const object of scene.objects) {
     requireFields(object, ["x", "y", "text"], "object");
@@ -185,11 +250,46 @@ function validateAndBuild(blocks) {
     s.textDirection = normalizeTextDirection(s["text.direction"] ?? s.textDirection, scene.meta["text.direction"]);
   }
   for (const a of scene.assets) {
-    requireFields(a, ["x", "y", "w", "h", "src"], "asset");
+    requireFields(a, ["w", "h", "src"], "asset");
+    if (a.panel !== undefined && a.panel !== null && a.panel !== "") {
+      requireFields(a, ["x", "y", "panel"], "asset");
+      if (!dicts.panels.get(String(a.panel))) throw new Error(`Line ${a._line}: 未定義 panel 参照 ${a.panel}`);
+    }
     a.opacity = num(a.opacity, 1);
     a.clipToPanel = a.clipToPanel !== false;
+    a.dx = num(a.dx, 0);
+    a.dy = num(a.dy, 0);
+    a.s = num(a.s, 1);
+    a.rot = num(a.rot, 0);
+    a.z = num(a.z, 0);
+  }
+  const assetsById = byId(scene.assets, "asset");
+  for (const actor of scene.actors) {
+    for (const attachment of actor.attachments) {
+      if (!assetsById.get(String(attachment.ref))) {
+        throw new Error(`Line ${actor._line}: 未定義 asset 参照 ${attachment.ref}`);
+      }
+      attachment.dx = typeof attachment.dx === "number" ? attachment.dx : null;
+      attachment.dy = typeof attachment.dy === "number" ? attachment.dy : null;
+      attachment.s = typeof attachment.s === "number" ? attachment.s : null;
+      attachment.rot = typeof attachment.rot === "number" ? attachment.rot : null;
+      attachment.z = typeof attachment.z === "number" ? attachment.z : null;
+    }
   }
   return scene;
+}
+function normalizeAttachments(value, line) {
+  if (value === undefined || value === null || value === "") return [];
+  if (!Array.isArray(value)) throw new Error(`Line ${line}: actor.attachments は配列で指定してください`);
+  return value.map((attachment) => {
+    if (!attachment || typeof attachment !== "object") {
+      throw new Error(`Line ${line}: actor.attachments の要素形式が不正です`);
+    }
+    if (attachment.ref === undefined || attachment.ref === null || attachment.ref === "") {
+      throw new Error(`Line ${line}: actor.attachments.ref は必須です`);
+    }
+    return { ...attachment };
+  });
 }
 function byId(arr, type) {
   const map = new Map();
@@ -247,9 +347,14 @@ function render(scene) {
   }
   const panelMap = new Map(scene.panels.map((p) => [String(p.id), p]));
   const actorMap = new Map(scene.actors.map((a) => [String(a.id), a]));
+  const assetMap = new Map(scene.assets.map((asset) => [String(asset.id), asset]));
   const entries = [];
   for (const p of scene.panels) entries.push({ kind: "panel", z: p.z ?? 0, order: p._order, data: p });
-  for (const a of scene.assets) entries.push({ kind: "asset", z: a.z ?? 0, order: a._order, data: a });
+  for (const a of scene.assets) {
+    if (a.panel !== undefined && a.panel !== null && a.panel !== "") {
+      entries.push({ kind: "asset", z: a.z ?? 0, order: a._order, data: a });
+    }
+  }
   for (const a of scene.actors) entries.push({ kind: "actor", z: a.z ?? 0, order: a._order, data: a });
   for (const o of scene.objects) entries.push({ kind: "object", z: o.z ?? 0, order: o._order, data: o });
   for (const b of scene.balloons) entries.push({ kind: "balloon", z: b.z ?? 0, order: b._order, data: b });
@@ -298,7 +403,7 @@ function render(scene) {
       const pageLayout = panel ? pageLayouts.get(String(panel.page)) : null;
       const panelRect = panelRects.get(String(entry.data.panel));
       if (!pageLayout || !panelRect) continue;
-      const actorMarkup = renderActor(entry.data, panelRect, pageLayout.page.unit, showActorName);
+      const actorMarkup = renderActor(entry.data, panelRect, pageLayout.page.unit, showActorName, assetMap);
       body.push(clipWhenBehindPanel(entry, panel, panelRect, actorMarkup));
     } else if (entry.kind === "object") {
       const panel = panelMap.get(String(entry.data.panel));
@@ -377,11 +482,14 @@ function canvasBounds(pageLayouts) {
     h: values.reduce((max, { maxY }) => Math.max(max, maxY), 0),
   };
 }
-function renderActor(actor, panelRect, unit, showActorName) {
+function renderActor(actor, panelRect, unit, showActorName, assetMap) {
   const p = pointInPanel(actor.x, actor.y, panelRect, unit);
   const s = 20 * actor.scale;
   const mirror = actor.facing === "left" ? -1 : 1;
   const pose = poseSegments(actor.pose, s);
+  const attachments = resolveActorAttachments(actor, assetMap);
+  const underlayAttachments = attachments.filter((attachment) => attachment.z < 0).map((attachment) => attachment.markup).join("");
+  const overlayAttachments = attachments.filter((attachment) => attachment.z >= 0).map((attachment) => attachment.markup).join("");
   const faceMarkup = actor.facing === "back"
     ? ""
     : `${eyePath(actor.eye, s)}${emotionPath(actor.emotion, s)}`;
@@ -390,13 +498,35 @@ function renderActor(actor, panelRect, unit, showActorName) {
     : "";
   return `<g transform="translate(${p.x},${p.y})">
     <g transform="scale(${mirror},1)">
+      ${underlayAttachments}
       <circle cx="0" cy="${-s * 2.2}" r="${s * 0.45}" fill="none" stroke="black" stroke-width="2"/>
       <line x1="0" y1="${-s * 1.7}" x2="0" y2="${-s * 0.8}" stroke="black" stroke-width="2"/>
       ${pose}
       ${faceMarkup}
+      ${overlayAttachments}
     </g>
     ${nameLabel}
   </g>`;
+}
+function resolveActorAttachments(actor, assetMap) {
+  if (!Array.isArray(actor.attachments) || actor.attachments.length === 0) return [];
+  return actor.attachments.flatMap((attachment) => {
+    const asset = assetMap.get(String(attachment.ref));
+    if (!asset) return [];
+    const dx = attachment.dx ?? asset.dx ?? 0;
+    const dy = attachment.dy ?? asset.dy ?? 0;
+    const scale = actor.scale * (attachment.s ?? asset.s ?? 1);
+    const width = asset.w * scale;
+    const height = asset.h * scale;
+    const rot = attachment.rot ?? asset.rot ?? 0;
+    const z = attachment.z ?? asset.z ?? 0;
+    const x = dx * actor.scale;
+    const y = dy * actor.scale;
+    const cx = x + width / 2;
+    const cy = y + height / 2;
+    const transform = rot ? ` transform="rotate(${rot} ${cx} ${cy})"` : "";
+    return [{ z, markup: `<image x="${x}" y="${y}" width="${width}" height="${height}" href="${escapeXml(asset.src)}" opacity="${asset.opacity}"${transform}/>` }];
+  });
 }
 function poseSegments(pose, s) {
   const shoulderY = -s * 1.5;
