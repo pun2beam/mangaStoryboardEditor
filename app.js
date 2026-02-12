@@ -4,6 +4,7 @@ const ACTOR_TYPES = new Set(["stand", "run", "sit", "point", "think", "surprise"
 const EMOTIONS = new Set(["neutral", "angry", "sad", "panic", "smile"]);
 const EYE_TYPES = new Set(["right", "left", "up", "down", "cry", "close", "wink"]);
 const FACING_TYPES = new Set(["left", "right", "back"]);
+const HEAD_SHAPES = new Set(["circle", "square", "none"]);
 const TEXT_DIRECTIONS = new Set(["horizontal", "vertical"]);
 const BALLOON_TAIL_TARGET_Y_OFFSET = { px: 12, percent: 0 };
 const els = {
@@ -190,6 +191,7 @@ function validateAndBuild(blocks) {
     actor.scale = num(actor.scale, 1);
     actor.facing = FACING_TYPES.has(actor.facing) ? actor.facing : "right";
     actor.eye = EYE_TYPES.has(actor.eye) ? actor.eye : "right";
+    actor["head.shape"] = HEAD_SHAPES.has(actor["head.shape"]) ? actor["head.shape"] : "circle";
     actor.x = num(actor.x, 0);
     actor.y = num(actor.y, 0);
     actor.attachments = normalizeAttachments(actor.attachments, actor._line);
@@ -493,13 +495,14 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap) {
   const faceMarkup = actor.facing === "back"
     ? ""
     : `${eyePath(actor.eye, s)}${emotionPath(actor.emotion, s)}`;
+  const headMarkup = headOutline(actor["head.shape"], s);
   const nameLabel = showActorName && actor.name
     ? `<text x="0" y="${-s * 2.9}" font-size="${Math.max(10, s * 0.55)}" text-anchor="middle" dominant-baseline="auto" fill="black">${escapeXml(String(actor.name))}</text>`
     : "";
   return `<g transform="translate(${p.x},${p.y})">
     <g transform="scale(${mirror},1)">
       ${underlayAttachments}
-      <circle cx="0" cy="${-s * 2.2}" r="${s * 0.45}" fill="white" stroke="black" stroke-width="2"/>
+      ${headMarkup}
       <line x1="0" y1="${-s * 1.7}" x2="0" y2="${-s * 0.8}" stroke="black" stroke-width="2"/>
       ${pose}
       ${faceMarkup}
@@ -507,6 +510,16 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap) {
     </g>
     ${nameLabel}
   </g>`;
+}
+function headOutline(shape, s) {
+  const y = -s * 2.2;
+  const radius = s * 0.45;
+  if (shape === "square") {
+    const side = radius * 2;
+    return `<rect x="${-radius}" y="${y - radius}" width="${side}" height="${side}" fill="white" stroke="black" stroke-width="2"/>`;
+  }
+  if (shape === "none") return "";
+  return `<circle cx="0" cy="${y}" r="${radius}" fill="white" stroke="black" stroke-width="2"/>`;
 }
 function resolveActorAttachments(actor, assetMap) {
   if (!Array.isArray(actor.attachments) || actor.attachments.length === 0) return [];
