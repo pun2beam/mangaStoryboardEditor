@@ -499,7 +499,7 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap) {
   return `<g transform="translate(${p.x},${p.y})">
     <g transform="scale(${mirror},1)">
       ${underlayAttachments}
-      <circle cx="0" cy="${-s * 2.2}" r="${s * 0.45}" fill="none" stroke="black" stroke-width="2"/>
+      <circle cx="0" cy="${-s * 2.2}" r="${s * 0.45}" fill="white" stroke="black" stroke-width="2"/>
       <line x1="0" y1="${-s * 1.7}" x2="0" y2="${-s * 0.8}" stroke="black" stroke-width="2"/>
       ${pose}
       ${faceMarkup}
