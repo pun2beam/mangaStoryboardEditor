@@ -798,7 +798,7 @@ function renderBoxArrow(boxarrow, panelRect, unit) {
     [-w / 2, boxarrow.py * h - h / 2],
     [boxarrow.px * w - w / 2, boxarrow.py * h - h / 2],
     [boxarrow.px * w - w / 2, -h / 2],
-    [0, w / 2],
+    [w / 2, 0 ],
     [boxarrow.px * w - w / 2, +h / 2],
     [boxarrow.px * w - w / 2, -boxarrow.py * h + h / 2],
     [-w / 2, -boxarrow.py * h + h / 2],
