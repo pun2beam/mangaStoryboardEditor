@@ -875,6 +875,9 @@ function tokenizeMathText(text) {
         cursor = end + 1;
         continue;
       }
+      tokens.push({ type: "text", value: "$" });
+      cursor += 1;
+      continue;
     }
     const nextMathStart = text.indexOf("$", cursor);
     const end = nextMathStart === -1 ? text.length : nextMathStart;
