@@ -4,15 +4,400 @@ meta:
   actor.name.visible: on
   text.direction: horizontal
 
+page:
+  id:p0
+  size:B5
+  margin:5
+  unit:percent
+
 sfx:
   id:1
-  panel:1
+  panel:01
   x:0
   y:-5
-  text:導入：何が目的?
+  text:はじめに
   scale:1
   fontSize:5
   rotate:0
+  stroke:#000000
+  fill:#a0f0a0
+
+panel:
+  id:01
+  page:p0
+  x:0
+  y:0
+  w:100
+  h:30
+  radius:20
+
+
+actor:
+  id:a0.1
+  panel:01
+  x:10
+  y:90
+  scale:5
+  pose:point
+  emotion:neutral
+  facing:right
+  name:Hoge君
+  attachments:
+    - ref:hat1
+
+balloon:
+  id:b1
+  panel:01
+  x:3
+  y:5
+  w:35
+  h:18
+  z:1
+  shape:oval
+  tail:toActor(a0.1)
+  fontsize:25px
+  text: |
+    この漫画は、左綴じ、横書きで
+    作成されています。
+
+balloon:
+  id:b1
+  panel:01
+  x:28
+  y:20
+  w:20
+  h:28
+  z:1
+  shape:oval
+  tail:toActor(a0.1)
+  fontsize:25px
+  text: |
+    日本の大抵のマンガは、
+    右綴じ、縦書きで
+    作成されています。
+
+object:
+  id:o0.1
+  panel:01
+  x:57
+  y:15
+  w:10
+  h:30
+  shape:square
+  border:2px
+  fontsize:20
+  text.direction:vertical
+  text:|
+    国語の　　
+    　　教科書
+　　
+object:
+  id:o0.2
+  panel:01
+  x:69
+  y:15
+  w:10
+  h:30
+  shape:square
+  border:2px
+  fontsize:20
+  text.direction:vertical
+  text:|
+    小説
+
+object:
+  id:o0.3
+  panel:01
+  x:81
+  y:15
+  w:10
+  h:30
+  shape:square
+  border:2px
+  fontsize:20
+  text:|
+    マンガ
+
+object:
+  id:o0.4
+  panel:01
+  x:66
+  y:15
+  w:1
+  h:30
+  shape:square
+  border:2px
+  fontsize:20
+  text.direction:vertical
+  text:閉じ位置
+
+object:
+  id:o0.5
+  panel:01
+  x:78
+  y:15
+  w:1
+  h:30
+  shape:square
+  border:2px
+  fontsize:20
+  text.direction:vertical
+  text:閉じ位置
+
+object:
+  id:o0.6
+  panel:01
+  x:90
+  y:15
+  w:1
+  h:30
+  shape:square
+  border:2px
+  fontsize:20
+  text.direction:vertical
+  text:閉じ位置
+
+boxarrow:
+  id:ba1
+  panel:01
+  x:66.5
+  y:11
+  w:2
+  h:5
+  px:0.45
+  py:0.35
+  scale:1
+  rot:90
+  z:1
+  opacity:1
+  stroke:#000000
+  fill:#a0f0a0
+
+boxarrow:
+  id:ba2
+  panel:01
+  x:78.5
+  y:11
+  w:2
+  h:5
+  px:0.45
+  py:0.35
+  scale:1
+  rot:90
+  z:1
+  opacity:1
+  stroke:#000000
+  fill:#a0f0a0
+
+boxarrow:
+  id:ba3
+  panel:01
+  x:90.5
+  y:11
+  w:2
+  h:5
+  px:0.45
+  py:0.35
+  scale:1
+  rot:90
+  z:1
+  opacity:1
+  stroke:#000000
+  fill:#a0f0a0
+
+caption:
+  id:c0.1
+  panel:01
+  x:57.5
+  y:3
+  w:15
+  h:15
+  style:none
+  fontSize:10
+  text:右綴じ
+
+caption:
+  id:c0.2
+  panel:01
+  x:69.5
+  y:3
+  w:15
+  h:15
+  style:none
+  fontSize:10
+  text:右綴じ
+
+caption:
+  id:c0.3
+  panel:01
+  x:81.5
+  y:3
+  w:15
+  h:15
+  style:none
+  fontSize:10
+  text:右綴じ
+
+object:
+  id:o0.7
+  panel:01
+  x:57
+  y:55
+  w:10
+  h:30
+  shape:square
+  border:2px
+  fontsize:15
+  text.direction:horizontal
+  text:|
+    国語以外の
+    　　教科書
+　　
+object:
+  id:o0.8
+  panel:01
+  x:69
+  y:55
+  w:10
+  h:30
+  shape:square
+  border:2px
+  fontsize:20
+  text:|
+    雑誌
+
+object:
+  id:o0.9
+  panel:01
+  x:81
+  y:55
+  w:10
+  h:30
+  shape:square
+  border:2px
+  fontsize:20
+  text.direction:horizontal
+  text:|
+    外国の
+    マンガ
+
+object:
+  id:o0.10
+  panel:01
+  x:57
+  y:55
+  w:1
+  h:30
+  shape:square
+  border:2px
+  fontsize:20
+  text.direction:vertical
+  text:閉じ位置
+
+object:
+  id:o0.11
+  panel:01
+  x:69
+  y:55
+  w:1
+  h:30
+  shape:square
+  border:2px
+  fontsize:20
+  text.direction:vertical
+  text:閉じ位置
+
+object:
+  id:o0.12
+  panel:01
+  x:81
+  y:55
+  w:1
+  h:30
+  shape:square
+  border:2px
+  fontsize:20
+  text.direction:vertical
+  text:閉じ位置
+
+caption:
+  id:c0.4
+  panel:01
+  x:51.5
+  y:92
+  w:15
+  h:15
+  style:none
+  fontSize:10
+  text:左綴じ
+
+caption:
+  id:c0.5
+  panel:01
+  x:63.5
+  y:92
+  w:15
+  h:15
+  style:none
+  fontSize:10
+  text:左綴じ
+
+caption:
+  id:c0.6
+  panel:01
+  x:75.5
+  y:92
+  w:15
+  h:15
+  style:none
+  fontSize:10
+  text:左綴じ
+
+boxarrow:
+  id:ba1
+  panel:01
+  x:57.5
+  y:89
+  w:2
+  h:5
+  px:0.45
+  py:0.35
+  scale:1
+  rot:-90
+  z:1
+  opacity:1
+  stroke:#000000
+  fill:#a0f0a0
+
+boxarrow:
+  id:ba2
+  panel:01
+  x:69.5
+  y:89
+  w:2
+  h:5
+  px:0.45
+  py:0.35
+  scale:1
+  rot:-90
+  z:1
+  opacity:1
+  stroke:#000000
+  fill:#a0f0a0
+
+boxarrow:
+  id:ba3
+  panel:01
+  x:81.5
+  y:89
+  w:2
+  h:5
+  px:0.45
+  py:0.35
+  scale:1
+  rot:-90
+  z:1
+  opacity:1
   stroke:#000000
   fill:#a0f0a0
 
@@ -22,8 +407,20 @@ page:
   margin:5
   unit:percent
 
-panel:
+sfx:
   id:1
+  panel:11
+  x:0
+  y:-5
+  text:導入：何が目的?
+  scale:1
+  fontSize:5
+  rotate:0
+  stroke:#000000
+  fill:#a0f0a0
+
+panel:
+  id:11
   page:p1
   x:0
   y:0
@@ -32,7 +429,7 @@ panel:
   radius:20
 
 panel:
-  id:2
+  id:12
   page:p1
   x:0
   y:31
@@ -41,7 +438,7 @@ panel:
   radius:20
 
 panel:
-  id:3
+  id:13
   page:p1
   x:0
   y:55
@@ -50,7 +447,7 @@ panel:
   radius:20
 
 panel:
-  id:4
+  id:14
   page:p1
   x:0
   y:79
@@ -59,7 +456,7 @@ panel:
   radius:20
 
 panel:
-  id:5
+  id:15
   page:p1
   x:62
   y:31
@@ -68,7 +465,7 @@ panel:
   radius:20
 
 panel:
-  id:6
+  id:16
   page:p1
   x:62
   y:82
@@ -78,7 +475,7 @@ panel:
 
 actor:
   id:a1
-  panel:1
+  panel:11
   x:20
   y:90
   scale:5
@@ -91,7 +488,7 @@ actor:
 
 actor:
   id:a2
-  panel:1
+  panel:11
   x:50
   y:90
   scale:5
@@ -105,7 +502,7 @@ actor:
 
 actor:
   id:a3
-  panel:1
+  panel:11
   x:98
   y:180
   z:-1
@@ -163,26 +560,9 @@ asset:
   z:1
   src:./assets/hair2.svg
 
-
-boxarrow:
-  id:ba1
-  panel:1
-  x:50
-  y:-8
-  w:5
-  h:8
-  px:0.45
-  py:0.35
-  scale:1
-  rot:90
-  z:1
-  opacity:1
-  stroke:#000000
-  fill:#a0f0a0
-
 balloon:
   id:b1
-  panel:1
+  panel:11
   x:-5
   y:5
   w:35
@@ -197,7 +577,7 @@ balloon:
 
 balloon:
   id:b2
-  panel:1
+  panel:11
   x:40
   y:15
   w:35
@@ -212,7 +592,7 @@ balloon:
 
 balloon:
   id:b3
-  panel:1
+  panel:11
   x:60
   y:70
   w:20
@@ -225,7 +605,7 @@ balloon:
 
 caption:
   id:c1
-  panel:1
+  panel:11
   x:-3
   y:75
   w:17
@@ -239,7 +619,7 @@ caption:
 
 actor:
   id:a4
-  panel:2
+  panel:12
   x:20
   y:290
   z:-1
@@ -253,7 +633,7 @@ actor:
 
 balloon:
   id:b4
-  panel:2
+  panel:12
   x:55
   y:5
   w:40
@@ -271,7 +651,7 @@ balloon:
 
 actor:
   id:a5
-  panel:3
+  panel:13
   x:80
   y:310
   z:-1
@@ -285,7 +665,7 @@ actor:
 
 balloon:
   id:b5
-  panel:3
+  panel:13
   x:5
   y:5
   w:40
@@ -306,7 +686,7 @@ balloon:
 
 actor:
   id:a6
-  panel:4
+  panel:14
   x:10
   y:37
   z:-1
@@ -320,7 +700,7 @@ actor:
 
 actor:
   id:a7
-  panel:4
+  panel:14
   x:20
   y:60
   z:-1
@@ -334,7 +714,7 @@ actor:
 
 actor:
   id:a8
-  panel:4
+  panel:14
   x:50
   y:150
   z:-1
@@ -349,7 +729,7 @@ actor:
 
 balloon:
   id:b6
-  panel:4
+  panel:14
   x:30
   y:5
   w:40
@@ -364,7 +744,7 @@ balloon:
 
 balloon:
   id:b7
-  panel:4
+  panel:14
   x:35
   y:25
   w:45
@@ -380,7 +760,7 @@ balloon:
 
 balloon:
   id:b7
-  panel:4
+  panel:14
   x:10
   y:75
   w:25
@@ -394,7 +774,7 @@ balloon:
 
 object:
   id:o1
-  panel:4
+  panel:14
   x:80
   y:80
   w:10
@@ -405,7 +785,7 @@ object:
 
 balloon:
   id:b7
-  panel:5
+  panel:15
   x:5
   y:8
   w:90
@@ -422,7 +802,7 @@ balloon:
 
 object:
   id:o2
-  panel:5
+  panel:15
   x:47
   y:35
   w:10
@@ -438,7 +818,7 @@ object:
 
 balloon:
   id:b8
-  panel:5
+  panel:15
   x:5
   y:58
   w:90
@@ -456,7 +836,7 @@ balloon:
 
 actor:
   id:a9
-  panel:6
+  panel:16
   x:40
   y:100
   z:-1
@@ -471,7 +851,7 @@ actor:
 
 object:
   id:o3
-  panel:6
+  panel:16
   x:15
   y:60
   w:10
@@ -481,7 +861,7 @@ object:
 
 balloon:
   id:b9
-  panel:6
+  panel:16
   x:67
   y:20
   w:40
@@ -498,7 +878,7 @@ balloon:
 
 caption:
   id:c2
-  panel:6
+  panel:16
   x:66
   y:77
   w:32
