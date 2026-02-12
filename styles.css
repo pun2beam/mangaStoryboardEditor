@@ -77,4 +77,4 @@ html, body { margin: 0; height: 100%; color: var(--text); background: var(--bg);
   border-top: 1px solid var(--border);
 }
 #svgCanvas { min-height: 100%; padding: 16px; }
-#svgCanvas svg { display: block; margin: 0 auto; background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,.12); }
+#svgCanvas > svg { display: block; margin: 0 auto; background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,.12); }
