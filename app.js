@@ -141,7 +141,7 @@ function parseValue(value) {
   return value;
 }
 function validateAndBuild(blocks) {
-  const scene = { meta: {}, pages: [], panels: [], actors: [], objects: [], balloons: [], captions: [], sfx: [], assets: [], styles: [] };
+  const scene = { meta: {}, pages: [], panels: [], actors: [], objects: [], boxarrows: [], balloons: [], captions: [], sfx: [], assets: [], styles: [] };
   for (const b of blocks) {
     const key = b.type === "sfx" ? "sfx" : `${b.type}s`;
     if (b.type === "meta") {
@@ -175,7 +175,7 @@ function validateAndBuild(blocks) {
     if (!dicts.pages.get(String(panel.page))) throw new Error(`Line ${panel._line}: 未定義 page 参照 ${panel.page}`);
     if (panel.w <= 0 || panel.h <= 0) throw new Error(`Line ${panel._line}: panel w/h は正数`);
   }
-  const inPanelItems = ["actors", "objects", "balloons", "captions", "sfx"];
+  const inPanelItems = ["actors", "objects", "boxarrows", "balloons", "captions", "sfx"];
   for (const type of inPanelItems) {
     for (const item of scene[type]) {
       requireFields(item, ["id", "panel"], type.slice(0, -1));
@@ -207,6 +207,17 @@ function validateAndBuild(blocks) {
     object.align = object.align || "center";
     object.padding = num(object.padding, 2);
     object.textDirection = normalizeTextDirection(object["text.direction"] ?? object.textDirection, scene.meta["text.direction"]);
+  }
+  for (const boxarrow of scene.boxarrows) {
+    requireFields(boxarrow, ["x", "y"], "boxarrow");
+    boxarrow.w = num(boxarrow.w, 100);
+    boxarrow.h = num(boxarrow.h, 100);
+    if (boxarrow.w <= 0 || boxarrow.h <= 0) throw new Error(`Line ${boxarrow._line}: boxarrow w/h は正数`);
+    boxarrow.px = clamp(num(boxarrow.px, 0.5), 0, 1);
+    boxarrow.py = clamp(num(boxarrow.py, 0.3), 0, 1);
+    boxarrow.scale = num(boxarrow.scale, 1);
+    boxarrow.rot = num(boxarrow.rot, 0);
+    boxarrow.opacity = clamp(num(boxarrow.opacity, 1), 0, 1);
   }
   for (const balloon of scene.balloons) {
     requireFields(balloon, ["x", "y", "w", "h", "text"], "balloon");
@@ -311,6 +322,9 @@ function requireFields(obj, fields, type) {
 function num(value, fallback) {
   return typeof value === "number" ? value : fallback;
 }
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
 function isOn(value) {
   return typeof value === "string" && value.toLowerCase() === "on";
 }
@@ -359,6 +373,7 @@ function render(scene) {
   }
   for (const a of scene.actors) entries.push({ kind: "actor", z: a.z ?? 0, order: a._order, data: a });
   for (const o of scene.objects) entries.push({ kind: "object", z: o.z ?? 0, order: o._order, data: o });
+  for (const ba of scene.boxarrows) entries.push({ kind: "boxarrow", z: ba.z ?? 0, order: ba._order, data: ba });
   for (const b of scene.balloons) entries.push({ kind: "balloon", z: b.z ?? 0, order: b._order, data: b });
   for (const c of scene.captions) entries.push({ kind: "caption", z: c.z ?? 0, order: c._order, data: c });
   for (const s of scene.sfx) entries.push({ kind: "sfx", z: s.z ?? 0, order: s._order, data: s });
@@ -414,6 +429,13 @@ function render(scene) {
       if (!pageLayout || !panelRect) continue;
       const objectMarkup = renderObject(entry.data, panelRect, pageLayout.page.unit, defaultTextDirection);
       body.push(clipWhenBehindPanel(entry, panel, panelRect, objectMarkup));
+    } else if (entry.kind === "boxarrow") {
+      const panel = panelMap.get(String(entry.data.panel));
+      const pageLayout = panel ? pageLayouts.get(String(panel.page)) : null;
+      const panelRect = panelRects.get(String(entry.data.panel));
+      if (!pageLayout || !panelRect) continue;
+      const boxarrowMarkup = renderBoxArrow(entry.data, panelRect, pageLayout.page.unit);
+      body.push(clipWhenBehindPanel(entry, panel, panelRect, boxarrowMarkup));
     } else if (entry.kind === "balloon") {
       const panel = panelMap.get(String(entry.data.panel));
       const pageLayout = panel ? pageLayouts.get(String(panel.page)) : null;
@@ -767,6 +789,22 @@ function renderObject(object, panelRect, unit, defaultTextDirection) {
   }
   const text = renderText(object.text, r, object.fontSize, object.align, object.padding, unit, object.lineHeight, "center", object.textDirection || defaultTextDirection);
   return `<g>${shape}${text}</g>`;
+}
+function renderBoxArrow(boxarrow, panelRect, unit) {
+  const center = pointInPanel(boxarrow.x, boxarrow.y, panelRect, unit);
+  const w = sizeInUnit(boxarrow.w, panelRect, unit, "x");
+  const h = sizeInUnit(boxarrow.h, panelRect, unit, "y");
+  const points = [
+    [-w / 2, boxarrow.py * h - h / 2],
+    [boxarrow.px * w - w / 2, boxarrow.py * h - h / 2],
+    [boxarrow.px * w - w / 2, -h / 2],
+    [0, w / 2],
+    [boxarrow.px * w - w / 2, +h / 2],
+    [boxarrow.px * w - w / 2, -boxarrow.py * h + h / 2],
+    [-w / 2, -boxarrow.py * h + h / 2],
+  ];
+  const pointsAttr = points.map(([x, y]) => `${x},${y}`).join(" ");
+  return `<g transform="translate(${center.x} ${center.y}) rotate(${boxarrow.rot}) scale(${boxarrow.scale})" opacity="${boxarrow.opacity}"><polygon points="${pointsAttr}" fill="none" stroke="black" stroke-width="2"/></g>`;
 }
 function renderText(text, rect, fontSize, align, padding, unit, lineHeight = 1.2, verticalAlign = "top", textDirection = "horizontal") {
   const lines = String(text).split("\n");
