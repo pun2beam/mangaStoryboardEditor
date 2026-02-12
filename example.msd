@@ -163,6 +163,21 @@ asset:
   z:1
   src:./assets/hair2.svg
 
+
+boxarrow:
+  id:ba1
+  panel:1
+  x:30
+  y:60
+  w:18
+  h:22
+  px:0.45
+  py:0.35
+  scale:1
+  rot:-15
+  z:1
+  opacity:1
+
 balloon:
   id:b1
   panel:1
