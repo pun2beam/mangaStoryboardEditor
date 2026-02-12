@@ -218,6 +218,8 @@ function validateAndBuild(blocks) {
     boxarrow.scale = num(boxarrow.scale, 1);
     boxarrow.rot = num(boxarrow.rot, 0);
     boxarrow.opacity = clamp(num(boxarrow.opacity, 1), 0, 1);
+    boxarrow.stroke = boxarrow.stroke || "#000000";
+    boxarrow.fill = boxarrow.fill || "#a0f0a0";
   }
   for (const balloon of scene.balloons) {
     requireFields(balloon, ["x", "y", "w", "h", "text"], "balloon");
@@ -804,7 +806,7 @@ function renderBoxArrow(boxarrow, panelRect, unit) {
     [-w / 2, -boxarrow.py * h + h / 2],
   ];
   const pointsAttr = points.map(([x, y]) => `${x},${y}`).join(" ");
-  return `<g transform="translate(${center.x} ${center.y}) rotate(${boxarrow.rot}) scale(${boxarrow.scale})" opacity="${boxarrow.opacity}"><polygon points="${pointsAttr}" fill="none" stroke="black" stroke-width="2"/></g>`;
+  return `<g transform="translate(${center.x} ${center.y}) rotate(${boxarrow.rot}) scale(${boxarrow.scale})" opacity="${boxarrow.opacity}"><polygon points="${pointsAttr}" fill="${boxarrow.fill}" stroke="${boxarrow.stroke}" stroke-width="2"/></g>`;
 }
 function renderText(text, rect, fontSize, align, padding, unit, lineHeight = 1.2, verticalAlign = "top", textDirection = "horizontal") {
   const lines = String(text).split("\n");
