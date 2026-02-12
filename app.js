@@ -921,7 +921,7 @@ function renderHorizontalTextWithMath(lines, rect, baseSize, align, paddingX, pa
         return markup;
       }
       const topY = baselineY - part.height * 0.85;
-      const markup = `<svg x="${cursorX}" y="${topY}" width="${part.width}" height="${part.height}" viewBox="${part.viewBox}">${part.inner}</svg>`;
+      const markup = `<svg x="${cursorX}" y="${topY}" width="${part.width}" height="${part.height}" viewBox="${part.viewBox}" overflow="visible">${part.inner}</svg>`;
       cursorX += part.width;
       return markup;
     }).join("");
