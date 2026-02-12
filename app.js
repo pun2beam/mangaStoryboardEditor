@@ -770,7 +770,7 @@ function anchorPointOnRectTowardPoint(rect, fromPoint, towardPoint) {
 function renderCaption(caption, panelRect, unit, defaultTextDirection) {
   const r = withinPanel(caption, panelRect, unit);
   const box = caption.style === "none" ? "" : `<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="white" stroke="black"/>`;
-  const text = renderText(caption.text, r, caption.fontSize, caption.align, caption.padding, unit, caption.lineHeight, "top", caption.textDirection || defaultTextDirection);
+  const text = renderText(caption.text, r, caption.fontSize, caption.align, caption.padding, unit, caption.lineHeight, "top", caption.textDirection || defaultTextDirection, true);
   return `<g>${box}${text}</g>`;
 }
 function renderSfx(sfx, panelRect, unit, defaultTextDirection) {
