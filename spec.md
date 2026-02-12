@@ -173,6 +173,7 @@ panel:
 * `emotion`（既定`neutral`）
 * `name`（任意、デバッグ用）
 * `lookAt`（`actor:<id>` または `point(x,y)`、任意）
+* `attachments`（任意、配列。`asset`の`id`を`ref`で参照し、`dx`,`dy`,`s`,`rot`,`z`で相対配置）
 * `style`（後述 styleRef）
 
 #### pose（プリセット）
@@ -307,12 +308,16 @@ balloon:
 必須:
 
 * `id`
-* `panel`
-* `x,y,w,h`
+* `w,h`
 * `src`（URLまたは相対パス。ブラウザ実装なら相対はpublic配下想定）
   任意:
+* `panel,x,y`（指定時は従来どおりコマ内へ単体表示。`panel`なしは単体表示しない）
+* `dx,dy`（actor基準の相対座標。attachments側で未指定の場合の既定値）
+* `s`（actor.scaleに掛ける追加倍率、既定1）
+* `rot`（回転角、既定0）
+* `z`（actor内相対レイヤ。負で背面、0以上で前面）
 * `opacity`（既定1.0）
-* `clipToPanel`（既定true）
+* `clipToPanel`（既定true、単体表示時のみ有効）
 
 ---
 
@@ -336,7 +341,9 @@ balloon:
 * `page` は1つ以上
 * 各 `id` は同一型内で一意（推奨: 全体で一意でもよい）
 * `panel` は参照先 `page` が存在する
-* `actor/balloon/caption/sfx/asset` は参照先 `panel` が存在する
+* `actor/balloon/caption/sfx` は参照先 `panel` が存在する
+* `asset` は `panel` を持つ場合のみ参照先 `panel` が存在する
+* `actor.attachments[].ref` の参照先 `asset` が存在する
 * `x,y,w,h`（必要なもの）は数値で、`w,h > 0`
 * `unit:percent` の場合、原則 `0..100` を推奨（範囲外は許容するが警告）
 * `tail:toActor(a1)` の参照先が存在する

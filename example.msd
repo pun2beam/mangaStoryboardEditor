@@ -110,6 +110,25 @@ actor:
   facing:right
   eye:down
   name:Huge君
+  attachments:
+    - ref:hat1
+      dx:-4.5
+      dy:32.5
+      s:1.0
+      rot:0
+      z:1
+
+
+asset:
+  id:hat1
+  w:50
+  h:50
+  dx:-4.5
+  dy:32.5
+  s:1.0
+  rot:0
+  z:1
+  src:./assets/hat.svg
 
 balloon:
   id:b1
