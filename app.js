@@ -641,8 +641,10 @@ function renderText(text, rect, fontSize, align, padding, unit, lineHeight = 1.2
     const columnStep = baseSize * lineHeight;
     const totalTextWidth = baseSize + (lines.length - 1) * columnStep;
     const startX = verticalAlign === "center" ? x0 + totalTextWidth / 2 - baseSize / 2 : x0;
-    const y = rect.y + paddingY;
-    const anchor = "start";
+    const y = verticalAlign === "center"
+      ? rect.y + paddingY + (rect.h - paddingY * 2) / 2
+      : rect.y + paddingY;
+    const anchor = verticalAlign === "center" ? "middle" : "start";
     const tspans = lines.map((line, i) => `<tspan x="${startX - i * columnStep}" y="${y}">${escapeXml(line)}</tspan>`).join("");
     return `<text x="${startX}" y="${y}" font-size="${baseSize}" text-anchor="${anchor}" writing-mode="vertical-rl" text-orientation="upright">${tspans}</text>`;
   }
