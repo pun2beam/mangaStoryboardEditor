@@ -98,7 +98,10 @@ actor:
   pose:stand
   emotion:panic
   facing:left
+  head.shape:circle
   name:Hige君
+  attachments:
+    - ref:hair2
 
 actor:
   id:a3
@@ -148,6 +151,17 @@ asset:
   rot:0
   z:-1
   src:./assets/hair_back1.svg
+
+asset:
+  id:hair2
+  w:85
+  h:55
+  dx:-20
+  dy:-58.5
+  s:0.4
+  rot:0
+  z:1
+  src:./assets/hair2.svg
 
 balloon:
   id:b1
@@ -248,6 +262,8 @@ actor:
   pose:point
   emotion:neutral
   facing:left
+  attachments:
+    - ref:hair2
   name:Hige君
 
 balloon:
@@ -296,6 +312,8 @@ actor:
   emotion:neutral
   facing:back
   name:Hige君
+  attachments:
+    - ref:hair2
 
 actor:
   id:a8
@@ -308,6 +326,9 @@ actor:
   emotion:smile
   facing:right
   name:Huge君
+  attachments:
+    - ref:hair1
+    - ref:hair_back1
 
 balloon:
   id:b6
@@ -427,6 +448,9 @@ actor:
   emotion:smile
   facing:right
   name:Huge君
+  attachments:
+    - ref:hair1
+    - ref:hair_back1
 
 object:
   id:o3
