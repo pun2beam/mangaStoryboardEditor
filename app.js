@@ -811,7 +811,8 @@ function renderBoxArrow(boxarrow, panelRect, unit) {
   return `<g transform="translate(${center.x} ${center.y}) rotate(${boxarrow.rot}) scale(${boxarrow.scale})" opacity="${boxarrow.opacity}"><polygon points="${pointsAttr}" fill="${boxarrow.fill}" stroke="${boxarrow.stroke}" stroke-width="2"/></g>`;
 }
 function renderText(text, rect, fontSize, align, padding, unit, lineHeight = 1.2, verticalAlign = "top", textDirection = "horizontal", enableMath = false) {
-  const lines = String(text).split("\n");
+  const rawText = String(text);
+  const lines = rawText.split("\n");
   const direction = textDirection === "vertical" ? "vertical" : "horizontal";
   const sizeSpec = normalizeTextSize(fontSize, unit);
   const baseSize = sizeSpec.unit === "percent" ? sizeSpec.value / 100 * rect.w : sizeSpec.value;
@@ -833,8 +834,11 @@ function renderText(text, rect, fontSize, align, padding, unit, lineHeight = 1.2
     const tspans = lines.map((line, i) => `<tspan x="${startX - i * columnStep}" y="${y}">${escapeXml(line)}</tspan>`).join("");
     return `<text x="${startX}" y="${y}" font-size="${baseSize}" text-anchor="${anchor}" writing-mode="vertical-rl" text-orientation="upright">${tspans}</text>`;
   }
-  if (enableMath && hasMathSyntax(lines)) {
-    return renderHorizontalTextWithMath(lines, rect, baseSize, align, paddingX, paddingY, lineHeight, verticalAlign);
+  if (enableMath) {
+    const tokenized = tokenizeMathText(rawText);
+    if (hasMathSyntax(tokenized.tokens)) {
+      return renderHorizontalTextWithMath(tokenized.lines, rect, baseSize, align, paddingX, paddingY, lineHeight, verticalAlign);
+    }
   }
   const x = align === "left" ? rect.x + paddingX : align === "right" ? rect.x + rect.w - paddingX : rect.x + rect.w / 2;
   const anchor = align === "left" ? "start" : align === "right" ? "end" : "middle";
@@ -845,20 +849,51 @@ function renderText(text, rect, fontSize, align, padding, unit, lineHeight = 1.2
   const tspans = lines.map((line, i) => `<tspan x="${x}" dy="${i === 0 ? 0 : baseSize * lineHeight}">${escapeXml(line)}</tspan>`).join("");
   return `<text x="${x}" y="${y0}" font-size="${baseSize}" text-anchor="${anchor}">${tspans}</text>`;
 }
-function hasMathSyntax(lines) {
-  return lines.some((line) => /\$\$[^$]+\$\$|\$[^$\n]+\$/u.test(line));
+function hasMathSyntax(tokens) {
+  return tokens.some((token) => token.type === "math");
 }
-function parseMathTokens(line) {
-  const parts = [];
-  const regex = /(\$\$[^$]+\$\$|\$[^$\n]+\$)/gu;
-  let idx = 0;
-  for (const match of line.matchAll(regex)) {
-    if (match.index > idx) parts.push({ type: "text", value: line.slice(idx, match.index) });
-    parts.push({ type: "math", value: match[0] });
-    idx = match.index + match[0].length;
+function tokenizeMathText(text) {
+  const tokens = [];
+  let cursor = 0;
+  while (cursor < text.length) {
+    if (text.startsWith("$$", cursor)) {
+      const end = text.indexOf("$$", cursor + 2);
+      if (end === -1) {
+        tokens.push({ type: "text", value: text.slice(cursor) });
+        break;
+      }
+      tokens.push({ type: "math", value: text.slice(cursor, end + 2) });
+      cursor = end + 2;
+      continue;
+    }
+    if (text[cursor] === "$") {
+      const newline = text.indexOf("\n", cursor + 1);
+      const searchEnd = newline === -1 ? text.length : newline;
+      const end = text.indexOf("$", cursor + 1);
+      if (end !== -1 && end < searchEnd) {
+        tokens.push({ type: "math", value: text.slice(cursor, end + 1) });
+        cursor = end + 1;
+        continue;
+      }
+    }
+    const nextMathStart = text.indexOf("$", cursor);
+    const end = nextMathStart === -1 ? text.length : nextMathStart;
+    tokens.push({ type: "text", value: text.slice(cursor, end) });
+    cursor = end;
   }
-  if (idx < line.length) parts.push({ type: "text", value: line.slice(idx) });
-  return parts.length ? parts : [{ type: "text", value: line }];
+  const lines = [[]];
+  for (const token of tokens) {
+    if (token.type === "math") {
+      lines[lines.length - 1].push(token);
+      continue;
+    }
+    const chunks = token.value.split("\n");
+    chunks.forEach((chunk, index) => {
+      if (chunk) lines[lines.length - 1].push({ type: "text", value: chunk });
+      if (index < chunks.length - 1) lines.push([]);
+    });
+  }
+  return { tokens, lines };
 }
 function renderHorizontalTextWithMath(lines, rect, baseSize, align, paddingX, paddingY, lineHeight, verticalAlign) {
   const lineGap = baseSize * lineHeight;
@@ -866,7 +901,7 @@ function renderHorizontalTextWithMath(lines, rect, baseSize, align, paddingX, pa
   const y0 = verticalAlign === "center"
     ? rect.y + paddingY + (rect.h - paddingY * 2 - totalTextHeight) / 2 + baseSize
     : rect.y + baseSize + paddingY;
-  const renderedLines = lines.map((line) => renderLineWithMath(line, baseSize));
+  const renderedLines = lines.map((lineTokens) => renderLineWithMathTokens(lineTokens, baseSize));
   const availableWidth = rect.w - paddingX * 2;
   return renderedLines.map((line, i) => {
     const baselineY = y0 + i * lineGap;
@@ -890,8 +925,7 @@ function renderHorizontalTextWithMath(lines, rect, baseSize, align, paddingX, pa
     return `<g clip-path="inset(0 ${Math.max(0, line.width - availableWidth)} 0 0)">${chunks}</g>`;
   }).join("");
 }
-function renderLineWithMath(line, baseSize) {
-  const tokens = parseMathTokens(line);
+function renderLineWithMathTokens(tokens, baseSize) {
   const parts = tokens.map((token) => token.type === "math" ? renderMathToken(token.value, baseSize) : renderPlainTextToken(token.value, baseSize));
   const width = parts.reduce((sum, part) => sum + part.width, 0);
   return { parts, width };
