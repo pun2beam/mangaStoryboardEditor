@@ -88,6 +88,7 @@ SVG描画順は原則：
 * `author`（任意）
 * `version`（任意）
 * `actor.name.visible`（任意、`on`/`off`。`on` の場合、`actor.name` をキャラクターの上部に表示）
+* `text.direction`（任意、`horizontal`/`vertical`。既定: `horizontal`。全体の文字方向）
 
 例:
 
@@ -221,6 +222,7 @@ actor:
 * `padding`（既定: 2）
 * `align`（`left`/`center`/`right`、既定`center`）
 * `lineHeight`（既定: 1.2）
+* `text.direction`（任意、`horizontal`/`vertical`。指定時はmetaより優先）
 * `maxCharsPerLine`（既定: 0=自動。簡易折返し用）
 
 例:
@@ -255,6 +257,7 @@ balloon:
   任意:
 * `style`（`box`/`none`、既定`box`）
 * `fontSize`, `padding`, `align`, `lineHeight`（既定はballoon準拠）
+* `text.direction`（任意、`horizontal`/`vertical`。指定時はmetaより優先）
 
 ---
 
@@ -274,10 +277,30 @@ balloon:
 * `fontSize`（既定: 8）
 * `stroke`（文字縁取り色、任意）
 * `fill`（既定`black`）
+* `text.direction`（任意、`horizontal`/`vertical`。指定時はmetaより優先）
 
 ---
 
-### 5.8 `asset`（任意）
+### 5.8 `object`（任意）
+
+配置オブジェクト（ラベル付き図形）。
+
+必須:
+
+* `id`
+* `panel`
+* `x,y`
+* `text`
+  任意:
+* `w,h`（既定: 10）
+* `shape`（`rect`/`circle`/`none`、既定`rect`）
+* `border`（既定: 1）
+* `fontSize`, `padding`, `align`, `lineHeight`
+* `text.direction`（任意、`horizontal`/`vertical`。指定時はmetaより優先）
+
+---
+
+### 5.9 `asset`（任意）
 
 下絵画像や参考画像を貼る（棒人間を将来置き換える用途）。
 
@@ -293,7 +316,7 @@ balloon:
 
 ---
 
-### 5.9 `style`（任意）
+### 5.10 `style`（任意）
 
 複数要素に共通するスタイル定義。
 必須:

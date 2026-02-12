@@ -1,12 +1,11 @@
 const DEFAULT_DSL_PATH = "./example.msd";
-
 const PAGE_SIZES = { B5: [1760, 2500], A4: [2480, 3508] };
 const ACTOR_TYPES = new Set(["stand", "run", "sit", "point", "think", "surprise"]);
 const EMOTIONS = new Set(["neutral", "angry", "sad", "panic", "smile"]);
 const EYE_TYPES = new Set(["right", "left", "up", "down", "cry", "close", "wink"]);
 const FACING_TYPES = new Set(["left", "right", "back"]);
+const TEXT_DIRECTIONS = new Set(["horizontal", "vertical"]);
 const BALLOON_TAIL_TARGET_Y_OFFSET = { px: 12, percent: 0 };
-
 const els = {
   input: document.getElementById("dslInput"),
   errorBox: document.getElementById("errorBox"),
@@ -17,12 +16,10 @@ const els = {
   downloadBtn: document.getElementById("downloadSvgBtn"),
   split: document.querySelector(".split-root"),
 };
-
 let lastGoodSvg = "";
 let debounceId = null;
 let viewState = { scale: 1, panX: 0, panY: 0 };
 let currentScene = null;
-
 function parseDsl(text) {
   const lines = text.replace(/\r\n?/g, "\n").split("\n");
   const blocks = [];
@@ -37,7 +34,6 @@ function parseDsl(text) {
     if (!blockMatch) throw new Error(`Line ${i + 1}: ブロック宣言が不正です`);
     const block = { type: blockMatch[1], props: {}, line: i + 1, order: blocks.length };
     i += 1;
-
     while (i < lines.length) {
       const bodyRaw = lines[i];
       const bodyTrimmed = bodyRaw.trim();
@@ -50,11 +46,9 @@ function parseDsl(text) {
         i += 1;
         continue;
       }
-
       const kv = bodyRaw.match(/^\s{2,}([\w.-]+)\s*:\s*(.*)$/);
       if (!kv) throw new Error(`Line ${i + 1}: key:value 形式ではありません`);
       const [, key, rawValue] = kv;
-
       if (rawValue === "|") {
         i += 1;
         const multi = [];
@@ -67,16 +61,13 @@ function parseDsl(text) {
         block.props[key] = multi.join("\n");
         continue;
       }
-
       block.props[key] = parseValue(rawValue.trim());
       i += 1;
     }
-
     blocks.push(block);
   }
   return blocks;
 }
-
 function parseValue(value) {
   if (value === "true") return true;
   if (value === "false") return false;
@@ -84,7 +75,6 @@ function parseValue(value) {
   if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) return value.slice(1, -1);
   return value;
 }
-
 function validateAndBuild(blocks) {
   const scene = { meta: {}, pages: [], panels: [], actors: [], objects: [], balloons: [], captions: [], sfx: [], assets: [], styles: [] };
   for (const b of blocks) {
@@ -96,16 +86,14 @@ function validateAndBuild(blocks) {
     if (!scene[key]) throw new Error(`Line ${b.line}: 未対応ブロック ${b.type}`);
     scene[key].push({ ...b.props, _line: b.line, _order: b.order });
   }
-
+  scene.meta["text.direction"] = normalizeTextDirection(scene.meta["text.direction"] ?? scene.meta.textDirection);
   if (scene.pages.length === 0) throw new Error("page は1つ以上必要です");
-
   const dicts = {
     pages: byId(scene.pages, "page"),
     panels: byId(scene.panels, "panel"),
     actors: byId(scene.actors, "actor"),
     styles: byId(scene.styles, "style"),
   };
-
   scene.pages.forEach((p) => {
     p.margin = num(p.margin, 5);
     p.unit = p.unit || "percent";
@@ -117,13 +105,11 @@ function validateAndBuild(blocks) {
       throw new Error(`Line ${p._line}: size:custom では width,height が必須です`);
     }
   });
-
   for (const panel of scene.panels) {
     requireFields(panel, ["id", "page", "x", "y", "w", "h"], "panel");
     if (!dicts.pages.get(String(panel.page))) throw new Error(`Line ${panel._line}: 未定義 page 参照 ${panel.page}`);
     if (panel.w <= 0 || panel.h <= 0) throw new Error(`Line ${panel._line}: panel w/h は正数`);
   }
-
   const inPanelItems = ["actors", "objects", "balloons", "captions", "sfx", "assets"];
   for (const type of inPanelItems) {
     for (const item of scene[type]) {
@@ -134,7 +120,6 @@ function validateAndBuild(blocks) {
       }
     }
   }
-
   for (const actor of scene.actors) {
     actor.pose = ACTOR_TYPES.has(actor.pose) ? actor.pose : "stand";
     actor.emotion = EMOTIONS.has(actor.emotion) ? actor.emotion : "neutral";
@@ -144,7 +129,6 @@ function validateAndBuild(blocks) {
     actor.x = num(actor.x, 0);
     actor.y = num(actor.y, 0);
   }
-
   for (const object of scene.objects) {
     requireFields(object, ["x", "y", "text"], "object");
     object.w = num(object.w ?? object.width, 10);
@@ -155,28 +139,26 @@ function validateAndBuild(blocks) {
     object.fontSize = parseSizedValue(object.fontsize ?? object.fontSize, 4, pUnit(object, dicts, "panel"));
     object.align = object.align || "center";
     object.padding = num(object.padding, 2);
+    object.textDirection = normalizeTextDirection(object["text.direction"] ?? object.textDirection, scene.meta["text.direction"]);
   }
-
   for (const balloon of scene.balloons) {
     requireFields(balloon, ["x", "y", "w", "h", "text"], "balloon");
     balloon.shape = balloon.shape || "oval";
     balloon.align = balloon.align || "center";
     balloon.fontSize = parseSizedValue(balloon.fontsize ?? balloon.fontSize, 4, pUnit(balloon, dicts, "panel"));
     balloon.padding = num(balloon.padding, 2);
-
+    balloon.textDirection = normalizeTextDirection(balloon["text.direction"] ?? balloon.textDirection, scene.meta["text.direction"]);
     const tail = balloon.tail === undefined || balloon.tail === null || balloon.tail === "" ? "none" : String(balloon.tail);
     const tailMatch = tail.match(/^(none|toActor\(([^()]+)\)|toPoint\(([^,]+),([^,]+)\))$/);
     if (!tailMatch) {
       throw new Error(`Line ${balloon._line}: balloon.tail の形式が不正です`);
     }
-
     if (tail.startsWith("toActor(")) {
       const actorId = tailMatch[2]?.trim();
       if (!dicts.actors.get(String(actorId))) {
         throw new Error(`Line ${balloon._line}: 未定義 actor 参照 ${actorId}`);
       }
     }
-
     if (tail.startsWith("toPoint(")) {
       const x = Number(tailMatch[3]?.trim());
       const y = Number(tailMatch[4]?.trim());
@@ -184,35 +166,31 @@ function validateAndBuild(blocks) {
         throw new Error(`Line ${balloon._line}: balloon.tail の形式が不正です`);
       }
     }
-
     balloon.tail = tail;
   }
-
   for (const caption of scene.captions) {
     requireFields(caption, ["x", "y", "w", "h", "text"], "caption");
     caption.style = caption.style || "box";
     caption.align = caption.align || "center";
     caption.fontSize = parseSizedValue(caption.fontsize ?? caption.fontSize, 4, pUnit(caption, dicts, "panel"));
     caption.padding = num(caption.padding, 2);
+    caption.textDirection = normalizeTextDirection(caption["text.direction"] ?? caption.textDirection, scene.meta["text.direction"]);
   }
-
   for (const s of scene.sfx) {
     requireFields(s, ["x", "y", "text"], "sfx");
     s.scale = num(s.scale, 1);
     s.rotate = num(s.rotate, 0);
     s.fontSize = num(s.fontSize, 8);
     s.fill = s.fill || "black";
+    s.textDirection = normalizeTextDirection(s["text.direction"] ?? s.textDirection, scene.meta["text.direction"]);
   }
-
   for (const a of scene.assets) {
     requireFields(a, ["x", "y", "w", "h", "src"], "asset");
     a.opacity = num(a.opacity, 1);
     a.clipToPanel = a.clipToPanel !== false;
   }
-
   return scene;
 }
-
 function byId(arr, type) {
   const map = new Map();
   for (const item of arr) {
@@ -223,26 +201,21 @@ function byId(arr, type) {
   }
   return map;
 }
-
 function requireFields(obj, fields, type) {
   for (const f of fields) {
     if (obj[f] === undefined || obj[f] === null || obj[f] === "") throw new Error(`Line ${obj._line}: ${type}.${f} は必須です`);
   }
 }
-
 function num(value, fallback) {
   return typeof value === "number" ? value : fallback;
 }
-
 function isOn(value) {
   return typeof value === "string" && value.toLowerCase() === "on";
 }
-
 function parseSizedValue(value, fallbackValue, defaultUnit) {
   if (value === undefined || value === null || value === "") return { value: fallbackValue, unit: defaultUnit };
   if (typeof value === "number") return { value, unit: defaultUnit };
   if (typeof value !== "string") return { value: fallbackValue, unit: defaultUnit };
-
   const trimmed = value.trim();
   const match = trimmed.match(/^(-?\d+(?:\.\d+)?)(px|%)?$/);
   if (!match) return { value: fallbackValue, unit: defaultUnit };
@@ -251,16 +224,20 @@ function parseSizedValue(value, fallbackValue, defaultUnit) {
   const unit = match[2] === "%" ? "percent" : match[2] === "px" ? "px" : defaultUnit;
   return { value: parsed, unit };
 }
-
+function normalizeTextDirection(value, fallback = "horizontal") {
+  const candidate = typeof value === "string" ? value.toLowerCase() : "";
+  if (TEXT_DIRECTIONS.has(candidate)) return candidate;
+  return fallback;
+}
 function pUnit(item, dicts, refKey) {
   const ref = dicts[`${refKey}s`]?.get(String(item[refKey]));
   if (!ref) return "percent";
   const page = dicts.pages.get(String(ref.page));
   return page?.unit === "px" ? "px" : "percent";
 }
-
 function render(scene) {
   const showActorName = isOn(scene.meta?.["actor.name.visible"]);
+  const defaultTextDirection = normalizeTextDirection(scene.meta?.["text.direction"]);
   const pageLayouts = buildPageLayouts(scene);
   const panelRects = new Map();
   for (const panel of scene.panels) {
@@ -268,10 +245,8 @@ function render(scene) {
     if (!pageLayout) continue;
     panelRects.set(String(panel.id), rectInPage(panel, pageLayout.inner, pageLayout.page.unit));
   }
-
   const panelMap = new Map(scene.panels.map((p) => [String(p.id), p]));
   const actorMap = new Map(scene.actors.map((a) => [String(a.id), a]));
-
   const entries = [];
   for (const p of scene.panels) entries.push({ kind: "panel", z: p.z ?? 0, order: p._order, data: p });
   for (const a of scene.assets) entries.push({ kind: "asset", z: a.z ?? 0, order: a._order, data: a });
@@ -281,11 +256,9 @@ function render(scene) {
   for (const c of scene.captions) entries.push({ kind: "caption", z: c.z ?? 0, order: c._order, data: c });
   for (const s of scene.sfx) entries.push({ kind: "sfx", z: s.z ?? 0, order: s._order, data: s });
   entries.sort((a, b) => a.z - b.z || a.order - b.order);
-
   const defs = [];
   const body = [];
   const panelClipIds = new Map();
-
   function getPanelClipId(panelId, panelRect) {
     const key = String(panelId);
     if (panelClipIds.has(key)) return panelClipIds.get(key);
@@ -294,14 +267,12 @@ function render(scene) {
     panelClipIds.set(key, clipId);
     return clipId;
   }
-
   function clipWhenBehindPanel(entry, panel, panelRect, markup) {
     const panelZ = panel.z ?? 0;
     if (entry.z >= panelZ) return markup;
     const clipId = getPanelClipId(panel.id, panelRect);
     return `<g clip-path="url(#${clipId})">${markup}</g>`;
   }
-
   for (const entry of entries) {
     if (entry.kind === "panel") {
       const panelRect = panelRects.get(String(entry.data.id));
@@ -334,34 +305,32 @@ function render(scene) {
       const pageLayout = panel ? pageLayouts.get(String(panel.page)) : null;
       const panelRect = panelRects.get(String(entry.data.panel));
       if (!pageLayout || !panelRect) continue;
-      const objectMarkup = renderObject(entry.data, panelRect, pageLayout.page.unit);
+      const objectMarkup = renderObject(entry.data, panelRect, pageLayout.page.unit, defaultTextDirection);
       body.push(clipWhenBehindPanel(entry, panel, panelRect, objectMarkup));
     } else if (entry.kind === "balloon") {
       const panel = panelMap.get(String(entry.data.panel));
       const pageLayout = panel ? pageLayouts.get(String(panel.page)) : null;
       const panelRect = panelRects.get(String(entry.data.panel));
       if (!pageLayout || !panelRect) continue;
-      const balloonMarkup = renderBalloon(entry.data, panelRect, pageLayout.page.unit, actorMap, panelMap, panelRects, pageLayouts);
+      const balloonMarkup = renderBalloon(entry.data, panelRect, pageLayout.page.unit, actorMap, panelMap, panelRects, pageLayouts, defaultTextDirection);
       body.push(clipWhenBehindPanel(entry, panel, panelRect, balloonMarkup));
     } else if (entry.kind === "caption") {
       const panel = panelMap.get(String(entry.data.panel));
       const pageLayout = panel ? pageLayouts.get(String(panel.page)) : null;
       const panelRect = panelRects.get(String(entry.data.panel));
       if (!pageLayout || !panelRect) continue;
-      const captionMarkup = renderCaption(entry.data, panelRect, pageLayout.page.unit);
+      const captionMarkup = renderCaption(entry.data, panelRect, pageLayout.page.unit, defaultTextDirection);
       body.push(clipWhenBehindPanel(entry, panel, panelRect, captionMarkup));
     } else if (entry.kind === "sfx") {
       const panel = panelMap.get(String(entry.data.panel));
       const pageLayout = panel ? pageLayouts.get(String(panel.page)) : null;
       const panelRect = panelRects.get(String(entry.data.panel));
       if (!pageLayout || !panelRect) continue;
-      const sfxMarkup = renderSfx(entry.data, panelRect, pageLayout.page.unit);
+      const sfxMarkup = renderSfx(entry.data, panelRect, pageLayout.page.unit, defaultTextDirection);
       body.push(clipWhenBehindPanel(entry, panel, panelRect, sfxMarkup));
     }
   }
-
   const canvas = canvasBounds(pageLayouts);
-
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${canvas.w} ${canvas.h}" width="${canvas.w}" height="${canvas.h}">
   ${defs.length ? `<defs>${defs.join("")}</defs>` : ""}
   <g transform="translate(${viewState.panX},${viewState.panY}) scale(${viewState.scale})">
@@ -370,7 +339,6 @@ function render(scene) {
   </g>
 </svg>`;
 }
-
 function buildPageLayouts(scene) {
   const layouts = new Map();
   let offsetY = 0;
@@ -383,20 +351,17 @@ function buildPageLayouts(scene) {
       w: w * (1 - page.margin / 50),
       h: h * (1 - page.margin / 50),
     };
-
     const panelsInPage = scene.panels.filter((panel) => String(panel.page) === String(page.id));
     let maxY = frame.y + frame.h;
     for (const panel of panelsInPage) {
       const panelRect = rectInPage(panel, inner, page.unit);
       maxY = Math.max(maxY, panelRect.y + panelRect.h);
     }
-
     layouts.set(String(page.id), { page, frame, inner, maxY });
     offsetY = maxY + 1;
   }
   return layouts;
 }
-
 function renderPageFrames(pageLayouts) {
   return Array.from(pageLayouts.values())
     .map(({ page, frame }) => [
@@ -405,7 +370,6 @@ function renderPageFrames(pageLayouts) {
     ].join(""))
     .join("\n");
 }
-
 function canvasBounds(pageLayouts) {
   const values = Array.from(pageLayouts.values());
   return {
@@ -413,21 +377,17 @@ function canvasBounds(pageLayouts) {
     h: values.reduce((max, { maxY }) => Math.max(max, maxY), 0),
   };
 }
-
 function renderActor(actor, panelRect, unit, showActorName) {
   const p = pointInPanel(actor.x, actor.y, panelRect, unit);
   const s = 20 * actor.scale;
   const mirror = actor.facing === "left" ? -1 : 1;
-
   const pose = poseSegments(actor.pose, s);
   const faceMarkup = actor.facing === "back"
     ? ""
     : `${eyePath(actor.eye, s)}${emotionPath(actor.emotion, s)}`;
-
   const nameLabel = showActorName && actor.name
     ? `<text x="0" y="${-s * 2.9}" font-size="${Math.max(10, s * 0.55)}" text-anchor="middle" dominant-baseline="auto" fill="black">${escapeXml(String(actor.name))}</text>`
     : "";
-
   return `<g transform="translate(${p.x},${p.y})">
     <g transform="scale(${mirror},1)">
       <circle cx="0" cy="${-s * 2.2}" r="${s * 0.45}" fill="none" stroke="black" stroke-width="2"/>
@@ -438,7 +398,6 @@ function renderActor(actor, panelRect, unit, showActorName) {
     ${nameLabel}
   </g>`;
 }
-
 function poseSegments(pose, s) {
   const shoulderY = -s * 1.5;
   const hipY = -s * 0.8;
@@ -452,22 +411,18 @@ function poseSegments(pose, s) {
   };
   return sets[pose].map(([x1, y1, x2, y2]) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="black" stroke-width="2"/>`).join("");
 }
-
-
 function eyePath(eye, s) {
   const headY = -s * 2.2;
   const eyeY = headY - s * 0.04;
   const leftX = -s * 0.14;
   const rightX = s * 0.14;
   const eyeRadius = s * 0.05;
-
   const openEyes = (leftDx = 0, leftDy = 0, rightDx = 0, rightDy = 0) => [
     `<circle cx="${leftX}" cy="${eyeY}" r="${eyeRadius}" fill="white" stroke="black" stroke-width="1"/>`,
     `<circle cx="${rightX}" cy="${eyeY}" r="${eyeRadius}" fill="white" stroke="black" stroke-width="1"/>`,
     `<circle cx="${leftX + leftDx}" cy="${eyeY + leftDy}" r="${eyeRadius * 0.45}" fill="black"/>`,
     `<circle cx="${rightX + rightDx}" cy="${eyeY + rightDy}" r="${eyeRadius * 0.45}" fill="black"/>`,
   ].join("");
-
   if (eye === "left") return openEyes(-s * 0.018, 0, -s * 0.018, 0);
   if (eye === "up") return openEyes(0, -s * 0.018, 0, -s * 0.018);
   if (eye === "down") return openEyes(0, s * 0.018, 0, s * 0.018);
@@ -491,7 +446,6 @@ function eyePath(eye, s) {
       `<circle cx="${rightX}" cy="${eyeY}" r="${eyeRadius * 0.45}" fill="black"/>`,
     ].join("");
   }
-
   return openEyes(s * 0.018, 0, s * 0.018, 0);
 }
 function emotionPath(emotion, s) {
@@ -503,8 +457,7 @@ function emotionPath(emotion, s) {
   if (emotion === "panic") return `<circle cx="0" cy="${mouthY}" r="${s * 0.1}" fill="none" stroke="black" stroke-width="1.5"/>`;
   return `<line x1="${-s * 0.15}" y1="${mouthY}" x2="${s * 0.15}" y2="${mouthY}" stroke="black" stroke-width="1.5"/>`;
 }
-
-function renderBalloon(balloon, panelRect, unit, actorMap, panelMap, panelRects, pageLayouts) {
+function renderBalloon(balloon, panelRect, unit, actorMap, panelMap, panelRects, pageLayouts, defaultTextDirection) {
   const r = withinPanel(balloon, panelRect, unit);
   const balloonCenter = { x: r.x + r.w / 2, y: r.y + r.h / 2 };
   const isThoughtBalloon = balloon.shape === "thought";
@@ -516,7 +469,6 @@ function renderBalloon(balloon, panelRect, unit, actorMap, panelMap, panelRects,
   } else {
     shape = `<ellipse cx="${r.x + r.w / 2}" cy="${r.y + r.h / 2}" rx="${r.w / 2}" ry="${r.h / 2}" fill="white" stroke="black"/>`;
   }
-
   let tail = "";
   if (typeof balloon.tail === "string" && balloon.tail.startsWith("toActor(")) {
     const id = balloon.tail.match(/^toActor\((.+)\)$/)?.[1];
@@ -526,7 +478,7 @@ function renderBalloon(balloon, panelRect, unit, actorMap, panelMap, panelRects,
       const pRect = panelRects.get(String(actor.panel));
       const actorPage = actorPanel ? pageLayouts.get(String(actorPanel.page)) : null;
       if (!pRect || !actorPage) {
-        const text = renderText(balloon.text, r, balloon.fontSize, balloon.align, balloon.padding, unit, balloon.lineHeight, "center");
+        const text = renderText(balloon.text, r, balloon.fontSize, balloon.align, balloon.padding, unit, balloon.lineHeight, "center", balloon.textDirection || defaultTextDirection);
         return `<g>${shape}${text}</g>`;
       }
       const actorUnit = actorPage.page.unit;
@@ -548,7 +500,6 @@ function renderBalloon(balloon, panelRect, unit, actorMap, panelMap, panelRects,
       const directionToMouth = resolveOctantDirection(balloonCenter, mouthTarget);
       const start = anchorPointOnRect(r, directionToMouth);
       const end = anchorPointOnRectTowardPoint(actorRect, mouthTarget, start);
-
       tail = isThoughtBalloon
         ? renderThoughtTailBubbles(start, end, r)
         : `<line x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="black"/>`;
@@ -566,16 +517,13 @@ function renderBalloon(balloon, panelRect, unit, actorMap, panelMap, panelRects,
         : `<line x1="${start.x}" y1="${start.y}" x2="${target.x}" y2="${target.y}" stroke="black"/>`;
     }
   }
-
-  const text = renderText(balloon.text, r, balloon.fontSize, balloon.align, balloon.padding, unit, balloon.lineHeight, "center");
+  const text = renderText(balloon.text, r, balloon.fontSize, balloon.align, balloon.padding, unit, balloon.lineHeight, "center", balloon.textDirection || defaultTextDirection);
   return `<g>${tail}${shape}${text}</g>`;
 }
-
 function renderThoughtTailBubbles(balloonAnchor, targetAnchor, balloonRect) {
   const diameterBase = Math.max(6, Math.min(balloonRect.w, balloonRect.h) * 0.08);
   const radii = [diameterBase * 0.22, diameterBase * 0.33, diameterBase * 0.45];
   const stops = [0.32, 0.52, 0.72];
-
   return stops
     .map((t, index) => {
       const x = targetAnchor.x + (balloonAnchor.x - targetAnchor.x) * t;
@@ -584,7 +532,6 @@ function renderThoughtTailBubbles(balloonAnchor, targetAnchor, balloonRect) {
     })
     .join("");
 }
-
 function resolveOctantDirection(from, to) {
   const dx = to.x - from.x;
   const dy = to.y - from.y;
@@ -592,21 +539,16 @@ function resolveOctantDirection(from, to) {
   const yDir = Math.abs(dy) < 1e-6 ? 0 : dy > 0 ? 1 : -1;
   const absX = Math.abs(dx);
   const absY = Math.abs(dy);
-
   if (xDir === 0 && yDir === 0) return "bottom";
   if (xDir === 0) return yDir > 0 ? "bottom" : "top";
   if (yDir === 0) return xDir > 0 ? "right" : "left";
-
   if (absX > absY * 1.5) return xDir > 0 ? "right" : "left";
   if (absY > absX * 1.5) return yDir > 0 ? "bottom" : "top";
-
   if (xDir > 0 && yDir > 0) return "bottomRight";
   if (xDir > 0 && yDir < 0) return "topRight";
   if (xDir < 0 && yDir > 0) return "bottomLeft";
   return "topLeft";
 }
-
-
 function anchorPointOnRect(rect, direction) {
   const cx = rect.x + rect.w / 2;
   const cy = rect.y + rect.h / 2;
@@ -622,16 +564,13 @@ function anchorPointOnRect(rect, direction) {
   };
   return anchors[direction] || anchors.bottom;
 }
-
 function anchorPointOnRectTowardPoint(rect, fromPoint, towardPoint) {
   const dx = towardPoint.x - fromPoint.x;
   const dy = towardPoint.y - fromPoint.y;
   const epsilon = 1e-6;
-
   if (Math.abs(dx) < epsilon && Math.abs(dy) < epsilon) {
     return { x: fromPoint.x, y: fromPoint.y };
   }
-
   const candidates = [];
   const pushCandidate = (t, x, y) => {
     if (t <= epsilon) return;
@@ -639,68 +578,76 @@ function anchorPointOnRectTowardPoint(rect, fromPoint, towardPoint) {
     if (y < rect.y - epsilon || y > rect.y + rect.h + epsilon) return;
     candidates.push({ t, x, y });
   };
-
   if (Math.abs(dx) >= epsilon) {
     const leftT = (rect.x - fromPoint.x) / dx;
     pushCandidate(leftT, rect.x, fromPoint.y + dy * leftT);
     const rightT = (rect.x + rect.w - fromPoint.x) / dx;
     pushCandidate(rightT, rect.x + rect.w, fromPoint.y + dy * rightT);
   }
-
   if (Math.abs(dy) >= epsilon) {
     const topT = (rect.y - fromPoint.y) / dy;
     pushCandidate(topT, fromPoint.x + dx * topT, rect.y);
     const bottomT = (rect.y + rect.h - fromPoint.y) / dy;
     pushCandidate(bottomT, fromPoint.x + dx * bottomT, rect.y + rect.h);
   }
-
   if (candidates.length === 0) {
     const fallbackDirection = resolveOctantDirection(fromPoint, towardPoint);
     return anchorPointOnRect(rect, fallbackDirection);
   }
-
   candidates.sort((a, b) => a.t - b.t);
   const closest = candidates[0];
   return { x: closest.x, y: closest.y };
 }
-
-function renderCaption(caption, panelRect, unit) {
+function renderCaption(caption, panelRect, unit, defaultTextDirection) {
   const r = withinPanel(caption, panelRect, unit);
   const box = caption.style === "none" ? "" : `<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="white" stroke="black"/>`;
-  const text = renderText(caption.text, r, caption.fontSize, caption.align, caption.padding, unit, caption.lineHeight);
+  const text = renderText(caption.text, r, caption.fontSize, caption.align, caption.padding, unit, caption.lineHeight, "top", caption.textDirection || defaultTextDirection);
   return `<g>${box}${text}</g>`;
 }
-
-function renderSfx(sfx, panelRect, unit) {
+function renderSfx(sfx, panelRect, unit, defaultTextDirection) {
   const p = pointInPanel(sfx.x, sfx.y, panelRect, unit);
   const fontSize = unit === "percent" ? sfx.fontSize / 100 * panelRect.w : sfx.fontSize;
-  return `<text x="${p.x}" y="${p.y}" font-size="${fontSize}" transform="rotate(${sfx.rotate} ${p.x} ${p.y}) scale(${sfx.scale})" fill="${sfx.fill}" stroke="${sfx.stroke || "none"}" font-weight="700">${escapeXml(sfx.text)}</text>`;
+  const direction = sfx.textDirection || defaultTextDirection;
+  const textAttrs = direction === "vertical" ? ' writing-mode="vertical-rl" text-orientation="upright"' : '';
+  return `<text x="${p.x}" y="${p.y}" font-size="${fontSize}" transform="rotate(${sfx.rotate} ${p.x} ${p.y}) scale(${sfx.scale})" fill="${sfx.fill}" stroke="${sfx.stroke || "none"}" font-weight="700"${textAttrs}>${escapeXml(sfx.text)}</text>`;
 }
-
-function renderObject(object, panelRect, unit) {
+function renderObject(object, panelRect, unit, defaultTextDirection) {
   const r = withinPanel({ ...object, w: object.w, h: object.h }, panelRect, unit);
   const border = normalizeTextSize(object.border, unit);
   const borderWidth = border.unit === "percent" ? sizeInUnit(border.value, r, "percent", "x") : border.value;
   let shape = "";
-
   if (object.shape === "rect") {
     shape = `<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="none" stroke="black" stroke-width="${borderWidth}"/>`;
   } else if (object.shape === "circle") {
     const radius = Math.min(r.w, r.h) / 2;
     shape = `<circle cx="${r.x + r.w / 2}" cy="${r.y + r.h / 2}" r="${radius}" fill="none" stroke="black" stroke-width="${borderWidth}"/>`;
   }
-
-  const text = renderText(object.text, r, object.fontSize, object.align, object.padding, unit, object.lineHeight, "center");
+  const text = renderText(object.text, r, object.fontSize, object.align, object.padding, unit, object.lineHeight, "center", object.textDirection || defaultTextDirection);
   return `<g>${shape}${text}</g>`;
 }
-
-function renderText(text, rect, fontSize, align, padding, unit, lineHeight = 1.2, verticalAlign = "top") {
+function renderText(text, rect, fontSize, align, padding, unit, lineHeight = 1.2, verticalAlign = "top", textDirection = "horizontal") {
   const lines = String(text).split("\n");
-  const x = align === "left" ? rect.x + sizeInUnit(padding, rect, unit, "x") : align === "right" ? rect.x + rect.w - sizeInUnit(padding, rect, unit, "x") : rect.x + rect.w / 2;
-  const anchor = align === "left" ? "start" : align === "right" ? "end" : "middle";
+  const direction = textDirection === "vertical" ? "vertical" : "horizontal";
   const sizeSpec = normalizeTextSize(fontSize, unit);
   const baseSize = sizeSpec.unit === "percent" ? sizeSpec.value / 100 * rect.w : sizeSpec.value;
+  const paddingX = sizeInUnit(padding, rect, unit, "x");
   const paddingY = sizeInUnit(padding, rect, unit, "y");
+  if (direction === "vertical") {
+    const x0 = align === "left"
+      ? rect.x + rect.w - paddingX - baseSize * 0.5
+      : align === "right"
+        ? rect.x + paddingX + baseSize * 0.5
+        : rect.x + rect.w / 2;
+    const columnStep = baseSize * lineHeight;
+    const totalTextWidth = baseSize + (lines.length - 1) * columnStep;
+    const startX = verticalAlign === "center" ? x0 + totalTextWidth / 2 - baseSize / 2 : x0;
+    const y = rect.y + paddingY;
+    const anchor = "start";
+    const tspans = lines.map((line, i) => `<tspan x="${startX - i * columnStep}" y="${y}">${escapeXml(line)}</tspan>`).join("");
+    return `<text x="${startX}" y="${y}" font-size="${baseSize}" text-anchor="${anchor}" writing-mode="vertical-rl" text-orientation="upright">${tspans}</text>`;
+  }
+  const x = align === "left" ? rect.x + paddingX : align === "right" ? rect.x + rect.w - paddingX : rect.x + rect.w / 2;
+  const anchor = align === "left" ? "start" : align === "right" ? "end" : "middle";
   const totalTextHeight = baseSize + (lines.length - 1) * baseSize * lineHeight;
   const y0 = verticalAlign === "center"
     ? rect.y + paddingY + (rect.h - paddingY * 2 - totalTextHeight) / 2 + baseSize
@@ -708,14 +655,12 @@ function renderText(text, rect, fontSize, align, padding, unit, lineHeight = 1.2
   const tspans = lines.map((line, i) => `<tspan x="${x}" dy="${i === 0 ? 0 : baseSize * lineHeight}">${escapeXml(line)}</tspan>`).join("");
   return `<text x="${x}" y="${y0}" font-size="${baseSize}" text-anchor="${anchor}">${tspans}</text>`;
 }
-
 function normalizeTextSize(fontSize, defaultUnit) {
   if (typeof fontSize === "object" && fontSize && typeof fontSize.value === "number") {
     return { value: fontSize.value, unit: fontSize.unit === "px" ? "px" : "percent" };
   }
   return { value: num(fontSize, 4), unit: defaultUnit };
 }
-
 function rectInPage(box, inner, unit) {
   if (unit === "px") return { x: inner.x + box.x, y: inner.y + box.y, w: box.w, h: box.h };
   return {
@@ -725,7 +670,6 @@ function rectInPage(box, inner, unit) {
     h: inner.h * (box.h / 100),
   };
 }
-
 function withinPanel(box, panelRect, unit) {
   if (unit === "px") return { x: panelRect.x + box.x, y: panelRect.y + box.y, w: box.w, h: box.h };
   return {
@@ -735,26 +679,21 @@ function withinPanel(box, panelRect, unit) {
     h: panelRect.h * (box.h / 100),
   };
 }
-
 function pointInPanel(x, y, panelRect, unit) {
   if (unit === "px") return { x: panelRect.x + x, y: panelRect.y + y };
   return { x: panelRect.x + panelRect.w * (x / 100), y: panelRect.y + panelRect.h * (y / 100) };
 }
-
 function sizeInUnit(v, rect, unit, axis) {
   if (unit === "px") return v;
   return axis === "x" ? rect.w * (v / 100) : rect.h * (v / 100);
 }
-
 function pageDimensions(page) {
   if (page.size === "custom") return [page.width, page.height];
   return PAGE_SIZES[page.size] || PAGE_SIZES.B5;
 }
-
 function escapeXml(str) {
   return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;");
 }
-
 function update() {
   try {
     const blocks = parseDsl(els.input.value);
@@ -775,12 +714,10 @@ function update() {
     els.errorBox.textContent = String(err.message);
   }
 }
-
 function debouncedUpdate() {
   clearTimeout(debounceId);
   debounceId = setTimeout(update, 200);
 }
-
 function setupResize() {
   let dragging = false;
   els.resizer.addEventListener("mousedown", () => (dragging = true));
@@ -792,7 +729,6 @@ function setupResize() {
     els.split.style.gridTemplateColumns = `${left}% 8px 1fr`;
   });
 }
-
 function setupPanZoom() {
   let dragging = false;
   let prev = null;
@@ -802,7 +738,6 @@ function setupPanZoom() {
     viewState.scale = Math.min(Math.max(0.4, viewState.scale + (e.deltaY < 0 ? 0.08 : -0.08)), 3);
     update();
   }, { passive: false });
-
   els.viewport.addEventListener("mousedown", (e) => {
     dragging = true;
     prev = { x: e.clientX, y: e.clientY };
@@ -818,7 +753,6 @@ function setupPanZoom() {
     update();
   });
 }
-
 function setupDownload() {
   els.downloadBtn.addEventListener("click", () => {
     if (!lastGoodSvg) return;
@@ -831,7 +765,6 @@ function setupDownload() {
     URL.revokeObjectURL(url);
   });
 }
-
 async function loadDefaultDsl() {
   const response = await fetch(DEFAULT_DSL_PATH, { cache: "no-store" });
   if (!response.ok) {
@@ -839,7 +772,6 @@ async function loadDefaultDsl() {
   }
   return response.text();
 }
-
 async function init() {
   try {
     els.input.value = await loadDefaultDsl();
@@ -853,5 +785,4 @@ async function init() {
   setupDownload();
   update();
 }
-
 void init();
