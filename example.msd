@@ -143,12 +143,12 @@ balloon:
 balloon:
   id:b3
   panel:1
-  x:65
-  y:65
+  x:60
+  y:70
   w:20
   h:20
   shape:thought 
-  tail:toPoint(88,65)
+  tail:toActor(a3)
   fontsize:25px
   text: |
     おなかすいたなぁ
@@ -187,7 +187,7 @@ balloon:
   w:40
   h:90
   shape:oval
-  tail:toPoint(50,55)
+  tail:toActor(a4)
   fontsize:25px
   text: |
     まぁ、広い意味では
@@ -217,7 +217,7 @@ balloon:
   w:40
   h:90
   shape:oval
-  tail:toPoint(50,55)
+  tail:toActor(a5)
   fontsize:25px
   text: |
     たしかに
@@ -306,7 +306,7 @@ balloon:
   h:18
   z:1
   shape:thought 
-  tail:toPoint(45,95)
+  tail:toActor(a8)
   fontsize:25px
   text: |
     確か冷蔵庫に...
@@ -403,7 +403,7 @@ balloon:
   h:40
   z:1
   shape:thought 
-  tail:toPoint(50,35)
+  tail:toActor(a9)
   fontsize:25px
   text: |
     そう簡単に
