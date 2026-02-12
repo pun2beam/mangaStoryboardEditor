@@ -177,6 +177,8 @@ boxarrow:
   rot:-15
   z:1
   opacity:1
+  stroke:#000000
+  fill:#a0f0a0
 
 balloon:
   id:b1
