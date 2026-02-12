@@ -167,14 +167,14 @@ asset:
 boxarrow:
   id:ba1
   panel:1
-  x:30
-  y:60
-  w:18
-  h:22
+  x:50
+  y:-8
+  w:5
+  h:8
   px:0.45
   py:0.35
   scale:1
-  rot:-15
+  rot:90
   z:1
   opacity:1
   stroke:#000000
