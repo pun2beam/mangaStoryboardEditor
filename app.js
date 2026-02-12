@@ -899,15 +899,24 @@ function tokenizeMathText(text) {
   return { tokens, lines };
 }
 function renderHorizontalTextWithMath(lines, rect, baseSize, align, paddingX, paddingY, lineHeight, verticalAlign) {
-  const lineGap = baseSize * lineHeight;
-  const totalTextHeight = baseSize + (lines.length - 1) * lineGap;
-  const y0 = verticalAlign === "center"
-    ? rect.y + paddingY + (rect.h - paddingY * 2 - totalTextHeight) / 2 + baseSize
-    : rect.y + baseSize + paddingY;
   const renderedLines = lines.map((lineTokens) => renderLineWithMathTokens(lineTokens, baseSize));
+  if (!renderedLines.length) return "";
+  const baselineSteps = renderedLines.map((_line, index) => {
+    if (index === 0) return 0;
+    const previousLine = renderedLines[index - 1];
+    const currentLine = renderedLines[index];
+    return Math.max(baseSize * lineHeight, previousLine.descent + currentLine.ascent);
+  });
+  const totalTextHeight = renderedLines[0].ascent
+    + baselineSteps.slice(1).reduce((sum, step) => sum + step, 0)
+    + renderedLines[renderedLines.length - 1].descent;
+  const contentTop = verticalAlign === "center"
+    ? rect.y + paddingY + (rect.h - paddingY * 2 - totalTextHeight) / 2
+    : rect.y + paddingY;
+  const firstBaseline = contentTop + renderedLines[0].ascent;
   const availableWidth = rect.w - paddingX * 2;
   return renderedLines.map((line, i) => {
-    const baselineY = y0 + i * lineGap;
+    const baselineY = firstBaseline + baselineSteps.slice(1, i + 1).reduce((sum, step) => sum + step, 0);
     const startX = align === "left"
       ? rect.x + paddingX
       : align === "right"
@@ -920,7 +929,7 @@ function renderHorizontalTextWithMath(lines, rect, baseSize, align, paddingX, pa
         cursorX += part.width;
         return markup;
       }
-      const topY = baselineY - part.height * 0.85;
+      const topY = baselineY - part.ascent;
       const markup = `<svg x="${cursorX}" y="${topY}" width="${part.width}" height="${part.height}" viewBox="${part.viewBox}" overflow="visible">${part.inner}</svg>`;
       cursorX += part.width;
       return markup;
@@ -931,12 +940,14 @@ function renderHorizontalTextWithMath(lines, rect, baseSize, align, paddingX, pa
 function renderLineWithMathTokens(tokens, baseSize) {
   const parts = tokens.map((token) => token.type === "math" ? renderMathToken(token.value, baseSize) : renderPlainTextToken(token.value, baseSize));
   const width = parts.reduce((sum, part) => sum + part.width, 0);
-  return { parts, width };
+  const ascent = parts.reduce((max, part) => Math.max(max, part.ascent ?? baseSize * 0.8), baseSize * 0.8);
+  const descent = parts.reduce((max, part) => Math.max(max, part.descent ?? baseSize * 0.2), baseSize * 0.2);
+  return { parts, width, ascent, descent };
 }
 function renderPlainTextToken(text, baseSize) {
   if (TEXT_METRICS_CONTEXT) TEXT_METRICS_CONTEXT.font = `${baseSize}px sans-serif`;
   const width = TEXT_METRICS_CONTEXT ? TEXT_METRICS_CONTEXT.measureText(text).width : text.length * baseSize * 0.6;
-  return { type: "text", value: text, width };
+  return { type: "text", value: text, width, ascent: baseSize * 0.8, descent: baseSize * 0.2 };
 }
 function renderMathToken(token, baseSize) {
   const tex = token.startsWith("$$") ? token.slice(2, -2) : token.slice(1, -1);
@@ -951,10 +962,14 @@ function renderMathToken(token, baseSize) {
     if (!svg) return renderPlainTextToken(token, baseSize);
     const width = cssLengthToPx(svg.getAttribute("width"), baseSize);
     const height = cssLengthToPx(svg.getAttribute("height"), baseSize);
+    const ascentRatio = display ? 0.5 : 0.8;
+    const ascent = height * ascentRatio;
     return {
       type: "math",
       width,
       height,
+      ascent,
+      descent: Math.max(0, height - ascent),
       inner: svg.innerHTML,
       viewBox: svg.getAttribute("viewBox") || `0 0 ${Math.max(1, width)} ${Math.max(1, height)}`,
     };
