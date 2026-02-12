@@ -2,6 +2,7 @@ meta:
   title: テスト
   author: DEF
   actor.name.visible: on
+  text.direction: horizontal
 
 sfx:
   id:1
@@ -9,6 +10,7 @@ sfx:
   x:0
   y:-5
   text:導入：何が目的?
+  text.direction: vertical
   scale:1
   fontSize:5
   rotate:0
@@ -308,6 +310,7 @@ balloon:
   shape:thought 
   tail:toActor(a8)
   fontsize:25px
+  text.direction: vertical
   text: |
     確か冷蔵庫に...
 
@@ -319,6 +322,7 @@ object:
   w:10
   h:20
   fontsize:25
+  text.direction: vertical
   text:冷蔵庫
 
 balloon:
@@ -419,5 +423,6 @@ caption:
   w:32
   h:20
   fontsize:60px
+  text.direction: vertical
   text: |
     つづく
