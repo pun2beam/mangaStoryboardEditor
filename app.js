@@ -7,6 +7,8 @@ const FACING_TYPES = new Set(["left", "right", "back"]);
 const HEAD_SHAPES = new Set(["circle", "square", "none"]);
 const TEXT_DIRECTIONS = new Set(["horizontal", "vertical"]);
 const BALLOON_TAIL_TARGET_Y_OFFSET = { px: 12, percent: 0 };
+const TEXT_METRICS_CONTEXT = document.createElement("canvas").getContext("2d");
+const MATH_EX_TO_PX = 8;
 const els = {
   input: document.getElementById("dslInput"),
   errorBox: document.getElementById("errorBox"),
@@ -645,7 +647,7 @@ function renderBalloon(balloon, panelRect, unit, actorMap, panelMap, panelRects,
       const pRect = panelRects.get(String(actor.panel));
       const actorPage = actorPanel ? pageLayouts.get(String(actorPanel.page)) : null;
       if (!pRect || !actorPage) {
-        const text = renderText(balloon.text, r, balloon.fontSize, balloon.align, balloon.padding, unit, balloon.lineHeight, "center", balloon.textDirection || defaultTextDirection);
+        const text = renderText(balloon.text, r, balloon.fontSize, balloon.align, balloon.padding, unit, balloon.lineHeight, "center", balloon.textDirection || defaultTextDirection, true);
         return `<g>${shape}${text}</g>`;
       }
       const actorUnit = actorPage.page.unit;
@@ -684,7 +686,7 @@ function renderBalloon(balloon, panelRect, unit, actorMap, panelMap, panelRects,
         : `<line x1="${start.x}" y1="${start.y}" x2="${target.x}" y2="${target.y}" stroke="black"/>`;
     }
   }
-  const text = renderText(balloon.text, r, balloon.fontSize, balloon.align, balloon.padding, unit, balloon.lineHeight, "center", balloon.textDirection || defaultTextDirection);
+  const text = renderText(balloon.text, r, balloon.fontSize, balloon.align, balloon.padding, unit, balloon.lineHeight, "center", balloon.textDirection || defaultTextDirection, true);
   return `<g>${tail}${shape}${text}</g>`;
 }
 function renderThoughtTailBubbles(balloonAnchor, targetAnchor, balloonRect) {
@@ -808,7 +810,7 @@ function renderBoxArrow(boxarrow, panelRect, unit) {
   const pointsAttr = points.map(([x, y]) => `${x},${y}`).join(" ");
   return `<g transform="translate(${center.x} ${center.y}) rotate(${boxarrow.rot}) scale(${boxarrow.scale})" opacity="${boxarrow.opacity}"><polygon points="${pointsAttr}" fill="${boxarrow.fill}" stroke="${boxarrow.stroke}" stroke-width="2"/></g>`;
 }
-function renderText(text, rect, fontSize, align, padding, unit, lineHeight = 1.2, verticalAlign = "top", textDirection = "horizontal") {
+function renderText(text, rect, fontSize, align, padding, unit, lineHeight = 1.2, verticalAlign = "top", textDirection = "horizontal", enableMath = false) {
   const lines = String(text).split("\n");
   const direction = textDirection === "vertical" ? "vertical" : "horizontal";
   const sizeSpec = normalizeTextSize(fontSize, unit);
@@ -831,6 +833,9 @@ function renderText(text, rect, fontSize, align, padding, unit, lineHeight = 1.2
     const tspans = lines.map((line, i) => `<tspan x="${startX - i * columnStep}" y="${y}">${escapeXml(line)}</tspan>`).join("");
     return `<text x="${startX}" y="${y}" font-size="${baseSize}" text-anchor="${anchor}" writing-mode="vertical-rl" text-orientation="upright">${tspans}</text>`;
   }
+  if (enableMath && hasMathSyntax(lines)) {
+    return renderHorizontalTextWithMath(lines, rect, baseSize, align, paddingX, paddingY, lineHeight, verticalAlign);
+  }
   const x = align === "left" ? rect.x + paddingX : align === "right" ? rect.x + rect.w - paddingX : rect.x + rect.w / 2;
   const anchor = align === "left" ? "start" : align === "right" ? "end" : "middle";
   const totalTextHeight = baseSize + (lines.length - 1) * baseSize * lineHeight;
@@ -839,6 +844,97 @@ function renderText(text, rect, fontSize, align, padding, unit, lineHeight = 1.2
     : rect.y + baseSize + paddingY;
   const tspans = lines.map((line, i) => `<tspan x="${x}" dy="${i === 0 ? 0 : baseSize * lineHeight}">${escapeXml(line)}</tspan>`).join("");
   return `<text x="${x}" y="${y0}" font-size="${baseSize}" text-anchor="${anchor}">${tspans}</text>`;
+}
+function hasMathSyntax(lines) {
+  return lines.some((line) => /\$\$[^$]+\$\$|\$[^$\n]+\$/u.test(line));
+}
+function parseMathTokens(line) {
+  const parts = [];
+  const regex = /(\$\$[^$]+\$\$|\$[^$\n]+\$)/gu;
+  let idx = 0;
+  for (const match of line.matchAll(regex)) {
+    if (match.index > idx) parts.push({ type: "text", value: line.slice(idx, match.index) });
+    parts.push({ type: "math", value: match[0] });
+    idx = match.index + match[0].length;
+  }
+  if (idx < line.length) parts.push({ type: "text", value: line.slice(idx) });
+  return parts.length ? parts : [{ type: "text", value: line }];
+}
+function renderHorizontalTextWithMath(lines, rect, baseSize, align, paddingX, paddingY, lineHeight, verticalAlign) {
+  const lineGap = baseSize * lineHeight;
+  const totalTextHeight = baseSize + (lines.length - 1) * lineGap;
+  const y0 = verticalAlign === "center"
+    ? rect.y + paddingY + (rect.h - paddingY * 2 - totalTextHeight) / 2 + baseSize
+    : rect.y + baseSize + paddingY;
+  const renderedLines = lines.map((line) => renderLineWithMath(line, baseSize));
+  const availableWidth = rect.w - paddingX * 2;
+  return renderedLines.map((line, i) => {
+    const baselineY = y0 + i * lineGap;
+    const startX = align === "left"
+      ? rect.x + paddingX
+      : align === "right"
+        ? rect.x + rect.w - paddingX - line.width
+        : rect.x + rect.w / 2 - line.width / 2;
+    let cursorX = startX;
+    const chunks = line.parts.map((part) => {
+      if (part.type === "text") {
+        const markup = `<text x="${cursorX}" y="${baselineY}" font-size="${baseSize}" text-anchor="start">${escapeXml(part.value)}</text>`;
+        cursorX += part.width;
+        return markup;
+      }
+      const topY = baselineY - part.height * 0.85;
+      const markup = `<svg x="${cursorX}" y="${topY}" width="${part.width}" height="${part.height}" viewBox="${part.viewBox}">${part.inner}</svg>`;
+      cursorX += part.width;
+      return markup;
+    }).join("");
+    return `<g clip-path="inset(0 ${Math.max(0, line.width - availableWidth)} 0 0)">${chunks}</g>`;
+  }).join("");
+}
+function renderLineWithMath(line, baseSize) {
+  const tokens = parseMathTokens(line);
+  const parts = tokens.map((token) => token.type === "math" ? renderMathToken(token.value, baseSize) : renderPlainTextToken(token.value, baseSize));
+  const width = parts.reduce((sum, part) => sum + part.width, 0);
+  return { parts, width };
+}
+function renderPlainTextToken(text, baseSize) {
+  if (TEXT_METRICS_CONTEXT) TEXT_METRICS_CONTEXT.font = `${baseSize}px sans-serif`;
+  const width = TEXT_METRICS_CONTEXT ? TEXT_METRICS_CONTEXT.measureText(text).width : text.length * baseSize * 0.6;
+  return { type: "text", value: text, width };
+}
+function renderMathToken(token, baseSize) {
+  const tex = token.startsWith("$$") ? token.slice(2, -2) : token.slice(1, -1);
+  const display = token.startsWith("$$");
+  const mathjax = window.MathJax;
+  if (!mathjax || typeof mathjax.tex2svg !== "function") {
+    return renderPlainTextToken(token, baseSize);
+  }
+  try {
+    const node = mathjax.tex2svg(tex, { display });
+    const svg = node.querySelector("svg");
+    if (!svg) return renderPlainTextToken(token, baseSize);
+    const width = cssLengthToPx(svg.getAttribute("width"), baseSize);
+    const height = cssLengthToPx(svg.getAttribute("height"), baseSize);
+    return {
+      type: "math",
+      width,
+      height,
+      inner: svg.innerHTML,
+      viewBox: svg.getAttribute("viewBox") || `0 0 ${Math.max(1, width)} ${Math.max(1, height)}`,
+    };
+  } catch (_error) {
+    return renderPlainTextToken(token, baseSize);
+  }
+}
+function cssLengthToPx(value, baseSize) {
+  if (!value) return baseSize;
+  const m = String(value).trim().match(/^([\d.]+)(px|em|ex)?$/);
+  if (!m) return baseSize;
+  const n = Number(m[1]);
+  const unit = m[2] || "px";
+  if (unit === "px") return n;
+  if (unit === "em") return n * baseSize;
+  if (unit === "ex") return n * (baseSize / 2 || MATH_EX_TO_PX);
+  return n;
 }
 function normalizeTextSize(fontSize, defaultUnit) {
   if (typeof fontSize === "object" && fontSize && typeof fontSize.value === "number") {
