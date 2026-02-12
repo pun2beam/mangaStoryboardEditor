@@ -61,7 +61,7 @@ balloon:
     作成されています。
 
 balloon:
-  id:b1
+  id:b2
   panel:01
   x:28
   y:20
@@ -73,8 +73,41 @@ balloon:
   fontsize:25px
   text: |
     日本の大抵のマンガは、
-    右綴じ、縦書きで
-    作成されています。
+    右綴じ、縦書きが
+    基本。
+
+balloon:
+  id:b3
+  panel:01
+  x:20
+  y:50
+  w:35
+  h:28
+  z:1
+  shape:oval
+  tail:toActor(a0.1)
+  fontsize:25px
+  text: |
+    右綴じ、左綴じとは
+    表紙を上にして、
+    右側が閉じられているなら右綴じ、
+    左側が閉じられているなら左綴じです。
+
+balloon:
+  id:b3
+  panel:01
+  x:20
+  y:80
+  w:25
+  h:18
+  z:1
+  shape:oval
+  tail:toActor(a0.1)
+  fontsize:25px
+  text: |
+    科学系の解説マンガ
+    を想定しているので
+    左綴じ、横書きなのです。
 
 object:
   id:o0.1
@@ -400,6 +433,221 @@ boxarrow:
   opacity:1
   stroke:#000000
   fill:#a0f0a0
+
+balloon:
+  id:b1
+  panel:01
+  x:93
+  y:20
+  w:10
+  h:40
+  z:1
+  shape:oval
+  tail:toPoint(90,35)
+  fontsize:25px
+  text.direction:vertical
+  text: |
+    タイトルは横書きでも
+    吹き出しは縦が多い。
+
+panel:
+  id:02
+  page:p0
+  x:0
+  y:31
+  w:60
+  h:20
+  radius:20
+
+actor:
+  id:a0.2
+  panel:02
+  x:10
+  y:260
+  z:-1
+  scale:20
+  pose:point
+  emotion:neutral
+  facing:right
+  name:Hoge君
+  attachments:
+    - ref:hat1
+
+balloon:
+  id:b1
+  panel:02
+  x:43
+  y:10
+  w:120
+  h:80
+  z:1
+  shape:oval
+  tail:toActor(a0.2)
+  fontsize:35px
+  text: |
+    $$
+    \begin{aligned}
+    縦書きは数式を&書くのには不便なんです。 \\
+    f(x)&=\int_1^2\frac{1}{x^2}\,dx \\
+    &=\Big\lbrack -\frac{1}{x}\Big\rbrack_1^2=-\frac{1}{2} + 1=\frac{1}{2}　\\
+    みたい&なことが難しいんです。
+    \end{aligned}
+    $$
+
+panel:
+  id:03
+  page:p0
+  x:39
+  y:52
+  w:60
+  h:20
+  radius:20
+
+actor:
+  id:a0.3
+  panel:03
+  x:90
+  y:260
+  z:-1
+  scale:20
+  pose:point
+  emotion:neutral
+  facing:right
+  name:Hoge君
+  eye:down
+  attachments:
+    - ref:hat1
+
+balloon:
+  id:b0.6
+  panel:03
+  x:-43
+  y:10
+  w:120
+  h:80
+  z:1
+  shape:oval
+  tail:toActor(a0.3)
+  fontsize:35px
+  text: |
+    マンガのコマを読む順は左綴じとは逆になります。
+    最初のコマはページの左上で、基本現在のコマの
+    右か下に接するコマにしか移動できなくて、
+    すべてのコマを読める様に読んでいきます。
+    例外は右隅、下隅まで到達した時には
+    接する下の最左、右の最上まで移動って感じです。
+    以下に例を示します。
+
+panel:
+  id:04
+  page:p0
+  x:0
+  y:77
+  w:30
+  h:6
+  radius:2
+
+caption:
+  id:c0.20
+  panel:04
+  x:-15
+  y:-45
+  w:50
+  h:50
+  style:none
+  fontSize:20
+  text:例1
+
+caption:
+  id:c0.21
+  panel:04
+  x:0
+  y:0
+  w:15
+  h:50
+  style:none
+  fontSize:40px
+  text:①
+
+panel:
+  id:05
+  page:p0
+  x:0
+  y:84
+  w:12
+  h:4
+  radius:2
+
+caption:
+  id:c0.21
+  panel:05
+  x:10
+  y:0
+  w:15
+  h:50
+  style:none
+  fontSize:40px
+  text:②
+
+panel:
+  id:06
+  page:p0
+  x:0
+  y:89
+  w:12
+  h:4
+  radius:2
+
+caption:
+  id:c0.21
+  panel:06
+  x:10
+  y:0
+  w:15
+  h:50
+  style:none
+  fontSize:40px
+  text:③
+
+panel:
+  id:07
+  page:p0
+  x:13
+  y:84
+  w:17
+  h:9
+  radius:2
+
+caption:
+  id:c0.21
+  panel:07
+  x:10
+  y:0
+  w:5
+  h:50
+  style:none
+  fontSize:40px
+  text:④
+
+panel:
+  id:08
+  page:p0
+  x:0
+  y:94
+  w:30
+  h:6
+  radius:2
+
+caption:
+  id:c0.21
+  panel:08
+  x:4
+  y:0
+  w:5
+  h:50
+  style:none
+  fontSize:40px
+  text:⑤
 
 page:
   id:p1
