@@ -112,6 +112,9 @@ actor:
   facing:right
   eye:down
   name:Huge君
+  attachments:
+    - ref:hair1
+    - ref:hair_back1
 
 asset:
   id:hat1
@@ -123,6 +126,28 @@ asset:
   rot:-10
   z:1
   src:./assets/hat.svg
+
+asset:
+  id:hair1
+  w:55
+  h:55
+  dx:-31.5
+  dy:-80.5
+  s:1.2
+  rot:0
+  z:1
+  src:./assets/hair1.svg
+
+asset:
+  id:hair_back1
+  w:55
+  h:55
+  dx:-31.5
+  dy:-80.5
+  s:1.2
+  rot:0
+  z:-1
+  src:./assets/hair_back1.svg
 
 balloon:
   id:b1
