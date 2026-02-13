@@ -503,8 +503,8 @@ balloon:
     $$
     \begin{aligned}
     縦書きは数式を&書くのには不便なんです。 \\
-    f(x)&=\int_1^2\frac{1}{x^2}\,dx \\
-    &=\Big\lbrack -\frac{1}{x}\Big\rbrack_1^2=-\frac{1}{2} + 1=\frac{1}{2}　\\
+    \int_1^2\frac{1}{x^2}\,dx &=\Big\lbrack -\frac{1}{x}\Big\rbrack_1^2 \\
+    &=-\frac{1}{2} + 1=\frac{1}{2}　\\
     みたい&なことが難しいんです。
     \end{aligned}
     $$
@@ -971,6 +971,22 @@ caption:
   fontSize:40px
   text:①
 
+boxarrow:
+  id:ba1
+  panel:0.15
+  x:50
+  y:103
+  w:20
+  h:30
+  px:0.55
+  py:0.35
+  scale:1
+  rot:90
+  z:1
+  opacity:1
+  stroke:#000000
+  fill:#30f0f0
+
 panel:
   id:0.16
   page:p0
@@ -990,6 +1006,22 @@ caption:
   style:none
   fontSize:40px
   text:②
+
+boxarrow:
+  id:ba1
+  panel:0.16
+  x:50
+  y:103
+  w:20
+  h:20
+  px:0.55
+  py:0.35
+  scale:1
+  rot:90
+  z:1
+  opacity:1
+  stroke:#000000
+  fill:#30f0f0
 
 panel:
   id:0.17
@@ -1011,6 +1043,22 @@ caption:
   fontSize:40px
   text:③
 
+boxarrow:
+  id:ba1
+  panel:0.17
+  x:105
+  y:-50
+  w:100
+  h:20
+  px:0.85
+  py:0.35
+  scale:1
+  rot:-80
+  z:1
+  opacity:1
+  stroke:#000000
+  fill:#30f0f0
+
 panel:
   id:0.18
   page:p0
@@ -1030,6 +1078,22 @@ caption:
   style:none
   fontSize:40px
   text:④
+
+boxarrow:
+  id:ba1
+  panel:0.18
+  x:50
+  y:102
+  w:15
+  h:20
+  px:0.55
+  py:0.35
+  scale:1
+  rot:90
+  z:1
+  opacity:1
+  stroke:#000000
+  fill:#30f0f0
 
 panel:
   id:0.19
