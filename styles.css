@@ -11,6 +11,12 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; color: var(--text); background: var(--bg); overflow: hidden; }
 
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .topbar {
   display: flex;
   align-items: center;
@@ -40,6 +46,7 @@ html, body { margin: 0; height: 100%; color: var(--text); background: var(--bg);
 .controls {
   display: flex;
   gap: 8px;
+  align-items: center;
 }
 .controls button {
   padding: 6px 10px;
