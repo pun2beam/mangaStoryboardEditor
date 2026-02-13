@@ -74,7 +74,7 @@ balloon:
   text: |
     日本の大抵のマンガは、
     右綴じ、縦書きが
-    基本。
+    基本なので『逆』です。
 
 balloon:
   id:b3
@@ -98,7 +98,7 @@ balloon:
   panel:01
   x:20
   y:80
-  w:25
+  w:30
   h:18
   z:1
   shape:oval
@@ -107,7 +107,22 @@ balloon:
   text: |
     科学系の解説マンガ
     を想定しているので
-    左綴じ、横書きなのです。
+    左綴じ、横書きなのです(※1)。
+
+caption:
+  id:c0.0
+  panel:01
+  x:87
+  y:95
+  w:15
+  h:15
+  style:rect
+  fontSize:8
+  text:|
+    ※1:
+    DLCとしては綴じ方向の
+    制限があるわけではなく
+    縦書きも可能です。
 
 object:
   id:o0.1
@@ -530,7 +545,7 @@ balloon:
   tail:toActor(a0.3)
   fontsize:35px
   text: |
-    マンガのコマを読む順は左綴じとは逆になります。
+    マンガのコマを読む順は右綴じとは逆になります。
     最初のコマはページの左上で、基本現在のコマの
     右か下に接するコマにしか移動できなくて、
     すべてのコマを読める様に読んでいきます。
@@ -569,6 +584,22 @@ caption:
   fontSize:40px
   text:①
 
+boxarrow:
+  id:ba1
+  panel:04
+  x:25
+  y:110
+  w:10
+  h:30
+  px:0.55
+  py:0.35
+  scale:1
+  rot:90
+  z:1
+  opacity:1
+  stroke:#000000
+  fill:#30f0f0
+
 panel:
   id:05
   page:p0
@@ -588,6 +619,22 @@ caption:
   style:none
   fontSize:40px
   text:②
+
+boxarrow:
+  id:ba1
+  panel:05
+  x:63
+  y:110
+  w:25
+  h:50
+  px:0.55
+  py:0.35
+  scale:1
+  rot:90
+  z:1
+  opacity:1
+  stroke:#000000
+  fill:#30f0f0
 
 panel:
   id:06
@@ -609,6 +656,22 @@ caption:
   fontSize:40px
   text:③
 
+boxarrow:
+  id:ba1
+  panel:06
+  x:104
+  y:50
+  w:25
+  h:50
+  px:0.55
+  py:0.35
+  scale:1
+  rot:0
+  z:1
+  opacity:1
+  stroke:#000000
+  fill:#30f0f0
+
 panel:
   id:07
   page:p0
@@ -628,6 +691,22 @@ caption:
   style:none
   fontSize:40px
   text:④
+
+boxarrow:
+  id:ba1
+  panel:07
+  x:50
+  y:105
+  w:17
+  h:25
+  px:0.55
+  py:0.35
+  scale:1
+  rot:90
+  z:1
+  opacity:1
+  stroke:#000000
+  fill:#30f0f0
 
 panel:
   id:08
@@ -681,6 +760,22 @@ caption:
   fontSize:40px
   text:①
 
+boxarrow:
+  id:ba1
+  panel:09
+  x:105
+  y:50
+  w:25
+  h:25
+  px:0.55
+  py:0.35
+  scale:1
+  rot:0
+  z:1
+  opacity:1
+  stroke:#000000
+  fill:#30f0f0
+
 panel:
   id:0.10
   page:p0
@@ -700,6 +795,22 @@ caption:
   style:none
   fontSize:40px
   text:②
+
+boxarrow:
+  id:ba1
+  panel:0.10
+  x:25
+  y:105
+  w:20
+  h:25
+  px:0.55
+  py:0.35
+  scale:1
+  rot:90
+  z:1
+  opacity:1
+  stroke:#000000
+  fill:#30f0f0
 
 panel:
   id:0.11
@@ -721,6 +832,22 @@ caption:
   fontSize:40px
   text:③
 
+boxarrow:
+  id:ba1
+  panel:0.11
+  x:102
+  y:55
+  w:15
+  h:25
+  px:0.55
+  py:0.35
+  scale:1
+  rot:0
+  z:1
+  opacity:1
+  stroke:#000000
+  fill:#30f0f0
+
 panel:
   id:0.12
   page:p0
@@ -741,6 +868,22 @@ caption:
   fontSize:40px
   text:④
 
+boxarrow:
+  id:ba1
+  panel:0.12
+  x:-70
+  y:110
+  w:150
+  h:25
+  px:0.90
+  py:0.35
+  scale:1
+  rot:170
+  z:1
+  opacity:1
+  stroke:#000000
+  fill:#30f0f0
+
 panel:
   id:0.13
   page:p0
@@ -760,6 +903,22 @@ caption:
   style:none
   fontSize:40px
   text:⑤
+
+boxarrow:
+  id:ba1
+  panel:0.13
+  x:102
+  y:60
+  w:35
+  h:35
+  px:0.55
+  py:0.35
+  scale:1
+  rot:0
+  z:1
+  opacity:1
+  stroke:#000000
+  fill:#30f0f0
 
 panel:
   id:0.14
