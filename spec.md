@@ -220,6 +220,8 @@ actor:
 * `tail`（`none`/`toActor(<id>)`/`toPoint(x,y)`、既定`none`）
 * `fontsize`（既定: `4`。`12px` / `4%` / `4` のように指定可能。単位省略時はpageの`unit`を使用）
 * `fontSize`（後方互換。既定: 4 ※percent単位時の相対値、px単位ならpx）
+* `emphasis.fontsize`（任意。`**強調**` で囲んだ文字列に適用するサイズ。`12px` / `4%` / `4` を指定可能）
+* `emphasisFontSize` / `emphasisFontsize`（後方互換キー）
 * `padding`（既定: 2）
 * `align`（`left`/`center`/`right`、既定`center`）
 * `lineHeight`（既定: 1.2）
@@ -258,7 +260,14 @@ balloon:
   任意:
 * `style`（`box`/`none`、既定`box`）
 * `fontSize`, `padding`, `align`, `lineHeight`（既定はballoon準拠）
+* `emphasis.fontsize`（任意。`**強調**` で囲んだ文字列に適用するサイズ）
+* `emphasisFontSize` / `emphasisFontsize`（後方互換キー）
 * `text.direction`（任意、`horizontal`/`vertical`。指定時はmetaより優先）
+
+補足:
+
+* `text` 内で `**...**` で囲った部分は強調として描画する。
+* `emphasis.fontsize` 未指定時は通常文字サイズの約 `1.35` 倍で描画する。
 
 ---
 
