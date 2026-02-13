@@ -537,7 +537,7 @@ actor:
 balloon:
   id:b0.6
   panel:03
-  x:-43
+  x:-63
   y:10
   w:120
   h:80
