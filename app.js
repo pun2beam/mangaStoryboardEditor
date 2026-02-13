@@ -1225,17 +1225,31 @@ function stringifyBlocks(blocks) {
   }
   return out.join("\n").trimEnd();
 }
-function updateIdReferencesInBlocks(blocks, idMapByType) {
+function buildIdRemap(blocks) {
+  const countersByType = {};
+  const remap = {};
+  for (const block of blocks) {
+    if (block.type === "meta" || block.props.id === undefined || block.props.id === null || block.props.id === "") continue;
+    countersByType[block.type] = (countersByType[block.type] ?? 0) + 1;
+    const oldId = String(block.props.id);
+    const newId = nextIdForType(block.type, countersByType[block.type]);
+    if (!remap[block.type]) remap[block.type] = new Map();
+    remap[block.type].set(oldId, newId);
+    block.props.id = newId;
+  }
+  return remap;
+}
+function rewriteReferences(blocks, remap) {
   for (const block of blocks) {
     const refFields = ID_REFERENCE_FIELDS_BY_TYPE[block.type] ?? [];
     for (const field of refFields) {
       if (block.props[field] === undefined || block.props[field] === null || block.props[field] === "") continue;
       const refType = field;
-      const mapped = idMapByType[refType]?.get(String(block.props[field]));
+      const mapped = remap[refType]?.get(String(block.props[field]));
       if (mapped) block.props[field] = mapped;
     }
     if (block.type === "actor" && Array.isArray(block.props.attachments)) {
-      const assetMap = idMapByType.asset;
+      const assetMap = remap.asset;
       if (assetMap) {
         for (const attachment of block.props.attachments) {
           if (!attachment || typeof attachment !== "object") continue;
@@ -1244,16 +1258,24 @@ function updateIdReferencesInBlocks(blocks, idMapByType) {
         }
       }
     }
+    if (block.type === "actor" && typeof block.props.lookAt === "string") {
+      const lookAtMatch = block.props.lookAt.match(/^actor:(.+)$/);
+      if (lookAtMatch) {
+        const oldId = lookAtMatch[1].trim();
+        const mapped = remap.actor?.get(oldId);
+        if (mapped) block.props.lookAt = `actor:${mapped}`;
+      }
+    }
     if (block.type === "balloon" && typeof block.props.tail === "string") {
       const match = block.props.tail.match(/^toActor\(([^()]+)\)$/);
       if (match) {
         const oldId = match[1].trim();
-        const mapped = idMapByType.actor?.get(oldId);
+        const mapped = remap.actor?.get(oldId);
         if (mapped) block.props.tail = `toActor(${mapped})`;
       }
     }
     if (block.props.styleRef !== undefined && block.props.styleRef !== null && block.props.styleRef !== "") {
-      const mapped = idMapByType.style?.get(String(block.props.styleRef));
+      const mapped = remap.style?.get(String(block.props.styleRef));
       if (mapped) block.props.styleRef = mapped;
     }
   }
@@ -1263,18 +1285,9 @@ function setupRenumberIds() {
   els.renumberBtn.addEventListener("click", () => {
     const blocks = parseDsl(els.input.value);
     blocks.sort((a, b) => a.order - b.order);
-    const countersByType = {};
-    const idMapByType = {};
-    for (const block of blocks) {
-      if (block.type === "meta" || block.props.id === undefined || block.props.id === null || block.props.id === "") continue;
-      countersByType[block.type] = (countersByType[block.type] ?? 0) + 1;
-      const oldId = String(block.props.id);
-      const newId = nextIdForType(block.type, countersByType[block.type]);
-      if (!idMapByType[block.type]) idMapByType[block.type] = new Map();
-      idMapByType[block.type].set(oldId, newId);
-      block.props.id = newId;
-    }
-    updateIdReferencesInBlocks(blocks, idMapByType);
+    const remap = buildIdRemap(blocks);
+    rewriteReferences(blocks, remap);
+    validateAndBuild(blocks);
     els.input.value = stringifyBlocks(blocks);
     update();
   });
