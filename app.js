@@ -228,6 +228,10 @@ function validateAndBuild(blocks) {
     balloon.shape = balloon.shape || "oval";
     balloon.align = balloon.align || "center";
     balloon.fontSize = parseSizedValue(balloon.fontsize ?? balloon.fontSize, 4, pUnit(balloon, dicts, "panel"));
+    balloon.emphasisFontSize = parseOptionalSizedValue(
+      balloon["emphasis.fontsize"] ?? balloon.emphasisFontsize ?? balloon.emphasisFontSize,
+      pUnit(balloon, dicts, "panel"),
+    );
     balloon.padding = num(balloon.padding, 2);
     balloon.textDirection = normalizeTextDirection(balloon["text.direction"] ?? balloon.textDirection, scene.meta["text.direction"]);
     const tail = balloon.tail === undefined || balloon.tail === null || balloon.tail === "" ? "none" : String(balloon.tail);
@@ -255,6 +259,10 @@ function validateAndBuild(blocks) {
     caption.style = caption.style || "box";
     caption.align = caption.align || "center";
     caption.fontSize = parseSizedValue(caption.fontsize ?? caption.fontSize, 4, pUnit(caption, dicts, "panel"));
+    caption.emphasisFontSize = parseOptionalSizedValue(
+      caption["emphasis.fontsize"] ?? caption.emphasisFontsize ?? caption.emphasisFontSize,
+      pUnit(caption, dicts, "panel"),
+    );
     caption.padding = num(caption.padding, 2);
     caption.textDirection = normalizeTextDirection(caption["text.direction"] ?? caption.textDirection, scene.meta["text.direction"]);
   }
@@ -647,7 +655,7 @@ function renderBalloon(balloon, panelRect, unit, actorMap, panelMap, panelRects,
       const pRect = panelRects.get(String(actor.panel));
       const actorPage = actorPanel ? pageLayouts.get(String(actorPanel.page)) : null;
       if (!pRect || !actorPage) {
-        const text = renderText(balloon.text, r, balloon.fontSize, balloon.align, balloon.padding, unit, balloon.lineHeight, "center", balloon.textDirection || defaultTextDirection, true);
+        const text = renderText(balloon.text, r, balloon.fontSize, balloon.align, balloon.padding, unit, balloon.lineHeight, "center", balloon.textDirection || defaultTextDirection, true, balloon.emphasisFontSize);
         return `<g>${shape}${text}</g>`;
       }
       const actorUnit = actorPage.page.unit;
@@ -686,7 +694,7 @@ function renderBalloon(balloon, panelRect, unit, actorMap, panelMap, panelRects,
         : `<line x1="${start.x}" y1="${start.y}" x2="${target.x}" y2="${target.y}" stroke="black"/>`;
     }
   }
-  const text = renderText(balloon.text, r, balloon.fontSize, balloon.align, balloon.padding, unit, balloon.lineHeight, "center", balloon.textDirection || defaultTextDirection, true);
+  const text = renderText(balloon.text, r, balloon.fontSize, balloon.align, balloon.padding, unit, balloon.lineHeight, "center", balloon.textDirection || defaultTextDirection, true, balloon.emphasisFontSize);
   return `<g>${tail}${shape}${text}</g>`;
 }
 function renderThoughtTailBubbles(balloonAnchor, targetAnchor, balloonRect) {
@@ -770,7 +778,7 @@ function anchorPointOnRectTowardPoint(rect, fromPoint, towardPoint) {
 function renderCaption(caption, panelRect, unit, defaultTextDirection) {
   const r = withinPanel(caption, panelRect, unit);
   const box = caption.style === "none" ? "" : `<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="white" stroke="black"/>`;
-  const text = renderText(caption.text, r, caption.fontSize, caption.align, caption.padding, unit, caption.lineHeight, "top", caption.textDirection || defaultTextDirection, true);
+  const text = renderText(caption.text, r, caption.fontSize, caption.align, caption.padding, unit, caption.lineHeight, "top", caption.textDirection || defaultTextDirection, true, caption.emphasisFontSize);
   return `<g>${box}${text}</g>`;
 }
 function renderSfx(sfx, panelRect, unit, defaultTextDirection) {
@@ -810,7 +818,7 @@ function renderBoxArrow(boxarrow, panelRect, unit) {
   const pointsAttr = points.map(([x, y]) => `${x},${y}`).join(" ");
   return `<g transform="translate(${center.x} ${center.y}) rotate(${boxarrow.rot}) scale(${boxarrow.scale})" opacity="${boxarrow.opacity}"><polygon points="${pointsAttr}" fill="${boxarrow.fill}" stroke="${boxarrow.stroke}" stroke-width="2"/></g>`;
 }
-function renderText(text, rect, fontSize, align, padding, unit, lineHeight = 1.2, verticalAlign = "top", textDirection = "horizontal", enableMath = false) {
+function renderText(text, rect, fontSize, align, padding, unit, lineHeight = 1.2, verticalAlign = "top", textDirection = "horizontal", enableMath = false, emphasisFontSize = null) {
   const rawText = String(text);
   const lines = rawText.split("\n");
   const direction = textDirection === "vertical" ? "vertical" : "horizontal";
@@ -818,7 +826,11 @@ function renderText(text, rect, fontSize, align, padding, unit, lineHeight = 1.2
   const baseSize = sizeSpec.unit === "percent" ? sizeSpec.value / 100 * rect.w : sizeSpec.value;
   const paddingX = sizeInUnit(padding, rect, unit, "x");
   const paddingY = sizeInUnit(padding, rect, unit, "y");
+  const emphasisSpec = normalizeOptionalTextSize(emphasisFontSize, sizeSpec.unit);
+  const emphasisSize = emphasisSpec ? (emphasisSpec.unit === "percent" ? emphasisSpec.value / 100 * rect.w : emphasisSpec.value) : baseSize * 1.35;
   if (direction === "vertical") {
+    const emphasisLines = lines.map(tokenizeEmphasisLine);
+    const hasEmphasis = emphasisLines.some((segments) => segments.some((segment) => segment.emphasis));
     const x0 = align === "left"
       ? rect.x + rect.w - paddingX - baseSize * 0.5
       : align === "right"
@@ -831,13 +843,21 @@ function renderText(text, rect, fontSize, align, padding, unit, lineHeight = 1.2
       ? rect.y + paddingY + (rect.h - paddingY * 2) / 2
       : rect.y + paddingY;
     const anchor = verticalAlign === "center" ? "middle" : "start";
-    const tspans = lines.map((line, i) => `<tspan x="${startX - i * columnStep}" y="${y}">${escapeXml(line)}</tspan>`).join("");
+    const tspans = hasEmphasis
+      ? emphasisLines.map((segments, i) => {
+        const content = segments.map((segment) => {
+          const segmentSize = segment.emphasis ? emphasisSize : baseSize;
+          return `<tspan font-size="${segmentSize}">${escapeXml(segment.value)}</tspan>`;
+        }).join("");
+        return `<tspan x="${startX - i * columnStep}" y="${y}">${content}</tspan>`;
+      }).join("")
+      : lines.map((line, i) => `<tspan x="${startX - i * columnStep}" y="${y}">${escapeXml(line)}</tspan>`).join("");
     return `<text x="${startX}" y="${y}" font-size="${baseSize}" text-anchor="${anchor}" writing-mode="vertical-rl" text-orientation="upright">${tspans}</text>`;
   }
   if (enableMath) {
-    const tokenized = tokenizeMathText(rawText);
-    if (hasMathSyntax(tokenized.tokens)) {
-      return renderHorizontalTextWithMath(tokenized.lines, rect, baseSize, align, paddingX, paddingY, lineHeight, verticalAlign);
+    const tokenized = tokenizeRichText(rawText);
+    if (hasRichSyntax(tokenized)) {
+      return renderHorizontalRichText(tokenized.lines, rect, baseSize, emphasisSize, align, paddingX, paddingY, lineHeight, verticalAlign);
     }
   }
   const x = align === "left" ? rect.x + paddingX : align === "right" ? rect.x + rect.w - paddingX : rect.x + rect.w / 2;
@@ -849,10 +869,12 @@ function renderText(text, rect, fontSize, align, padding, unit, lineHeight = 1.2
   const tspans = lines.map((line, i) => `<tspan x="${x}" dy="${i === 0 ? 0 : baseSize * lineHeight}">${escapeXml(line)}</tspan>`).join("");
   return `<text x="${x}" y="${y0}" font-size="${baseSize}" text-anchor="${anchor}">${tspans}</text>`;
 }
-function hasMathSyntax(tokens) {
-  return tokens.some((token) => token.type === "math");
+function hasRichSyntax(tokenized) {
+  const hasMath = tokenized.tokens.some((token) => token.type === "math");
+  if (hasMath) return true;
+  return tokenized.lines.some((line) => line.some((token) => token.type === "emphasis"));
 }
-function tokenizeMathText(text) {
+function tokenizeRichText(text) {
   const tokens = [];
   let cursor = 0;
   while (cursor < text.length) {
@@ -892,14 +914,35 @@ function tokenizeMathText(text) {
     }
     const chunks = token.value.split("\n");
     chunks.forEach((chunk, index) => {
-      if (chunk) lines[lines.length - 1].push({ type: "text", value: chunk });
+      if (chunk) lines[lines.length - 1].push(...tokenizeEmphasisLine(chunk));
       if (index < chunks.length - 1) lines.push([]);
     });
   }
   return { tokens, lines };
 }
-function renderHorizontalTextWithMath(lines, rect, baseSize, align, paddingX, paddingY, lineHeight, verticalAlign) {
-  const renderedLines = lines.map((lineTokens) => renderLineWithMathTokens(lineTokens, baseSize));
+function tokenizeEmphasisLine(text) {
+  const segments = [];
+  let cursor = 0;
+  while (cursor < text.length) {
+    const start = text.indexOf("**", cursor);
+    if (start === -1) {
+      if (cursor < text.length) segments.push({ type: "text", value: text.slice(cursor), emphasis: false });
+      break;
+    }
+    if (start > cursor) segments.push({ type: "text", value: text.slice(cursor, start), emphasis: false });
+    const end = text.indexOf("**", start + 2);
+    if (end === -1) {
+      segments.push({ type: "text", value: text.slice(start), emphasis: false });
+      break;
+    }
+    const emphasized = text.slice(start + 2, end);
+    if (emphasized) segments.push({ type: "emphasis", value: emphasized, emphasis: true });
+    cursor = end + 2;
+  }
+  return segments;
+}
+function renderHorizontalRichText(lines, rect, baseSize, emphasisSize, align, paddingX, paddingY, lineHeight, verticalAlign) {
+  const renderedLines = lines.map((lineTokens) => renderLineWithRichTokens(lineTokens, baseSize, emphasisSize));
   if (!renderedLines.length) return "";
   const baselineSteps = renderedLines.map((_line, index) => {
     if (index === 0) return 0;
@@ -925,7 +968,8 @@ function renderHorizontalTextWithMath(lines, rect, baseSize, align, paddingX, pa
     let cursorX = startX;
     const chunks = line.parts.map((part) => {
       if (part.type === "text") {
-        const markup = `<text x="${cursorX}" y="${baselineY}" font-size="${baseSize}" text-anchor="start">${escapeXml(part.value)}</text>`;
+        const weightAttr = part.emphasis ? ' font-weight="700"' : "";
+        const markup = `<text x="${cursorX}" y="${baselineY}" font-size="${part.fontSize || baseSize}" text-anchor="start"${weightAttr}>${escapeXml(part.value)}</text>`;
         cursorX += part.width;
         return markup;
       }
@@ -937,17 +981,20 @@ function renderHorizontalTextWithMath(lines, rect, baseSize, align, paddingX, pa
     return `<g clip-path="inset(0 ${Math.max(0, line.width - availableWidth)} 0 0)">${chunks}</g>`;
   }).join("");
 }
-function renderLineWithMathTokens(tokens, baseSize) {
-  const parts = tokens.map((token) => token.type === "math" ? renderMathToken(token.value, baseSize) : renderPlainTextToken(token.value, baseSize));
+function renderLineWithRichTokens(tokens, baseSize, emphasisSize) {
+  const parts = tokens.map((token) => {
+    if (token.type === "math") return renderMathToken(token.value, baseSize);
+    return renderPlainTextToken(token.value, token.type === "emphasis" ? emphasisSize : baseSize, token.type === "emphasis");
+  });
   const width = parts.reduce((sum, part) => sum + part.width, 0);
   const ascent = parts.reduce((max, part) => Math.max(max, part.ascent ?? baseSize * 0.8), baseSize * 0.8);
   const descent = parts.reduce((max, part) => Math.max(max, part.descent ?? baseSize * 0.2), baseSize * 0.2);
   return { parts, width, ascent, descent };
 }
-function renderPlainTextToken(text, baseSize) {
-  if (TEXT_METRICS_CONTEXT) TEXT_METRICS_CONTEXT.font = `${baseSize}px sans-serif`;
+function renderPlainTextToken(text, baseSize, emphasis = false) {
+  if (TEXT_METRICS_CONTEXT) TEXT_METRICS_CONTEXT.font = `${emphasis ? "700 " : ""}${baseSize}px sans-serif`;
   const width = TEXT_METRICS_CONTEXT ? TEXT_METRICS_CONTEXT.measureText(text).width : text.length * baseSize * 0.6;
-  return { type: "text", value: text, width, ascent: baseSize * 0.8, descent: baseSize * 0.2 };
+  return { type: "text", value: text, width, ascent: baseSize * 0.8, descent: baseSize * 0.2, fontSize: baseSize, emphasis };
 }
 function renderMathToken(token, baseSize) {
   const tex = token.startsWith("$$") ? token.slice(2, -2) : token.slice(1, -1);
@@ -976,6 +1023,14 @@ function renderMathToken(token, baseSize) {
   } catch (_error) {
     return renderPlainTextToken(token, baseSize);
   }
+}
+function normalizeOptionalTextSize(fontSize, defaultUnit) {
+  if (fontSize === undefined || fontSize === null || fontSize === "") return null;
+  return normalizeTextSize(fontSize, defaultUnit);
+}
+function parseOptionalSizedValue(value, defaultUnit) {
+  if (value === undefined || value === null || value === "") return null;
+  return parseSizedValue(value, 0, defaultUnit);
 }
 function cssLengthToPx(value, baseSize) {
   if (!value) return baseSize;
