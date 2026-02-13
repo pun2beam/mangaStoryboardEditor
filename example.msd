@@ -555,7 +555,7 @@ caption:
   w:50
   h:50
   style:none
-  fontSize:20
+  fontSize:50px
   text:例1
 
 caption:
@@ -648,6 +648,250 @@ caption:
   style:none
   fontSize:40px
   text:⑤
+
+
+panel:
+  id:09
+  page:p0
+  x:34
+  y:77
+  w:12
+  h:8
+  radius:2
+
+caption:
+  id:c0.20
+  panel:09
+  x:15
+  y:-35
+  w:10
+  h:50
+  style:none
+  fontSize:50px
+  text:例2
+
+caption:
+  id:c0.21
+  panel:09
+  x:10
+  y:0
+  w:15
+  h:50
+  style:none
+  fontSize:40px
+  text:①
+
+panel:
+  id:0.10
+  page:p0
+  x:47
+  y:77
+  w:17
+  h:8
+  radius:2
+
+caption:
+  id:c0.21
+  panel:0.10
+  x:4
+  y:0
+  w:15
+  h:50
+  style:none
+  fontSize:40px
+  text:②
+
+panel:
+  id:0.11
+  page:p0
+  x:34
+  y:86
+  w:20
+  h:7
+  radius:2
+
+caption:
+  id:c0.21
+  panel:0.11
+  x:4
+  y:0
+  w:15
+  h:50
+  style:none
+  fontSize:40px
+  text:③
+
+panel:
+  id:0.12
+  page:p0
+  x:55
+  y:86
+  w:9
+  h:7
+  radius:2
+
+caption:
+  id:c0.21
+  panel:0.12
+  x:15
+  y:0
+  w:5
+  h:50
+  style:none
+  fontSize:40px
+  text:④
+
+panel:
+  id:0.13
+  page:p0
+  x:34
+  y:94
+  w:10
+  h:6
+  radius:2
+
+caption:
+  id:c0.22
+  panel:0.13
+  x:14
+  y:0
+  w:5
+  h:50
+  style:none
+  fontSize:40px
+  text:⑤
+
+panel:
+  id:0.14
+  page:p0
+  x:45
+  y:94
+  w:19
+  h:6
+  radius:2
+
+caption:
+  id:c0.21
+  panel:0.14
+  x:7
+  y:0
+  w:5
+  h:50
+  style:none
+  fontSize:40px
+  text:➅
+
+panel:
+  id:0.15
+  page:p0
+  x:68
+  y:77
+  w:12
+  h:6
+  radius:2
+
+caption:
+  id:c0.20
+  panel:0.15
+  x:-3
+  y:-45
+  w:50
+  h:50
+  style:none
+  fontSize:50px
+  text:例3
+
+caption:
+  id:c0.21
+  panel:0.15
+  x:10
+  y:0
+  w:15
+  h:50
+  style:none
+  fontSize:40px
+  text:①
+
+panel:
+  id:0.16
+  page:p0
+  x:68
+  y:83.5
+  w:12
+  h:9
+  radius:2
+
+caption:
+  id:c0.21
+  panel:0.16
+  x:10
+  y:0
+  w:15
+  h:50
+  style:none
+  fontSize:40px
+  text:②
+
+panel:
+  id:0.17
+  page:p0
+  x:68
+  y:93
+  w:12
+  h:7
+  radius:2
+
+caption:
+  id:c0.21
+  panel:0.17
+  x:10
+  y:0
+  w:15
+  h:50
+  style:none
+  fontSize:40px
+  text:③
+
+panel:
+  id:0.18
+  page:p0
+  x:81
+  y:77
+  w:17
+  h:9
+  radius:2
+
+caption:
+  id:c0.21
+  panel:0.18
+  x:10
+  y:0
+  w:5
+  h:50
+  style:none
+  fontSize:40px
+  text:④
+
+panel:
+  id:0.19
+  page:p0
+  x:81
+  y:86.5
+  w:17
+  h:13.5
+  radius:2
+
+caption:
+  id:c0.21
+  panel:0.19
+  x:10
+  y:0
+  w:5
+  h:50
+  style:none
+  fontSize:40px
+  text:⑤
+
 
 page:
   id:p1
