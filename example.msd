@@ -5,14 +5,14 @@ meta:
   text.direction: horizontal
 
 page:
-  id: p1
+  id: p1000
   size: B5
   margin: 5
   unit: percent
 
 sfx:
-  id: s1
-  panel: 1
+  id: s1000
+  panel: 1000
   x: 0
   y: -5
   text: はじめに
@@ -23,8 +23,8 @@ sfx:
   fill: #a0f0a0
 
 panel:
-  id: 1
-  page: p1
+  id: 1000
+  page: p1000
   x: 0
   y: 0
   w: 100
@@ -32,8 +32,8 @@ panel:
   radius: 20
 
 actor:
-  id: a1
-  panel: 1
+  id: a1000
+  panel: 1000
   x: 10
   y: 90
   scale: 5
@@ -42,33 +42,33 @@ actor:
   facing: right
   name: Hoge君
   attachments:
-    - ref: as1
+    - ref: as1000
 
 balloon:
-  id: b1
-  panel: 1
+  id: b1000
+  panel: 1000
   x: 3
   y: 5
   w: 35
   h: 18
   z: 1
   shape: oval
-  tail: toActor(a1)
+  tail: toActor(a1000)
   fontsize: 25px
   text: |
     この漫画は、左綴じ、横書きで
     作成されています(※1)。
 
 balloon:
-  id: b2
-  panel: 1
+  id: b1010
+  panel: 1000
   x: 28
   y: 20
   w: 20
   h: 28
   z: 1
   shape: oval
-  tail: toActor(a1)
+  tail: toActor(a1000)
   fontsize: 25px
   text: |
     日本の大抵のマンガは、
@@ -77,15 +77,15 @@ balloon:
     **『逆』**です。
 
 balloon:
-  id: b3
-  panel: 1
+  id: b1020
+  panel: 1000
   x: 20
   y: 50
   w: 35
   h: 28
   z: 1
   shape: oval
-  tail: toActor(a1)
+  tail: toActor(a1000)
   fontsize: 25px
   text: |
     右綴じ、左綴じとは
@@ -94,15 +94,15 @@ balloon:
     左側が閉じられているなら左綴じです。
 
 balloon:
-  id: b4
-  panel: 1
+  id: b1030
+  panel: 1000
   x: 20
   y: 80
   w: 30
   h: 18
   z: 1
   shape: oval
-  tail: toActor(a1)
+  tail: toActor(a1000)
   fontsize: 25px
   text: |
     科学系の解説マンガ
@@ -110,8 +110,8 @@ balloon:
     左綴じ、横書きなのです。
 
 caption:
-  id: c1
-  panel: 1
+  id: c1000
+  panel: 1000
   x: 87
   y: 95
   w: 15
@@ -125,8 +125,8 @@ caption:
     また、縦書きも可能です。
 
 object:
-  id: o1
-  panel: 1
+  id: o1000
+  panel: 1000
   x: 57
   y: 15
   w: 10
@@ -140,8 +140,8 @@ object:
     　　教科書
 
 object:
-  id: o2
-  panel: 1
+  id: o1010
+  panel: 1000
   x: 69
   y: 15
   w: 10
@@ -153,8 +153,8 @@ object:
   text: 小説
 
 object:
-  id: o3
-  panel: 1
+  id: o1020
+  panel: 1000
   x: 81
   y: 15
   w: 10
@@ -165,8 +165,8 @@ object:
   text: マンガ
 
 object:
-  id: o4
-  panel: 1
+  id: o1030
+  panel: 1000
   x: 66
   y: 15
   w: 1
@@ -178,8 +178,8 @@ object:
   text: 閉じ位置
 
 object:
-  id: o5
-  panel: 1
+  id: o1040
+  panel: 1000
   x: 78
   y: 15
   w: 1
@@ -191,8 +191,8 @@ object:
   text: 閉じ位置
 
 object:
-  id: o6
-  panel: 1
+  id: o1050
+  panel: 1000
   x: 90
   y: 15
   w: 1
@@ -204,8 +204,8 @@ object:
   text: 閉じ位置
 
 boxarrow:
-  id: ba1
-  panel: 1
+  id: ba1000
+  panel: 1000
   x: 66.5
   y: 11
   w: 2
@@ -220,8 +220,8 @@ boxarrow:
   fill: #a0f0a0
 
 boxarrow:
-  id: ba2
-  panel: 1
+  id: ba1010
+  panel: 1000
   x: 78.5
   y: 11
   w: 2
@@ -236,8 +236,8 @@ boxarrow:
   fill: #a0f0a0
 
 boxarrow:
-  id: ba3
-  panel: 1
+  id: ba1020
+  panel: 1000
   x: 90.5
   y: 11
   w: 2
@@ -252,8 +252,8 @@ boxarrow:
   fill: #a0f0a0
 
 caption:
-  id: c2
-  panel: 1
+  id: c1010
+  panel: 1000
   x: 57.5
   y: 3
   w: 15
@@ -263,8 +263,8 @@ caption:
   text: 右綴じ
 
 caption:
-  id: c3
-  panel: 1
+  id: c1020
+  panel: 1000
   x: 69.5
   y: 3
   w: 15
@@ -274,8 +274,8 @@ caption:
   text: 右綴じ
 
 caption:
-  id: c4
-  panel: 1
+  id: c1030
+  panel: 1000
   x: 81.5
   y: 3
   w: 15
@@ -285,8 +285,8 @@ caption:
   text: 右綴じ
 
 object:
-  id: o7
-  panel: 1
+  id: o1060
+  panel: 1000
   x: 57
   y: 55
   w: 10
@@ -300,8 +300,8 @@ object:
     　　教科書
 
 object:
-  id: o8
-  panel: 1
+  id: o1070
+  panel: 1000
   x: 69
   y: 55
   w: 10
@@ -312,8 +312,8 @@ object:
   text: 雑誌
 
 object:
-  id: o9
-  panel: 1
+  id: o1080
+  panel: 1000
   x: 81
   y: 55
   w: 10
@@ -327,8 +327,8 @@ object:
     マンガ
 
 object:
-  id: o10
-  panel: 1
+  id: o1090
+  panel: 1000
   x: 57
   y: 55
   w: 1
@@ -340,8 +340,8 @@ object:
   text: 閉じ位置
 
 object:
-  id: o11
-  panel: 1
+  id: o1100
+  panel: 1000
   x: 69
   y: 55
   w: 1
@@ -353,8 +353,8 @@ object:
   text: 閉じ位置
 
 object:
-  id: o12
-  panel: 1
+  id: o1110
+  panel: 1000
   x: 81
   y: 55
   w: 1
@@ -366,8 +366,8 @@ object:
   text: 閉じ位置
 
 caption:
-  id: c5
-  panel: 1
+  id: c1040
+  panel: 1000
   x: 51.5
   y: 92
   w: 15
@@ -377,8 +377,8 @@ caption:
   text: 左綴じ
 
 caption:
-  id: c6
-  panel: 1
+  id: c1050
+  panel: 1000
   x: 63.5
   y: 92
   w: 15
@@ -388,8 +388,8 @@ caption:
   text: 左綴じ
 
 caption:
-  id: c7
-  panel: 1
+  id: c1060
+  panel: 1000
   x: 75.5
   y: 92
   w: 15
@@ -399,8 +399,8 @@ caption:
   text: 左綴じ
 
 boxarrow:
-  id: ba4
-  panel: 1
+  id: ba1030
+  panel: 1000
   x: 57.5
   y: 89
   w: 2
@@ -415,8 +415,8 @@ boxarrow:
   fill: #a0f0a0
 
 boxarrow:
-  id: ba5
-  panel: 1
+  id: ba1040
+  panel: 1000
   x: 69.5
   y: 89
   w: 2
@@ -431,8 +431,8 @@ boxarrow:
   fill: #a0f0a0
 
 boxarrow:
-  id: ba6
-  panel: 1
+  id: ba1050
+  panel: 1000
   x: 81.5
   y: 89
   w: 2
@@ -447,8 +447,8 @@ boxarrow:
   fill: #a0f0a0
 
 balloon:
-  id: b5
-  panel: 1
+  id: b1040
+  panel: 1000
   x: 93
   y: 20
   w: 10
@@ -463,8 +463,8 @@ balloon:
     吹き出しは縦が多い。
 
 panel:
-  id: 2
-  page: p1
+  id: 1010
+  page: p1000
   x: 0
   y: 31
   w: 60
@@ -472,8 +472,8 @@ panel:
   radius: 20
 
 actor:
-  id: a2
-  panel: 2
+  id: a1010
+  panel: 1010
   x: 10
   y: 260
   z: -1
@@ -483,18 +483,18 @@ actor:
   facing: right
   name: Hoge君
   attachments:
-    - ref: as1
+    - ref: as1000
 
 balloon:
-  id: b6
-  panel: 2
+  id: b1050
+  panel: 1010
   x: 43
   y: 10
   w: 120
   h: 80
   z: 1
   shape: oval
-  tail: toActor(a2)
+  tail: toActor(a1010)
   fontsize: 25px
   text: |
     $$
@@ -509,8 +509,8 @@ balloon:
     $$
 
 panel:
-  id: 3
-  page: p1
+  id: 1020
+  page: p1000
   x: 39
   y: 52
   w: 60
@@ -518,8 +518,8 @@ panel:
   radius: 20
 
 actor:
-  id: a3
-  panel: 3
+  id: a1020
+  panel: 1020
   x: 90
   y: 260
   z: -1
@@ -530,18 +530,18 @@ actor:
   name: Hoge君
   eye: down
   attachments:
-    - ref: as1
+    - ref: as1000
 
 balloon:
-  id: b7
-  panel: 3
+  id: b1060
+  panel: 1020
   x: -63
   y: 10
   w: 120
   h: 80
   z: 1
   shape: oval
-  tail: toActor(a3)
+  tail: toActor(a1020)
   fontsize: 30px
   text: |
     そして、
@@ -554,8 +554,8 @@ balloon:
     以下に例を示します。
 
 panel:
-  id: 4
-  page: p1
+  id: 1030
+  page: p1000
   x: 0
   y: 77
   w: 30
@@ -563,8 +563,8 @@ panel:
   radius: 2
 
 caption:
-  id: c8
-  panel: 4
+  id: c1070
+  panel: 1030
   x: -15
   y: -45
   w: 50
@@ -574,8 +574,8 @@ caption:
   text: 例1
 
 caption:
-  id: c9
-  panel: 4
+  id: c1080
+  panel: 1030
   x: 0
   y: 0
   w: 15
@@ -585,8 +585,8 @@ caption:
   text: ①
 
 boxarrow:
-  id: ba7
-  panel: 4
+  id: ba1060
+  panel: 1030
   x: 25
   y: 110
   w: 10
@@ -601,8 +601,8 @@ boxarrow:
   fill: #30f0f0
 
 panel:
-  id: 5
-  page: p1
+  id: 1040
+  page: p1000
   x: 0
   y: 84
   w: 12
@@ -610,8 +610,8 @@ panel:
   radius: 2
 
 caption:
-  id: c10
-  panel: 5
+  id: c1090
+  panel: 1040
   x: 10
   y: 0
   w: 15
@@ -621,8 +621,8 @@ caption:
   text: ②
 
 boxarrow:
-  id: ba8
-  panel: 5
+  id: ba1070
+  panel: 1040
   x: 63
   y: 110
   w: 25
@@ -637,8 +637,8 @@ boxarrow:
   fill: #30f0f0
 
 panel:
-  id: 6
-  page: p1
+  id: 1050
+  page: p1000
   x: 0
   y: 89
   w: 12
@@ -646,8 +646,8 @@ panel:
   radius: 2
 
 caption:
-  id: c11
-  panel: 6
+  id: c1100
+  panel: 1050
   x: 10
   y: 0
   w: 15
@@ -657,8 +657,8 @@ caption:
   text: ③
 
 boxarrow:
-  id: ba9
-  panel: 6
+  id: ba1080
+  panel: 1050
   x: 104
   y: 50
   w: 25
@@ -673,8 +673,8 @@ boxarrow:
   fill: #30f0f0
 
 panel:
-  id: 7
-  page: p1
+  id: 1060
+  page: p1000
   x: 13
   y: 84
   w: 17
@@ -682,8 +682,8 @@ panel:
   radius: 2
 
 caption:
-  id: c12
-  panel: 7
+  id: c1110
+  panel: 1060
   x: 10
   y: 0
   w: 5
@@ -693,8 +693,8 @@ caption:
   text: ④
 
 boxarrow:
-  id: ba10
-  panel: 7
+  id: ba1090
+  panel: 1060
   x: 50
   y: 105
   w: 17
@@ -709,8 +709,8 @@ boxarrow:
   fill: #30f0f0
 
 panel:
-  id: 8
-  page: p1
+  id: 1070
+  page: p1000
   x: 0
   y: 94
   w: 30
@@ -718,8 +718,8 @@ panel:
   radius: 2
 
 caption:
-  id: c13
-  panel: 8
+  id: c1120
+  panel: 1070
   x: 4
   y: 0
   w: 5
@@ -729,8 +729,8 @@ caption:
   text: ⑤
 
 panel:
-  id: 9
-  page: p1
+  id: 1080
+  page: p1000
   x: 34
   y: 77
   w: 12
@@ -738,8 +738,8 @@ panel:
   radius: 2
 
 caption:
-  id: c14
-  panel: 9
+  id: c1130
+  panel: 1080
   x: 15
   y: -35
   w: 10
@@ -749,8 +749,8 @@ caption:
   text: 例2
 
 caption:
-  id: c15
-  panel: 9
+  id: c1140
+  panel: 1080
   x: 10
   y: 0
   w: 15
@@ -760,8 +760,8 @@ caption:
   text: ①
 
 boxarrow:
-  id: ba11
-  panel: 9
+  id: ba1100
+  panel: 1080
   x: 105
   y: 50
   w: 25
@@ -776,8 +776,8 @@ boxarrow:
   fill: #30f0f0
 
 panel:
-  id: 10
-  page: p1
+  id: 1090
+  page: p1000
   x: 47
   y: 77
   w: 17
@@ -785,8 +785,8 @@ panel:
   radius: 2
 
 caption:
-  id: c16
-  panel: 10
+  id: c1150
+  panel: 1090
   x: 4
   y: 0
   w: 15
@@ -796,8 +796,8 @@ caption:
   text: ②
 
 boxarrow:
-  id: ba12
-  panel: 10
+  id: ba1110
+  panel: 1090
   x: 25
   y: 105
   w: 20
@@ -812,8 +812,8 @@ boxarrow:
   fill: #30f0f0
 
 panel:
-  id: 11
-  page: p1
+  id: 1100
+  page: p1000
   x: 34
   y: 86
   w: 20
@@ -821,8 +821,8 @@ panel:
   radius: 2
 
 caption:
-  id: c17
-  panel: 11
+  id: c1160
+  panel: 1100
   x: 4
   y: 0
   w: 15
@@ -832,8 +832,8 @@ caption:
   text: ③
 
 boxarrow:
-  id: ba13
-  panel: 11
+  id: ba1120
+  panel: 1100
   x: 102
   y: 55
   w: 15
@@ -848,8 +848,8 @@ boxarrow:
   fill: #30f0f0
 
 panel:
-  id: 12
-  page: p1
+  id: 1110
+  page: p1000
   x: 55
   y: 86
   w: 9
@@ -857,8 +857,8 @@ panel:
   radius: 2
 
 caption:
-  id: c18
-  panel: 12
+  id: c1170
+  panel: 1110
   x: 15
   y: 0
   w: 5
@@ -868,8 +868,8 @@ caption:
   text: ④
 
 boxarrow:
-  id: ba14
-  panel: 12
+  id: ba1130
+  panel: 1110
   x: -70
   y: 110
   w: 150
@@ -884,8 +884,8 @@ boxarrow:
   fill: #30f0f0
 
 panel:
-  id: 13
-  page: p1
+  id: 1120
+  page: p1000
   x: 34
   y: 94
   w: 10
@@ -893,8 +893,8 @@ panel:
   radius: 2
 
 caption:
-  id: c19
-  panel: 13
+  id: c1180
+  panel: 1120
   x: 14
   y: 0
   w: 5
@@ -904,8 +904,8 @@ caption:
   text: ⑤
 
 boxarrow:
-  id: ba15
-  panel: 13
+  id: ba1140
+  panel: 1120
   x: 102
   y: 60
   w: 35
@@ -920,8 +920,8 @@ boxarrow:
   fill: #30f0f0
 
 panel:
-  id: 14
-  page: p1
+  id: 1130
+  page: p1000
   x: 45
   y: 94
   w: 19
@@ -929,8 +929,8 @@ panel:
   radius: 2
 
 caption:
-  id: c20
-  panel: 14
+  id: c1190
+  panel: 1130
   x: 7
   y: 0
   w: 5
@@ -940,8 +940,8 @@ caption:
   text: ➅
 
 panel:
-  id: 15
-  page: p1
+  id: 1140
+  page: p1000
   x: 68
   y: 77
   w: 12
@@ -949,8 +949,8 @@ panel:
   radius: 2
 
 caption:
-  id: c21
-  panel: 15
+  id: c1200
+  panel: 1140
   x: -3
   y: -45
   w: 50
@@ -960,8 +960,8 @@ caption:
   text: 例3
 
 caption:
-  id: c22
-  panel: 15
+  id: c1210
+  panel: 1140
   x: 10
   y: 0
   w: 15
@@ -971,8 +971,8 @@ caption:
   text: ①
 
 boxarrow:
-  id: ba16
-  panel: 15
+  id: ba1150
+  panel: 1140
   x: 50
   y: 103
   w: 20
@@ -987,8 +987,8 @@ boxarrow:
   fill: #30f0f0
 
 panel:
-  id: 16
-  page: p1
+  id: 1150
+  page: p1000
   x: 68
   y: 83.5
   w: 12
@@ -996,8 +996,8 @@ panel:
   radius: 2
 
 caption:
-  id: c23
-  panel: 16
+  id: c1220
+  panel: 1150
   x: 10
   y: 0
   w: 15
@@ -1007,8 +1007,8 @@ caption:
   text: ②
 
 boxarrow:
-  id: ba17
-  panel: 16
+  id: ba1160
+  panel: 1150
   x: 50
   y: 103
   w: 20
@@ -1023,8 +1023,8 @@ boxarrow:
   fill: #30f0f0
 
 panel:
-  id: 17
-  page: p1
+  id: 1160
+  page: p1000
   x: 68
   y: 93
   w: 12
@@ -1032,8 +1032,8 @@ panel:
   radius: 2
 
 caption:
-  id: c24
-  panel: 17
+  id: c1230
+  panel: 1160
   x: 10
   y: 0
   w: 15
@@ -1043,8 +1043,8 @@ caption:
   text: ③
 
 boxarrow:
-  id: ba18
-  panel: 17
+  id: ba1170
+  panel: 1160
   x: 105
   y: -50
   w: 100
@@ -1059,8 +1059,8 @@ boxarrow:
   fill: #30f0f0
 
 panel:
-  id: 18
-  page: p1
+  id: 1170
+  page: p1000
   x: 81
   y: 77
   w: 17
@@ -1068,8 +1068,8 @@ panel:
   radius: 2
 
 caption:
-  id: c25
-  panel: 18
+  id: c1240
+  panel: 1170
   x: 10
   y: 0
   w: 5
@@ -1079,8 +1079,8 @@ caption:
   text: ④
 
 boxarrow:
-  id: ba19
-  panel: 18
+  id: ba1180
+  panel: 1170
   x: 50
   y: 102
   w: 15
@@ -1095,8 +1095,8 @@ boxarrow:
   fill: #30f0f0
 
 panel:
-  id: 19
-  page: p1
+  id: 1180
+  page: p1000
   x: 81
   y: 86.5
   w: 17
@@ -1104,8 +1104,8 @@ panel:
   radius: 2
 
 caption:
-  id: c26
-  panel: 19
+  id: c1250
+  panel: 1180
   x: 10
   y: 0
   w: 5
@@ -1115,14 +1115,14 @@ caption:
   text: ⑤
 
 page:
-  id: p2
+  id: p1010
   size: B5
   margin: 5
   unit: percent
 
 sfx:
-  id: s2
-  panel: 20
+  id: s1010
+  panel: 1190
   x: 0
   y: -5
   text: 導入：何が目的?
@@ -1133,8 +1133,8 @@ sfx:
   fill: #a0f0a0
 
 panel:
-  id: 20
-  page: p2
+  id: 1190
+  page: p1010
   x: 0
   y: 0
   w: 100
@@ -1142,8 +1142,8 @@ panel:
   radius: 20
 
 panel:
-  id: 21
-  page: p2
+  id: 1200
+  page: p1010
   x: 0
   y: 31
   w: 60
@@ -1151,8 +1151,8 @@ panel:
   radius: 20
 
 panel:
-  id: 22
-  page: p2
+  id: 1210
+  page: p1010
   x: 0
   y: 55
   w: 60
@@ -1160,8 +1160,8 @@ panel:
   radius: 20
 
 panel:
-  id: 23
-  page: p2
+  id: 1220
+  page: p1010
   x: 0
   y: 79
   w: 60
@@ -1169,8 +1169,8 @@ panel:
   radius: 20
 
 panel:
-  id: 24
-  page: p2
+  id: 1230
+  page: p1010
   x: 62
   y: 31
   w: 38
@@ -1178,8 +1178,8 @@ panel:
   radius: 20
 
 panel:
-  id: 25
-  page: p2
+  id: 1240
+  page: p1010
   x: 62
   y: 82
   w: 38
@@ -1187,8 +1187,8 @@ panel:
   radius: 20
 
 actor:
-  id: a4
-  panel: 20
+  id: a1030
+  panel: 1190
   x: 20
   y: 90
   scale: 5
@@ -1197,11 +1197,11 @@ actor:
   facing: right
   name: Hoge君
   attachments:
-    - ref: as1
+    - ref: as1000
 
 actor:
-  id: a5
-  panel: 20
+  id: a1040
+  panel: 1190
   x: 50
   y: 90
   scale: 5
@@ -1211,11 +1211,11 @@ actor:
   head.shape: circle
   name: Hige君
   attachments:
-    - ref: as4
+    - ref: as1030
 
 actor:
-  id: a6
-  panel: 20
+  id: a1050
+  panel: 1190
   x: 98
   y: 180
   z: -1
@@ -1226,11 +1226,11 @@ actor:
   eye: down
   name: Huge君
   attachments:
-    - ref: as2
-    - ref: as3
+    - ref: as1010
+    - ref: as1020
 
 asset:
-  id: as1
+  id: as1000
   w: 55
   h: 55
   dx: -26.5
@@ -1241,7 +1241,7 @@ asset:
   src: ./assets/hat.svg
 
 asset:
-  id: as2
+  id: as1010
   w: 55
   h: 55
   dx: -31.5
@@ -1252,7 +1252,7 @@ asset:
   src: ./assets/hair1.svg
 
 asset:
-  id: as3
+  id: as1020
   w: 55
   h: 55
   dx: -31.5
@@ -1263,7 +1263,7 @@ asset:
   src: ./assets/hair_back1.svg
 
 asset:
-  id: as4
+  id: as1030
   w: 85
   h: 55
   dx: -20
@@ -1274,29 +1274,29 @@ asset:
   src: ./assets/hair2.svg
 
 balloon:
-  id: b8
-  panel: 20
+  id: b1070
+  panel: 1190
   x: -5
   y: 5
   w: 35
   h: 18
   z: 1
   shape: oval
-  tail: toActor(a4)
+  tail: toActor(a1030)
   fontsize: 25px
   text: |
     なぜマンガ用のDSL(※1)を作成したのか
     わかりますか?
 
 balloon:
-  id: b9
-  panel: 20
+  id: b1080
+  panel: 1190
   x: 40
   y: 15
   w: 35
   h: 20
   shape: oval
-  tail: toActor(a5)
+  tail: toActor(a1040)
   fontsize: 25px
   text: |
     うーん。
@@ -1304,20 +1304,20 @@ balloon:
     ですか?
 
 balloon:
-  id: b10
-  panel: 20
+  id: b1090
+  panel: 1190
   x: 60
   y: 70
   w: 20
   h: 20
   shape: thought
-  tail: toActor(a6)
+  tail: toActor(a1050)
   fontsize: 25px
   text: おなかすいたなぁ
 
 caption:
-  id: c27
-  panel: 20
+  id: c1260
+  panel: 1190
   x: -3
   y: 75
   w: 17
@@ -1330,8 +1330,8 @@ caption:
     たコンピュータ言語。
 
 actor:
-  id: a7
-  panel: 21
+  id: a1060
+  panel: 1200
   x: 20
   y: 290
   z: -1
@@ -1341,17 +1341,17 @@ actor:
   facing: right
   name: Hoge君
   attachments:
-    - ref: as1
+    - ref: as1000
 
 balloon:
-  id: b11
-  panel: 21
+  id: b1100
+  panel: 1200
   x: 55
   y: 5
   w: 40
   h: 90
   shape: oval
-  tail: toActor(a7)
+  tail: toActor(a1060)
   fontsize: 25px
   text: |
     まぁ、広い意味では
@@ -1362,8 +1362,8 @@ balloon:
     楽じゃないですか?
 
 actor:
-  id: a8
-  panel: 22
+  id: a1070
+  panel: 1210
   x: 80
   y: 310
   z: -1
@@ -1372,18 +1372,18 @@ actor:
   emotion: neutral
   facing: left
   attachments:
-    - ref: as4
+    - ref: as1030
   name: Hige君
 
 balloon:
-  id: b12
-  panel: 22
+  id: b1110
+  panel: 1210
   x: 5
   y: 5
   w: 40
   h: 90
   shape: oval
-  tail: toActor(a8)
+  tail: toActor(a1070)
   fontsize: 25px
   text: |
     たしかに
@@ -1397,8 +1397,8 @@ balloon:
     時間かけるのも変だし。
 
 actor:
-  id: a9
-  panel: 23
+  id: a1080
+  panel: 1220
   x: 10
   y: 37
   z: -1
@@ -1408,11 +1408,11 @@ actor:
   facing: right
   name: Hoge君
   attachments:
-    - ref: as1
+    - ref: as1000
 
 actor:
-  id: a10
-  panel: 23
+  id: a1090
+  panel: 1220
   x: 20
   y: 60
   z: -1
@@ -1422,11 +1422,11 @@ actor:
   facing: back
   name: Hige君
   attachments:
-    - ref: as4
+    - ref: as1030
 
 actor:
-  id: a11
-  panel: 23
+  id: a1100
+  panel: 1220
   x: 50
   y: 150
   z: -1
@@ -1436,34 +1436,34 @@ actor:
   facing: right
   name: Huge君
   attachments:
-    - ref: as2
-    - ref: as3
+    - ref: as1010
+    - ref: as1020
 
 balloon:
-  id: b13
-  panel: 23
+  id: b1120
+  panel: 1220
   x: 30
   y: 5
   w: 40
   h: 20
   z: 1
   shape: oval
-  tail: toActor(a10)
+  tail: toActor(a1090)
   fontsize: 25px
   text: |
     じゃあ
     なぜこんな回りくどいことを?
 
 balloon:
-  id: b14
-  panel: 23
+  id: b1130
+  panel: 1220
   x: 35
   y: 25
   w: 45
   h: 38
   z: 1
   shape: oval
-  tail: toActor(a9)
+  tail: toActor(a1080)
   fontsize: 25px
   text: |
     これは、LLM用なんです。
@@ -1471,21 +1471,21 @@ balloon:
     ネームを作成しようと。
 
 balloon:
-  id: b15
-  panel: 23
+  id: b1140
+  panel: 1220
   x: 10
   y: 75
   w: 25
   h: 18
   z: 1
   shape: thought
-  tail: toActor(a11)
+  tail: toActor(a1100)
   fontsize: 25px
   text: 確か冷蔵庫に...
 
 object:
-  id: o13
-  panel: 23
+  id: o1120
+  panel: 1220
   x: 80
   y: 80
   w: 10
@@ -1495,8 +1495,8 @@ object:
   text: 冷蔵庫
 
 balloon:
-  id: b16
-  panel: 24
+  id: b1150
+  panel: 1230
   x: 5
   y: 8
   w: 90
@@ -1512,8 +1512,8 @@ balloon:
     DSLを作成したってわけ。
 
 object:
-  id: o14
-  panel: 24
+  id: o1130
+  panel: 1230
   x: 47
   y: 35
   w: 10
@@ -1527,8 +1527,8 @@ object:
     人間 ↔ DSL→変換→SVG
 
 balloon:
-  id: b17
-  panel: 24
+  id: b1160
+  panel: 1230
   x: 5
   y: 58
   w: 90
@@ -1545,8 +1545,8 @@ balloon:
     なるかもしれませんね。
 
 actor:
-  id: a12
-  panel: 25
+  id: a1110
+  panel: 1240
   x: 40
   y: 100
   z: -1
@@ -1556,12 +1556,12 @@ actor:
   facing: right
   name: Huge君
   attachments:
-    - ref: as2
-    - ref: as3
+    - ref: as1010
+    - ref: as1020
 
 object:
-  id: o15
-  panel: 25
+  id: o1140
+  panel: 1240
   x: 15
   y: 60
   w: 10
@@ -1570,23 +1570,23 @@ object:
   text: ケーキ
 
 balloon:
-  id: b18
-  panel: 25
+  id: b1170
+  panel: 1240
   x: 67
   y: 20
   w: 40
   h: 40
   z: 1
   shape: thought
-  tail: toActor(a12)
+  tail: toActor(a1110)
   fontsize: 25px
   text: |
     そう簡単に
     上手くいくかな...
 
 caption:
-  id: c28
-  panel: 25
+  id: c1270
+  panel: 1240
   x: 66
   y: 77
   w: 32
@@ -1595,14 +1595,14 @@ caption:
   text: つづく
 
 page:
-  id: p3
+  id: p1020
   size: B5
   margin: 5
   unit: percent
 
 sfx:
-  id: s3
-  panel: 26
+  id: s1020
+  panel: 1250
   x: 0
   y: -5
   text: そもそもマンガによる解説ッて有効なの?
@@ -1613,8 +1613,8 @@ sfx:
   fill: #a0f0a0
 
 panel:
-  id: 26
-  page: p3
+  id: 1250
+  page: p1020
   x: 0
   y: 0
   w: 100
@@ -1622,8 +1622,8 @@ panel:
   radius: 20
 
 caption:
-  id: c29
-  panel: 26
+  id: c1280
+  panel: 1250
   x: 5
   y: 5
   w: 30
