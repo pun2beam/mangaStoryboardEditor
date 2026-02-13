@@ -1589,8 +1589,6 @@ balloon:
     そう簡単に
     上手くいくかな...
 
-
-
 caption:
   id:c2
   panel:16
@@ -1601,3 +1599,48 @@ caption:
   fontsize:60px
   text: |
     つづく
+
+page:
+  id:p2
+  size:B5
+  margin:5
+  unit:percent
+
+sfx:
+  id:20
+  panel:20
+  x:0
+  y:-5
+  text:そもそもマンガによる解説ッて有効なの?
+  scale:1
+  fontSize:5
+  rotate:0
+  stroke:#000000
+  fill:#a0f0a0
+
+panel:
+  id:20
+  page:p2
+  x:0
+  y:0
+  w:100
+  h:30
+  radius:20
+
+caption:
+  id:b8
+  panel:20
+  x:5
+  y:5
+  w:30
+  h:35
+  z:1
+  style:box
+  fontsize:25px
+  text: |
+    
+    ①記憶の仕組み　　　　　　　　　
+    ②誰が話しているかが重要　　　　
+    ③文章だけと絵付きの説明　　　　
+    　・参照コスト（一次元と二次元）
+    　・読解コスト　　　　　　　　　
