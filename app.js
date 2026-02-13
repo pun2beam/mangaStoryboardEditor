@@ -9,6 +9,28 @@ const TEXT_DIRECTIONS = new Set(["horizontal", "vertical"]);
 const BALLOON_TAIL_TARGET_Y_OFFSET = { px: 12, percent: 0 };
 const TEXT_METRICS_CONTEXT = document.createElement("canvas").getContext("2d");
 const MATH_EX_TO_PX = 8;
+const ID_PREFIX_BY_TYPE = Object.freeze({
+  page: "p",
+  panel: "",
+  actor: "a",
+  object: "o",
+  boxarrow: "ba",
+  balloon: "b",
+  caption: "c",
+  sfx: "s",
+  asset: "as",
+  style: "st",
+});
+const ID_REFERENCE_FIELDS_BY_TYPE = Object.freeze({
+  panel: ["page"],
+  actor: ["panel"],
+  object: ["panel"],
+  boxarrow: ["panel"],
+  balloon: ["panel"],
+  caption: ["panel"],
+  sfx: ["panel"],
+  asset: ["panel"],
+});
 const els = {
   input: document.getElementById("dslInput"),
   errorBox: document.getElementById("errorBox"),
@@ -17,6 +39,7 @@ const els = {
   canvas: document.getElementById("svgCanvas"),
   resizer: document.getElementById("resizer"),
   downloadBtn: document.getElementById("downloadSvgBtn"),
+  renumberBtn: document.getElementById("renumberIdsBtn"),
   split: document.querySelector(".split-root"),
 };
 let lastGoodSvg = "";
@@ -1153,6 +1176,109 @@ function setupDownload() {
     URL.revokeObjectURL(url);
   });
 }
+function nextIdForType(type, count) {
+  const prefix = ID_PREFIX_BY_TYPE[type] ?? type;
+  return `${prefix}${count}`;
+}
+function serializeValue(value, indentLevel) {
+  if (Array.isArray(value)) return serializeList(value, indentLevel);
+  if (typeof value === "string" && value.includes("\n")) {
+    const body = value.split("\n").map((line) => `${" ".repeat(indentLevel + 2)}${line}`).join("\n");
+    return `|\n${body}`;
+  }
+  return String(value);
+}
+function serializeList(list, indentLevel) {
+  if (list.length === 0) return "";
+  const lines = [];
+  for (const item of list) {
+    if (item && typeof item === "object" && !Array.isArray(item)) {
+      const entries = Object.entries(item);
+      if (entries.length === 0) {
+        lines.push(`${" ".repeat(indentLevel)}-`);
+        continue;
+      }
+      const [firstKey, firstValue] = entries[0];
+      lines.push(`${" ".repeat(indentLevel)}- ${firstKey}: ${serializeValue(firstValue, indentLevel + 2)}`);
+      for (let i = 1; i < entries.length; i += 1) {
+        const [key, value] = entries[i];
+        lines.push(`${" ".repeat(indentLevel + 2)}${key}: ${serializeValue(value, indentLevel + 2)}`);
+      }
+      continue;
+    }
+    lines.push(`${" ".repeat(indentLevel)}- ${serializeValue(item, indentLevel + 2)}`);
+  }
+  return `\n${lines.join("\n")}`;
+}
+function stringifyBlocks(blocks) {
+  const out = [];
+  for (const block of blocks) {
+    out.push(`${block.type}:`);
+    for (const [key, value] of Object.entries(block.props)) {
+      if (Array.isArray(value)) {
+        out.push(`  ${key}:${serializeList(value, 4)}`);
+      } else {
+        out.push(`  ${key}: ${serializeValue(value, 2)}`);
+      }
+    }
+    out.push("");
+  }
+  return out.join("\n").trimEnd();
+}
+function updateIdReferencesInBlocks(blocks, idMapByType) {
+  for (const block of blocks) {
+    const refFields = ID_REFERENCE_FIELDS_BY_TYPE[block.type] ?? [];
+    for (const field of refFields) {
+      if (block.props[field] === undefined || block.props[field] === null || block.props[field] === "") continue;
+      const refType = field;
+      const mapped = idMapByType[refType]?.get(String(block.props[field]));
+      if (mapped) block.props[field] = mapped;
+    }
+    if (block.type === "actor" && Array.isArray(block.props.attachments)) {
+      const assetMap = idMapByType.asset;
+      if (assetMap) {
+        for (const attachment of block.props.attachments) {
+          if (!attachment || typeof attachment !== "object") continue;
+          const mapped = assetMap.get(String(attachment.ref));
+          if (mapped) attachment.ref = mapped;
+        }
+      }
+    }
+    if (block.type === "balloon" && typeof block.props.tail === "string") {
+      const match = block.props.tail.match(/^toActor\(([^()]+)\)$/);
+      if (match) {
+        const oldId = match[1].trim();
+        const mapped = idMapByType.actor?.get(oldId);
+        if (mapped) block.props.tail = `toActor(${mapped})`;
+      }
+    }
+    if (block.props.styleRef !== undefined && block.props.styleRef !== null && block.props.styleRef !== "") {
+      const mapped = idMapByType.style?.get(String(block.props.styleRef));
+      if (mapped) block.props.styleRef = mapped;
+    }
+  }
+}
+function setupRenumberIds() {
+  if (!els.renumberBtn) return;
+  els.renumberBtn.addEventListener("click", () => {
+    const blocks = parseDsl(els.input.value);
+    blocks.sort((a, b) => a.order - b.order);
+    const countersByType = {};
+    const idMapByType = {};
+    for (const block of blocks) {
+      if (block.type === "meta" || block.props.id === undefined || block.props.id === null || block.props.id === "") continue;
+      countersByType[block.type] = (countersByType[block.type] ?? 0) + 1;
+      const oldId = String(block.props.id);
+      const newId = nextIdForType(block.type, countersByType[block.type]);
+      if (!idMapByType[block.type]) idMapByType[block.type] = new Map();
+      idMapByType[block.type].set(oldId, newId);
+      block.props.id = newId;
+    }
+    updateIdReferencesInBlocks(blocks, idMapByType);
+    els.input.value = stringifyBlocks(blocks);
+    update();
+  });
+}
 async function loadDefaultDsl() {
   const response = await fetch(DEFAULT_DSL_PATH, { cache: "no-store" });
   if (!response.ok) {
@@ -1171,6 +1297,7 @@ async function init() {
   setupResize();
   setupPanZoom();
   setupDownload();
+  setupRenumberIds();
   update();
 }
 void init();

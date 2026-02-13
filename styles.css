@@ -37,6 +37,18 @@ html, body { margin: 0; height: 100%; color: var(--text); background: var(--bg);
 }
 
 .left-pane { padding: 10px; }
+.controls {
+  display: flex;
+  gap: 8px;
+}
+.controls button {
+  padding: 6px 10px;
+  cursor: pointer;
+}
+.controls-left {
+  margin-bottom: 8px;
+}
+
 .left-pane label { font-weight: 600; margin-bottom: 6px; }
 #dslInput {
   flex: 1;
