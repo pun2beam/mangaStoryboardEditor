@@ -1178,7 +1178,8 @@ function setupDownload() {
 }
 function nextIdForType(type, count) {
   const prefix = ID_PREFIX_BY_TYPE[type] ?? type;
-  return `${prefix}${count}`;
+  const renumberedValue = 1000 + (count - 1) * 10;
+  return `${prefix}${renumberedValue}`;
 }
 function serializeValue(value, indentLevel) {
   if (Array.isArray(value)) return serializeList(value, indentLevel);
