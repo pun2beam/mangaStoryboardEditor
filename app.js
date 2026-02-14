@@ -83,7 +83,7 @@ function parseDsl(text) {
     }
     const blockMatch = raw.match(/^([a-zA-Z][\w-]*)\s*:\s*$/);
     if (!blockMatch) throw new Error(`Line ${i + 1}: ブロック宣言が不正です`);
-    const block = { type: blockMatch[1], props: {}, line: i + 1, order: blocks.length };
+    const block = { type: blockMatch[1], props: {}, line: i + 1, order: blocks.length, sourceFormat: "flat" };
     i += 1;
     while (i < lines.length) {
       const bodyRaw = lines[i];
@@ -104,10 +104,11 @@ function parseDsl(text) {
       if (rawValue === "|") {
         i += 1;
         const multi = [];
+        const multilineIndent = keyIndent + 2;
         while (i < lines.length) {
           const m = lines[i];
-          if (!/^\s{4,}/.test(m)) break;
-          multi.push(m.replace(/^\s{4}/, ""));
+          if (indentWidth(m) < multilineIndent) break;
+          multi.push(m.slice(multilineIndent));
           i += 1;
         }
         block.props[key] = multi.join("\n");
@@ -178,10 +179,11 @@ function parseHierarchicalBlock(lines, startIndex, baseIndent) {
     if (rawValue === "|") {
       i += 1;
       const multi = [];
+      const multilineIndent = keyIndent + 2;
       while (i < lines.length) {
         const m = lines[i];
-        if (!/^\s{4,}/.test(m)) break;
-        multi.push(m.replace(/^\s{4}/, ""));
+        if (indentWidth(m) < multilineIndent) break;
+        multi.push(m.slice(multilineIndent));
         i += 1;
       }
       node.props[key] = multi.join("\n");
@@ -203,14 +205,23 @@ function flattenHierarchicalBlocks(nodes) {
   let order = 0;
   const walk = (node, context) => {
     const props = { ...node.props };
+    const autoParentRefFields = [];
     const parentRef = HIERARCHY_PARENT_REF[node.type];
     if (parentRef && (props[parentRef.field] === undefined || props[parentRef.field] === null || props[parentRef.field] === "")) {
       const parentValue = context[parentRef.ctxKey];
       if (parentValue !== undefined && parentValue !== null && parentValue !== "") {
         props[parentRef.field] = parentValue;
+        autoParentRefFields.push(parentRef.field);
       }
     }
-    blocks.push({ type: node.type, props, line: node.line, order });
+    blocks.push({
+      type: node.type,
+      props,
+      line: node.line,
+      order,
+      sourceFormat: "hierarchical",
+      autoParentRefFields,
+    });
     order += 1;
     const nextContext = { ...context };
     if (node.type === "page") {
@@ -1378,7 +1389,7 @@ function serializeList(list, indentLevel) {
   }
   return `\n${lines.join("\n")}`;
 }
-function stringifyBlocks(blocks) {
+function stringifyFlatBlocks(blocks) {
   const out = [];
   for (const block of blocks) {
     out.push(`${block.type}:`);
@@ -1392,6 +1403,78 @@ function stringifyBlocks(blocks) {
     out.push("");
   }
   return out.join("\n").trimEnd();
+}
+function stringifyHierarchicalBlocks(blocks) {
+  const sortedBlocks = [...blocks].sort((a, b) => a.order - b.order);
+  const pagesById = new Map();
+  const panelsById = new Map();
+  const pageChildren = new Map();
+  const panelChildren = new Map();
+  for (const block of sortedBlocks) {
+    if (block.type === "page") {
+      pagesById.set(String(block.props.id ?? ""), block);
+      pageChildren.set(block, []);
+    }
+    if (block.type === "panel") {
+      panelsById.set(String(block.props.id ?? ""), block);
+      panelChildren.set(block, []);
+    }
+  }
+  const topLevel = [];
+  for (const block of sortedBlocks) {
+    if (block.type === "panel") {
+      const page = pagesById.get(String(block.props.page ?? ""));
+      if (page) {
+        pageChildren.get(page).push(block);
+        continue;
+      }
+    }
+    if (HIERARCHY_PARENT_REF[block.type]?.field === "panel") {
+      const panel = panelsById.get(String(block.props.panel ?? ""));
+      if (panel) {
+        panelChildren.get(panel).push(block);
+        continue;
+      }
+    }
+    if (block.type !== "panel" && !HIERARCHY_PARENT_REF[block.type]) topLevel.push(block);
+    if (block.type === "panel" && !pagesById.get(String(block.props.page ?? ""))) topLevel.push(block);
+    if (HIERARCHY_PARENT_REF[block.type]?.field === "panel" && !panelsById.get(String(block.props.panel ?? ""))) topLevel.push(block);
+  }
+  const out = [];
+  const writeBlock = (block, indentLevel, omitFields = new Set()) => {
+    const indent = " ".repeat(indentLevel);
+    out.push(`${indent}${block.type}:`);
+    for (const [key, value] of Object.entries(block.props)) {
+      if (omitFields.has(key)) continue;
+      if (Array.isArray(value)) {
+        out.push(`${indent}  ${key}:${serializeList(value, indentLevel + 4)}`);
+      } else {
+        out.push(`${indent}  ${key}: ${serializeValue(value, indentLevel + 2)}`);
+      }
+    }
+    if (block.type === "page") {
+      for (const panel of pageChildren.get(block) ?? []) {
+        const omit = new Set(panel.autoParentRefFields ?? []);
+        writeBlock(panel, indentLevel + 2, omit);
+      }
+    }
+    if (block.type === "panel") {
+      for (const child of panelChildren.get(block) ?? []) {
+        const omit = new Set(child.autoParentRefFields ?? []);
+        writeBlock(child, indentLevel + 2, omit);
+      }
+    }
+  };
+  for (const block of topLevel) {
+    writeBlock(block, 0);
+    out.push("");
+  }
+  return out.join("\n").trimEnd();
+}
+function stringifyBlocks(blocks) {
+  const prefersHierarchical = blocks.some((block) => block.sourceFormat === "hierarchical");
+  if (prefersHierarchical) return stringifyHierarchicalBlocks(blocks);
+  return stringifyFlatBlocks(blocks);
 }
 function buildIdRemap(blocks) {
   const countersByType = {};
