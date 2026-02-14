@@ -550,16 +550,33 @@ function pUnit(item, dicts, refKey) {
   const page = dicts.pages.get(String(ref.page));
   return page?.unit === "px" ? "px" : "percent";
 }
+function intersectsRect(a, b) {
+  return a.x < b.x + b.w
+    && a.x + a.w > b.x
+    && a.y < b.y + b.h
+    && a.y + a.h > b.y;
+}
+function findMinNonOverlapY(panel, inner, unit, existingRects) {
+  const step = unit === "px" ? 1 : 0.01;
+  const maxIterations = unit === "px" ? 100000 : 1000000;
+  const fromCoord = (value) => unit === "px" ? value : value / inner.h * 100;
+  let baseY = panel.y;
+  for (let i = 0; i < maxIterations; i += 1) {
+    const candidate = { x: panel.x, y: baseY, w: panel.w, h: panel.h };
+    const candidateRect = rectInPage(candidate, inner, unit);
+    const hit = existingRects.find((rect) => intersectsRect(candidateRect, rect));
+    if (!hit) return unit === "px" ? Math.round(baseY) : Number(baseY.toFixed(2));
+    const nextY = fromCoord(hit.y + hit.h - inner.y);
+    if (!Number.isFinite(nextY)) break;
+    baseY = Math.max(baseY + step, nextY);
+  }
+  return unit === "px" ? Math.round(baseY) : Number(baseY.toFixed(2));
+}
 function render(scene) {
   const showActorName = isOn(scene.meta?.["actor.name.visible"]);
   const defaultTextDirection = normalizeTextDirection(scene.meta?.["text.direction"]);
   const pageLayouts = buildPageLayouts(scene);
-  const panelRects = new Map();
-  for (const panel of scene.panels) {
-    const pageLayout = pageLayouts.get(String(panel.page));
-    if (!pageLayout) continue;
-    panelRects.set(String(panel.id), rectInPage(panel, pageLayout.inner, pageLayout.page.unit));
-  }
+  const panelRects = buildPanelRects(scene, pageLayouts);
   const panelMap = new Map(scene.panels.map((p) => [String(p.id), p]));
   const actorMap = new Map(scene.actors.map((a) => [String(a.id), a]));
   const assetMap = new Map(scene.assets.map((asset) => [String(asset.id), asset]));
@@ -680,15 +697,29 @@ function buildPageLayouts(scene) {
       h: h * (1 - page.margin / 50),
     };
     const panelsInPage = scene.panels.filter((panel) => String(panel.page) === String(page.id));
+    const placedRects = [];
     let maxY = frame.y + frame.h;
     for (const panel of panelsInPage) {
+      if (panel._autoPlaced) {
+        panel.y = findMinNonOverlapY(panel, inner, page.unit, placedRects);
+      }
       const panelRect = rectInPage(panel, inner, page.unit);
+      placedRects.push(panelRect);
       maxY = Math.max(maxY, panelRect.y + panelRect.h);
     }
     layouts.set(String(page.id), { page, frame, inner, maxY });
     offsetY = maxY + 1;
   }
   return layouts;
+}
+function buildPanelRects(scene, pageLayouts) {
+  const panelRects = new Map();
+  for (const panel of scene.panels) {
+    const pageLayout = pageLayouts.get(String(panel.page));
+    if (!pageLayout) continue;
+    panelRects.set(String(panel.id), rectInPage(panel, pageLayout.inner, pageLayout.page.unit));
+  }
+  return panelRects;
 }
 function renderPageFrames(pageLayouts) {
   return Array.from(pageLayouts.values())
