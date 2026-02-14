@@ -343,7 +343,13 @@ function validateAndBuild(blocks) {
     }
   });
   for (const panel of scene.panels) {
-    requireFields(panel, ["id", "page", "x", "y", "w", "h"], "panel");
+    requireFields(panel, ["id", "page", "w", "h"], "panel");
+    const hasX = !(panel.x === undefined || panel.x === null || panel.x === "");
+    const hasY = !(panel.y === undefined || panel.y === null || panel.y === "");
+    // 既存DSL互換: x,y が両方ある場合は明示座標を優先し、欠ける場合のみ自動配置対象にする。
+    panel._autoPlaced = !hasX || !hasY;
+    panel.x = num(panel.x, 0);
+    panel.y = num(panel.y, 0);
     if (!dicts.pages.get(String(panel.page))) throw new Error(`Line ${panel._line}: 未定義 page 参照 ${panel.page}`);
     if (panel.w <= 0 || panel.h <= 0) throw new Error(`Line ${panel._line}: panel w/h は正数`);
   }
