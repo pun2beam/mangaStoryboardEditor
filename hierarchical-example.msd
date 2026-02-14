@@ -33,18 +33,31 @@ page:
       h: 18
       shape: oval
       tail: toActor(a1000)
-      fontsize: 10
+      fontsize: 25px
       text: |
         階層入力の
-        ラウンドトリップ
+        テスト
     object:
       id: o1000
       x: 60
       y: 20
       w: 30
-      h: 10
+      h: 60
       shape: square
-      text: NOTE
+      text: |
+        NOTE
+        メモメモ
+    caption:
+      id: c1000
+      x: 3
+      y: 50
+      w: 20
+      h: 30
+      fontsize: 25px
+      shape: square
+      text: |
+        NOTE
+        メモメモ
     actor:
       id: a1010
       x: 40
