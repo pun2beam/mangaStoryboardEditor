@@ -89,6 +89,7 @@ SVG描画順は原則：
 * `version`（任意）
 * `actor.name.visible`（任意、`on`/`off`。`on` の場合、`actor.name` をキャラクターの上部に表示）
 * `text.direction`（任意、`horizontal`/`vertical`。既定: `horizontal`。全体の文字方向）
+* `base.panel.direction`（任意、`left`/`right`/`bottom`。panel自動配置の既定方向。既定: `bottom`）
 
 例:
 
@@ -140,11 +141,18 @@ page:
 任意:
 
 * `x,y`（省略可。省略時は自動配置対象として扱う）
+* `next`（任意、`left`/`right`/`bottom`。このpanelの次に続くpanelの自動配置方向ヒント）
 * `radius`（角丸、既定0）
 * `stroke`（枠線色、既定`black`）
 * `strokeWidth`（既定1）
 * `fill`（既定`none`）
 * `gutter`（コマ間余白のヒント。描画には使わない/使ってもよい）
+
+配置優先ルール:
+
+* `x,y` 明示 > 直前panelの `next` 明示 > `meta.base.panel.direction` 既定。
+* `next` は小文字化して解釈し、許容値以外はエラー。
+* 「1つ前のpanelの `next` が次panelに適用される」ロジックは同一 `page` 内でのみ有効。
 
 互換性ルール:
 
