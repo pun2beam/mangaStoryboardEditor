@@ -6,6 +6,8 @@ const EYE_TYPES = new Set(["right", "left", "up", "down", "cry", "close", "wink"
 const FACING_TYPES = new Set(["left", "right", "back"]);
 const HEAD_SHAPES = new Set(["circle", "square", "none"]);
 const TEXT_DIRECTIONS = new Set(["horizontal", "vertical"]);
+const HORIZONTAL_ALIGNS = new Set(["left", "center", "right"]);
+const VERTICAL_ALIGNS = new Set(["top", "center", "bottom"]);
 const BALLOON_TAIL_TARGET_Y_OFFSET = { px: 12, percent: 0 };
 const TEXT_METRICS_CONTEXT = document.createElement("canvas").getContext("2d");
 const MATH_EX_TO_PX = 8;
@@ -280,7 +282,8 @@ function validateAndBuild(blocks) {
   for (const caption of scene.captions) {
     requireFields(caption, ["x", "y", "w", "h", "text"], "caption");
     caption.style = caption.style || "box";
-    caption.align = caption.align || "center";
+    caption.align = normalizeHorizontalAlign(caption.align, "center");
+    caption.valign = normalizeVerticalAlign(caption.valign ?? caption.vAlign ?? caption.verticalAlign, "top");
     caption.fontSize = parseSizedValue(caption.fontsize ?? caption.fontSize, 4, pUnit(caption, dicts, "panel"));
     caption.emphasisFontSize = parseOptionalSizedValue(
       caption["emphasis.fontsize"] ?? caption.emphasisFontsize ?? caption.emphasisFontSize,
@@ -378,6 +381,16 @@ function parseSizedValue(value, fallbackValue, defaultUnit) {
 function normalizeTextDirection(value, fallback = "horizontal") {
   const candidate = typeof value === "string" ? value.toLowerCase() : "";
   if (TEXT_DIRECTIONS.has(candidate)) return candidate;
+  return fallback;
+}
+function normalizeHorizontalAlign(value, fallback = "center") {
+  const candidate = typeof value === "string" ? value.toLowerCase() : "";
+  if (HORIZONTAL_ALIGNS.has(candidate)) return candidate;
+  return fallback;
+}
+function normalizeVerticalAlign(value, fallback = "top") {
+  const candidate = typeof value === "string" ? value.toLowerCase() : "";
+  if (VERTICAL_ALIGNS.has(candidate)) return candidate;
   return fallback;
 }
 function pUnit(item, dicts, refKey) {
@@ -801,7 +814,19 @@ function anchorPointOnRectTowardPoint(rect, fromPoint, towardPoint) {
 function renderCaption(caption, panelRect, unit, defaultTextDirection) {
   const r = withinPanel(caption, panelRect, unit);
   const box = caption.style === "none" ? "" : `<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="white" stroke="black"/>`;
-  const text = renderText(caption.text, r, caption.fontSize, caption.align, caption.padding, unit, caption.lineHeight, "top", caption.textDirection || defaultTextDirection, true, caption.emphasisFontSize);
+  const text = renderText(
+    caption.text,
+    r,
+    caption.fontSize,
+    caption.align,
+    caption.padding,
+    unit,
+    caption.lineHeight,
+    caption.valign,
+    caption.textDirection || defaultTextDirection,
+    true,
+    caption.emphasisFontSize,
+  );
   return `<g>${box}${text}</g>`;
 }
 function renderSfx(sfx, panelRect, unit, defaultTextDirection) {
@@ -861,11 +886,17 @@ function renderText(text, rect, fontSize, align, padding, unit, lineHeight = 1.2
         : rect.x + rect.w / 2;
     const columnStep = baseSize * lineHeight;
     const totalTextWidth = baseSize + (lines.length - 1) * columnStep;
-    const startX = verticalAlign === "center" ? x0 + totalTextWidth / 2 - baseSize / 2 : x0;
+    const startX = verticalAlign === "center"
+      ? x0 + totalTextWidth / 2 - baseSize / 2
+      : verticalAlign === "bottom"
+        ? x0 + totalTextWidth - baseSize
+        : x0;
     const y = verticalAlign === "center"
       ? rect.y + paddingY + (rect.h - paddingY * 2) / 2
-      : rect.y + paddingY;
-    const anchor = verticalAlign === "center" ? "middle" : "start";
+      : verticalAlign === "bottom"
+        ? rect.y + rect.h - paddingY
+        : rect.y + paddingY;
+    const anchor = verticalAlign === "center" ? "middle" : verticalAlign === "bottom" ? "end" : "start";
     const tspans = hasEmphasis
       ? emphasisLines.map((segments, i) => {
         const content = segments.map((segment) => {
@@ -888,7 +919,9 @@ function renderText(text, rect, fontSize, align, padding, unit, lineHeight = 1.2
   const totalTextHeight = baseSize + (lines.length - 1) * baseSize * lineHeight;
   const y0 = verticalAlign === "center"
     ? rect.y + paddingY + (rect.h - paddingY * 2 - totalTextHeight) / 2 + baseSize
-    : rect.y + baseSize + paddingY;
+    : verticalAlign === "bottom"
+      ? rect.y + rect.h - paddingY - totalTextHeight + baseSize
+      : rect.y + baseSize + paddingY;
   const tspans = lines.map((line, i) => `<tspan x="${x}" dy="${i === 0 ? 0 : baseSize * lineHeight}">${escapeXml(line)}</tspan>`).join("");
   return `<text x="${x}" y="${y0}" font-size="${baseSize}" text-anchor="${anchor}">${tspans}</text>`;
 }
