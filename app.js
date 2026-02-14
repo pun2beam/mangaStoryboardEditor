@@ -557,20 +557,67 @@ function intersectsRect(a, b) {
     && a.y + a.h > b.y;
 }
 function findMinNonOverlapY(panel, inner, unit, existingRects) {
+  const AUTO_PLACE_MAX_STAGES = 3;
   const step = unit === "px" ? 1 : 0.01;
   const maxIterations = unit === "px" ? 100000 : 1000000;
+  const precision = unit === "px" ? 0 : 2;
+  const roundValue = (value) => unit === "px" ? Math.round(value) : Number(value.toFixed(precision));
+  const toPercentX = (value) => unit === "px" ? value / inner.w * 100 : value;
+  const toPercentY = (value) => unit === "px" ? value / inner.h * 100 : value;
   const fromCoord = (value) => unit === "px" ? value : value / inner.h * 100;
-  let baseY = panel.y;
-  for (let i = 0; i < maxIterations; i += 1) {
-    const candidate = { x: panel.x, y: baseY, w: panel.w, h: panel.h };
-    const candidateRect = rectInPage(candidate, inner, unit);
-    const hit = existingRects.find((rect) => intersectsRect(candidateRect, rect));
-    if (!hit) return unit === "px" ? Math.round(baseY) : Number(baseY.toFixed(2));
-    const nextY = fromCoord(hit.y + hit.h - inner.y);
-    if (!Number.isFinite(nextY)) break;
-    baseY = Math.max(baseY + step, nextY);
+
+  function detectFailure(candidate, allowOverflowY) {
+    const px = toPercentX(candidate.x);
+    const py = toPercentY(candidate.y);
+    const pw = toPercentX(candidate.w);
+    const ph = toPercentY(candidate.h);
+    if (px < 0) return "x<0";
+    if (px + pw > 100) return "x+w>100";
+    if (py < 0) return "y<0";
+    if (!allowOverflowY && py > 100) return "y>100";
+    if (!allowOverflowY && py + ph > 100) return "y+h>100";
+    return null;
   }
-  return unit === "px" ? Math.round(baseY) : Number(baseY.toFixed(2));
+
+  function searchByStage(startX, startY, allowOverflowY) {
+    let baseY = startY;
+    let lastCandidate = { x: startX, y: baseY, w: panel.w, h: panel.h };
+    for (let i = 0; i < maxIterations; i += 1) {
+      const candidate = { x: startX, y: baseY, w: panel.w, h: panel.h };
+      lastCandidate = candidate;
+      const failure = detectFailure(candidate, allowOverflowY);
+      if (failure) return { ok: false, failure, candidate };
+      const candidateRect = rectInPage(candidate, inner, unit);
+      const hit = existingRects.find((rect) => intersectsRect(candidateRect, rect));
+      if (!hit) return { ok: true, candidate };
+      const nextY = fromCoord(hit.y + hit.h - inner.y);
+      if (!Number.isFinite(nextY)) return { ok: false, failure: "invalid-next-y", candidate };
+      baseY = Math.max(baseY + step, nextY);
+    }
+    return { ok: false, failure: "iteration-limit", candidate: lastCandidate };
+  }
+
+  const attempts = [
+    { name: "primary", x: panel.x, y: panel.y, allowOverflowY: false },
+    { name: "fallback", x: 0, y: panel.y, allowOverflowY: false },
+    { name: "finalOverflow", x: 0, y: panel.y, allowOverflowY: true },
+  ];
+  const tried = new Set();
+  let lastResult = { ok: false, candidate: { x: panel.x, y: panel.y, w: panel.w, h: panel.h } };
+
+  for (let i = 0; i < Math.min(AUTO_PLACE_MAX_STAGES, attempts.length); i += 1) {
+    const attempt = attempts[i];
+    const key = `${roundValue(attempt.x)}:${roundValue(attempt.y)}:${attempt.allowOverflowY}`;
+    if (tried.has(key)) continue;
+    tried.add(key);
+    lastResult = searchByStage(attempt.x, attempt.y, attempt.allowOverflowY);
+    if (lastResult.ok) return roundValue(lastResult.candidate.y);
+    if (attempt.name === "finalOverflow") {
+      return roundValue(lastResult.candidate.y);
+    }
+  }
+
+  return roundValue(lastResult.candidate.y);
 }
 function render(scene) {
   const showActorName = isOn(scene.meta?.["actor.name.visible"]);
