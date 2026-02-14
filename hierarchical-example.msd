@@ -12,10 +12,11 @@ page:
     x: 5
     y: 5
     w: 90
-    h: 90
+    h: 30
+
     actor:
       id: a1000
-      x: 50
+      x: 40
       y: 90
       scale: 6
       pose: stand
@@ -24,30 +25,36 @@ page:
       name: Taro
       attachments:
         - ref: as1000
+
     balloon:
       id: b1000
       x: 12
-      y: 15
+      y: 10
       w: 40
       h: 18
       shape: oval
       tail: toActor(a1000)
-      fontsize: 20
+      fontsize: 10
       text: |
         階層入力の
         ラウンドトリップ
+
     object:
       id: o1000
       x: 60
       y: 20
       w: 30
-      h: 40
+      h: 10
       shape: square
       text: NOTE
-    asset:
-      id: as1000
-      kind: prop
-      key: hat
-      x: 0
-      y: -15
-      scale: 1
+
+asset:
+  id: as1000
+  w: 55
+  h: 55
+  dx: -31.5
+  dy: -80.5
+  s: 1.2
+  rot: 0
+  z: 1
+  src: ./assets/hair1.svg
