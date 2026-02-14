@@ -1,6 +1,7 @@
 meta:
   title: Hierarchy test
   author: DEF
+  text.direction: horizontal
 
 page:
   id: p1000
@@ -13,7 +14,6 @@ page:
     y: 5
     w: 90
     h: 30
-
     actor:
       id: a1000
       x: 40
@@ -25,7 +25,6 @@ page:
       name: Taro
       attachments:
         - ref: as1000
-
     balloon:
       id: b1000
       x: 12
@@ -38,7 +37,6 @@ page:
       text: |
         階層入力の
         ラウンドトリップ
-
     object:
       id: o1000
       x: 60
@@ -47,6 +45,23 @@ page:
       h: 10
       shape: square
       text: NOTE
+    actor:
+      id: a1010
+      x: 40
+      y: 90
+      scale: 6
+      pose: stand
+      emotion: smile
+      facing: left
+      name: Taro
+      attachments:
+        - ref: as1000
+  panel:
+    id: 1010
+    x: 5
+    y: 36
+    w: 90
+    h: 30
 
 asset:
   id: as1000
