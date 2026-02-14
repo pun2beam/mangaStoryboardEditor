@@ -33,6 +33,29 @@ const ID_REFERENCE_FIELDS_BY_TYPE = Object.freeze({
   sfx: ["panel"],
   asset: ["panel"],
 });
+const HIERARCHICAL_BLOCK_TYPES = new Set([
+  "meta",
+  "page",
+  "panel",
+  "actor",
+  "object",
+  "boxarrow",
+  "balloon",
+  "caption",
+  "sfx",
+  "asset",
+  "style",
+]);
+const HIERARCHY_PARENT_REF = Object.freeze({
+  panel: { field: "page", ctxKey: "pageId" },
+  actor: { field: "panel", ctxKey: "panelId" },
+  object: { field: "panel", ctxKey: "panelId" },
+  boxarrow: { field: "panel", ctxKey: "panelId" },
+  balloon: { field: "panel", ctxKey: "panelId" },
+  caption: { field: "panel", ctxKey: "panelId" },
+  sfx: { field: "panel", ctxKey: "panelId" },
+  asset: { field: "panel", ctxKey: "panelId" },
+});
 const els = {
   input: document.getElementById("dslInput"),
   errorBox: document.getElementById("errorBox"),
@@ -102,6 +125,117 @@ function parseDsl(text) {
     blocks.push(block);
   }
   return blocks;
+}
+function parseHierarchicalDsl(text) {
+  const lines = text.replace(/\r\n?/g, "\n").split("\n");
+  const nodes = [];
+  for (let i = 0; i < lines.length;) {
+    const raw = lines[i];
+    const trimmed = raw.trim();
+    if (!trimmed || trimmed.startsWith("#")) {
+      i += 1;
+      continue;
+    }
+    if (indentWidth(raw) !== 0) throw new Error(`Line ${i + 1}: ブロック宣言が不正です`);
+    const parsed = parseHierarchicalBlock(lines, i, 0);
+    nodes.push(parsed.node);
+    i = parsed.nextIndex;
+  }
+  return flattenHierarchicalBlocks(nodes);
+}
+function parseHierarchicalBlock(lines, startIndex, baseIndent) {
+  const raw = lines[startIndex];
+  const blockMatch = raw.match(/^\s*([a-zA-Z][\w-]*)\s*:\s*$/);
+  if (!blockMatch || indentWidth(raw) !== baseIndent) {
+    throw new Error(`Line ${startIndex + 1}: ブロック宣言が不正です`);
+  }
+  const type = blockMatch[1];
+  if (!HIERARCHICAL_BLOCK_TYPES.has(type)) {
+    throw new Error(`Line ${startIndex + 1}: 未対応ブロック ${type}`);
+  }
+  const node = { type, props: {}, line: startIndex + 1, children: [] };
+  let i = startIndex + 1;
+  while (i < lines.length) {
+    const line = lines[i];
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) {
+      i += 1;
+      continue;
+    }
+    const indent = indentWidth(line);
+    if (indent <= baseIndent) break;
+    const nestedBlockMatch = line.match(/^\s*([a-zA-Z][\w-]*)\s*:\s*$/);
+    if (indent === baseIndent + 2 && nestedBlockMatch && HIERARCHICAL_BLOCK_TYPES.has(nestedBlockMatch[1])) {
+      const child = parseHierarchicalBlock(lines, i, baseIndent + 2);
+      node.children.push(child.node);
+      i = child.nextIndex;
+      continue;
+    }
+    const kv = line.match(/^\s+([\w.-]+)\s*:\s*(.*)$/);
+    if (!kv || indent !== baseIndent + 2) throw new Error(`Line ${i + 1}: key:value 形式ではありません`);
+    const [, key, rawValue] = kv;
+    const keyIndent = indentWidth(line);
+    if (rawValue === "|") {
+      i += 1;
+      const multi = [];
+      while (i < lines.length) {
+        const m = lines[i];
+        if (!/^\s{4,}/.test(m)) break;
+        multi.push(m.replace(/^\s{4}/, ""));
+        i += 1;
+      }
+      node.props[key] = multi.join("\n");
+      continue;
+    }
+    if (rawValue === "" && hasListAtIndent(lines, i + 1, keyIndent)) {
+      const parsed = parseListOfObjects(lines, i + 1, keyIndent);
+      node.props[key] = parsed.value;
+      i = parsed.nextIndex;
+      continue;
+    }
+    node.props[key] = parseValue(rawValue.trim());
+    i += 1;
+  }
+  return { node, nextIndex: i };
+}
+function flattenHierarchicalBlocks(nodes) {
+  const blocks = [];
+  let order = 0;
+  const walk = (node, context) => {
+    const props = { ...node.props };
+    const parentRef = HIERARCHY_PARENT_REF[node.type];
+    if (parentRef && (props[parentRef.field] === undefined || props[parentRef.field] === null || props[parentRef.field] === "")) {
+      const parentValue = context[parentRef.ctxKey];
+      if (parentValue !== undefined && parentValue !== null && parentValue !== "") {
+        props[parentRef.field] = parentValue;
+      }
+    }
+    blocks.push({ type: node.type, props, line: node.line, order });
+    order += 1;
+    const nextContext = { ...context };
+    if (node.type === "page") {
+      nextContext.pageId = props.id;
+      nextContext.panelId = undefined;
+    }
+    if (node.type === "panel") nextContext.panelId = props.id;
+    for (const child of node.children) walk(child, nextContext);
+  };
+  for (const node of nodes) walk(node, {});
+  return blocks;
+}
+function looksLikeHierarchicalDsl(text) {
+  const lines = text.replace(/\r\n?/g, "\n").split("\n");
+  return lines.some((line) => {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) return false;
+    if (!/^\s{2,}/.test(line)) return false;
+    const m = trimmed.match(/^([a-zA-Z][\w-]*)\s*:\s*$/);
+    return Boolean(m && HIERARCHICAL_BLOCK_TYPES.has(m[1]));
+  });
+}
+function parseBlocks(text) {
+  if (looksLikeHierarchicalDsl(text)) return parseHierarchicalDsl(text);
+  return parseDsl(text);
 }
 function indentWidth(line) {
   const m = line.match(/^\s*/);
@@ -1140,7 +1274,7 @@ function escapeXml(str) {
 }
 function update() {
   try {
-    const blocks = parseDsl(els.input.value);
+    const blocks = parseBlocks(els.input.value);
     const scene = validateAndBuild(blocks);
     currentScene = scene;
     const svg = render(scene);
@@ -1317,7 +1451,7 @@ function rewriteReferences(blocks, remap) {
 function setupRenumberIds() {
   if (!els.renumberBtn) return;
   els.renumberBtn.addEventListener("click", () => {
-    const blocks = parseDsl(els.input.value);
+    const blocks = parseBlocks(els.input.value);
     blocks.sort((a, b) => a.order - b.order);
     const remap = buildIdRemap(blocks);
     rewriteReferences(blocks, remap);
