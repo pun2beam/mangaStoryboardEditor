@@ -8,6 +8,7 @@ const HEAD_SHAPES = new Set(["circle", "square", "none"]);
 const TEXT_DIRECTIONS = new Set(["horizontal", "vertical"]);
 const HORIZONTAL_ALIGNS = new Set(["left", "center", "right"]);
 const VERTICAL_ALIGNS = new Set(["top", "center", "bottom"]);
+const PANEL_NEXT_DIRECTIONS = new Set(["left", "right", "bottom"]);
 const BALLOON_TAIL_TARGET_Y_OFFSET = { px: 12, percent: 0 };
 const TEXT_METRICS_CONTEXT = document.createElement("canvas").getContext("2d");
 const MATH_EX_TO_PX = 8;
@@ -348,6 +349,14 @@ function validateAndBuild(blocks) {
     const hasY = !(panel.y === undefined || panel.y === null || panel.y === "");
     // 既存DSL互換: x,y が両方ある場合は明示座標を優先し、欠ける場合のみ自動配置対象にする。
     panel._autoPlaced = !hasX || !hasY;
+    if (panel.next !== undefined && panel.next !== null && panel.next !== "") {
+      panel.next = String(panel.next).toLowerCase();
+      if (!PANEL_NEXT_DIRECTIONS.has(panel.next)) {
+        throw new Error(`Line ${panel._line}: panel next は left/right/bottom のいずれかを指定してください`);
+      }
+    } else {
+      panel.next = undefined;
+    }
     panel.x = num(panel.x, 0);
     panel.y = num(panel.y, 0);
     if (!dicts.pages.get(String(panel.page))) throw new Error(`Line ${panel._line}: 未定義 page 参照 ${panel.page}`);
@@ -619,6 +628,17 @@ function findMinNonOverlapY(panel, inner, unit, existingRects) {
 
   return roundValue(lastResult.candidate.y);
 }
+function normalizePanelDirection(value, fallback = "bottom") {
+  const candidate = typeof value === "string" ? value.toLowerCase() : "";
+  if (PANEL_NEXT_DIRECTIONS.has(candidate)) return candidate;
+  return fallback;
+}
+function resolvePanelAutoDirection(panel, previousPanel, defaultDirection) {
+  if (!panel._autoPlaced) return "bottom";
+  if (previousPanel?.next) return previousPanel.next;
+  return defaultDirection;
+}
+
 function render(scene) {
   const showActorName = isOn(scene.meta?.["actor.name.visible"]);
   const defaultTextDirection = normalizeTextDirection(scene.meta?.["text.direction"]);
@@ -733,6 +753,7 @@ function render(scene) {
 }
 function buildPageLayouts(scene) {
   const layouts = new Map();
+  const defaultPanelDirection = normalizePanelDirection(scene.meta?.["base.panel.direction"], "bottom");
   let offsetY = 0;
   for (const page of scene.pages) {
     const [w, h] = pageDimensions(page);
@@ -746,8 +767,36 @@ function buildPageLayouts(scene) {
     const panelsInPage = scene.panels.filter((panel) => String(panel.page) === String(page.id));
     const placedRects = [];
     let maxY = frame.y + frame.h;
-    for (const panel of panelsInPage) {
+    for (let i = 0; i < panelsInPage.length; i += 1) {
+      const panel = panelsInPage[i];
       if (panel._autoPlaced) {
+        const previousPanel = i > 0 ? panelsInPage[i - 1] : null;
+        const previousRect = i > 0 ? placedRects[i - 1] : null;
+        const direction = resolvePanelAutoDirection(panel, previousPanel, defaultPanelDirection);
+        if (previousRect) {
+          if (direction === "right") {
+            panel.x = page.unit === "px"
+              ? previousRect.x + previousRect.w - inner.x
+              : ((previousRect.x + previousRect.w - inner.x) / inner.w) * 100;
+            panel.y = page.unit === "px"
+              ? previousRect.y - inner.y
+              : ((previousRect.y - inner.y) / inner.h) * 100;
+          } else if (direction === "left") {
+            panel.x = page.unit === "px"
+              ? previousRect.x - inner.x - panel.w
+              : ((previousRect.x - inner.x) / inner.w) * 100 - panel.w;
+            panel.y = page.unit === "px"
+              ? previousRect.y - inner.y
+              : ((previousRect.y - inner.y) / inner.h) * 100;
+          } else {
+            panel.x = page.unit === "px"
+              ? previousRect.x - inner.x
+              : ((previousRect.x - inner.x) / inner.w) * 100;
+            panel.y = page.unit === "px"
+              ? previousRect.y + previousRect.h - inner.y
+              : ((previousRect.y + previousRect.h - inner.y) / inner.h) * 100;
+          }
+        }
         panel.y = findMinNonOverlapY(panel, inner, page.unit, placedRects);
       }
       const panelRect = rectInPage(panel, inner, page.unit);
