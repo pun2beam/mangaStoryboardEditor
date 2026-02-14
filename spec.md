@@ -260,6 +260,8 @@ balloon:
   任意:
 * `style`（`box`/`none`、既定`box`）
 * `fontSize`, `padding`, `align`, `lineHeight`（既定はballoon準拠）
+* `valign`（`top`/`center`/`bottom`、既定`top`）
+* `vAlign` / `verticalAlign`（後方互換キー）
 * `emphasis.fontsize`（任意。`**強調**` で囲んだ文字列に適用するサイズ）
 * `emphasisFontSize` / `emphasisFontsize`（後方互換キー）
 * `text.direction`（任意、`horizontal`/`vertical`。指定時はmetaより優先）
