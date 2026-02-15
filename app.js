@@ -1,4 +1,4 @@
-const DEFAULT_DSL_PATH = "./example.msd";
+const DEFAULT_DSL_PATH = "./example/readme.msd";
 const PAGE_SIZES = { B5: [1760, 2500], A4: [2480, 3508] };
 const ACTOR_TYPES = new Set(["stand", "run", "sit", "point", "think", "surprise"]);
 const EMOTIONS = new Set(["neutral", "angry", "sad", "panic", "smile"]);
