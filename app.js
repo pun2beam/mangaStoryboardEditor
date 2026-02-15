@@ -681,6 +681,98 @@ function isPanelXInBounds(panel, x, inner, unit) {
   if (unit === "px") return x >= 0 && x + panel.w <= inner.w;
   return x >= 0 && x + panel.w <= 100;
 }
+function intersectsLocalRect(a, b) {
+  return a.x < b.x + b.w
+    && a.x + a.w > b.x
+    && a.y < b.y + b.h
+    && a.y + a.h > b.y;
+}
+function findFirstNonOverlapYAtX(panel, x, existingRects, boundsMaxY) {
+  let y = 0;
+  const maxIterations = existingRects.length + 2;
+  for (let i = 0; i < maxIterations; i += 1) {
+    const candidate = { x, y, w: panel.w, h: panel.h };
+    const hit = existingRects.find((rect) => intersectsLocalRect(candidate, rect));
+    if (!hit) return y;
+    y = hit.y + hit.h;
+    if (!Number.isFinite(y)) return boundsMaxY;
+  }
+  return boundsMaxY;
+}
+function findFirstNonOverlapXAtY(panel, y, existingRects, boundsMaxX, horizontalDirection) {
+  const minX = 0;
+  const maxX = boundsMaxX - panel.w;
+  if (maxX < minX) return null;
+  const maxIterations = existingRects.length + 2;
+  if (horizontalDirection === "left") {
+    let x = maxX;
+    for (let i = 0; i < maxIterations; i += 1) {
+      if (x < minX) return null;
+      const candidate = { x, y, w: panel.w, h: panel.h };
+      const hit = existingRects.find((rect) => intersectsLocalRect(candidate, rect));
+      if (!hit) return x;
+      x = hit.x - panel.w;
+    }
+    return null;
+  }
+  let x = minX;
+  for (let i = 0; i < maxIterations; i += 1) {
+    if (x > maxX) return null;
+    const candidate = { x, y, w: panel.w, h: panel.h };
+    const hit = existingRects.find((rect) => intersectsLocalRect(candidate, rect));
+    if (!hit) return x;
+    x = hit.x + hit.w;
+  }
+  return null;
+}
+function autoPlacePanel(panel, previousPanel, existingRects, defaultPanelDirection, unit, inner) {
+  const boundsMaxX = unit === "px" ? inner.w : 100;
+  const boundsMaxY = unit === "px" ? inner.h : 100;
+  const fallbackHorizontal = defaultPanelDirection === "left.bottom" ? "left" : "right";
+
+  if (!previousPanel) {
+    panel.x = fallbackHorizontal === "left" ? boundsMaxX - panel.w : 0;
+    panel.y = 0;
+    return;
+  }
+
+  const placeHorizontal = (direction) => {
+    const x = direction === "left"
+      ? previousPanel.x - panel.w
+      : previousPanel.x + previousPanel.w;
+    if (!isPanelXInBounds(panel, x, inner, unit)) return null;
+    const y = findFirstNonOverlapYAtX(panel, x, existingRects, boundsMaxY);
+    return { x, y };
+  };
+
+  const placeBottom = () => {
+    const y = previousPanel.y + previousPanel.h;
+    if (y > boundsMaxY) return null;
+    const x = findFirstNonOverlapXAtY(panel, y, existingRects, boundsMaxX, fallbackHorizontal);
+    if (x === null) return null;
+    return { x, y };
+  };
+
+  const choose = (result) => {
+    if (!result) return false;
+    panel.x = result.x;
+    panel.y = result.y;
+    return true;
+  };
+
+  if (previousPanel.next === "left" || previousPanel.next === "right") {
+    if (choose(placeHorizontal(previousPanel.next))) return;
+  } else if (previousPanel.next === "bottom") {
+    if (choose(placeBottom())) return;
+  }
+
+  if (choose(placeHorizontal(fallbackHorizontal))) return;
+  if (choose(placeBottom())) return;
+  if (choose(placeHorizontal(fallbackHorizontal))) return;
+
+  panel.x = fallbackHorizontal === "left" ? boundsMaxX - panel.w : 0;
+  panel.y = previousPanel.y + previousPanel.h;
+}
 
 function render(scene) {
   const showActorName = isOn(scene.meta?.["actor.name.visible"]);
@@ -814,38 +906,10 @@ function buildPageLayouts(scene) {
       const panel = panelsInPage[i];
       if (panel._autoPlaced) {
         const previousPanel = i > 0 ? panelsInPage[i - 1] : null;
-        const previousRect = i > 0 ? placedRects[i - 1] : null;
-        const direction = resolvePanelAutoDirection(panel, previousPanel, defaultPanelDirection);
-        if (previousRect) {
-          const choiceOrder = direction === "right.bottom"
-            ? ["right", "bottom"]
-            : direction === "left.bottom"
-              ? ["left", "bottom"]
-              : [direction];
-          let placed = false;
-          for (const candidateDirection of choiceOrder) {
-            const coord = panelCoordInInner(panel, previousRect, inner, page.unit, candidateDirection);
-            if (!coord) continue;
-            if ((candidateDirection === "right" || candidateDirection === "left") && !isPanelXInBounds(panel, coord.x, inner, page.unit)) {
-              continue;
-            }
-            panel.x = coord.x;
-            panel.y = coord.y;
-            placed = true;
-            break;
-          }
-          if (!placed) {
-            const fallbackCoord = panelCoordInInner(panel, previousRect, inner, page.unit, "bottom");
-            if (fallbackCoord) {
-              panel.x = fallbackCoord.x;
-              panel.y = fallbackCoord.y;
-            }
-          }
-        }
-        panel.y = findMinNonOverlapY(panel, inner, page.unit, placedRects);
+        autoPlacePanel(panel, previousPanel, placedRects, defaultPanelDirection, page.unit, inner);
       }
+      placedRects.push({ x: panel.x, y: panel.y, w: panel.w, h: panel.h });
       const panelRect = rectInPage(panel, inner, page.unit);
-      placedRects.push(panelRect);
       maxY = Math.max(maxY, panelRect.y + panelRect.h);
     }
     layouts.set(String(page.id), { page, frame, inner, maxY });
