@@ -1799,7 +1799,7 @@ panel:
     tail: toActor(a1096)
     fontsize: 25px
     text: |
-      気軽に手に取ることができる
+      読み始めやすい
 
   balloon:
     id: b1171
@@ -1825,7 +1825,7 @@ panel:
     id: s1020
     x: 0
     y: 140
-    text: 記憶に残る理由
+    text: １. 記憶に残る理由
     scale: 1
     fontSize: 4
     rotate: 0
@@ -2014,3 +2014,330 @@ panel:
       う、、まぁ
       覚えてないとあまり意味はないのだけれど、
       そんな記憶でも捜すのには便利だよね。。。
+
+page:
+  id: p1030
+  size: B5
+  margin: 5
+  unit: percent
+
+panel:
+  id:1310
+  page:p1030
+  w:100
+  h:1
+  strokeWidth:0
+
+  sfx:
+    id: s1020
+    x: 0
+    y: 140
+    text: ２. 理解コストが低い理由
+    scale: 1
+    fontSize: 4
+    rotate: 0
+    stroke: #000000
+    fill: #a0f0a0
+
+panel:
+  id:1320
+  page:p1030
+  w:30
+  h:30
+  radius: 20
+  gutter:10
+
+  balloon:
+    id: b1171
+    x: 0
+    y: 0
+    w: 70
+    h: 20
+    z: 1
+    shape: oval^
+    fontsize: 25px
+    text:|
+      次に理解の負担。。
+
+  balloon:
+    id: b1171
+    x: 40
+    y: 20
+    w: 60
+    h: 20
+    z: 1
+    shape: oval^
+    fontsize: 25px
+    text:|
+      文章は順番にしか情報を出せない。。
+
+panel:
+  id:1330
+  page:p1030
+  w:30
+  h:30
+  radius: 20
+  gutter:10
+
+  balloon:
+    id: b1171
+    x: 10
+    y: 40
+    w: 60
+    h: 20
+    z: 1
+    shape: oval^
+    fontsize: 25px
+    text:|
+      マンガは情報を
+      同時に提示できる。。
+
+  balloon:
+    id: b1171
+    x: 10
+    y: 60
+    w: 60
+    h: 20
+    z: 1
+    shape: oval^
+    fontsize: 25px
+    text:|
+      だから因果関係を
+      一瞬で理解できる。
+
+
+panel:
+  id:1340
+  page:p1030
+  w:30
+  h:30
+  radius: 20
+  gutter:10
+
+  balloon:
+    id: b1171
+    x: 10
+    y: 10
+    w: 60
+    h: 20
+    z: 1
+    shape: oval^
+    fontsize: 25px
+    text:|
+      さらに視線移動だけで
+      補足にアクセスできる。
+
+  balloon:
+    id: b1171
+    x: 10
+    y: 30
+    w: 80
+    h: 30
+    z: 1
+    shape: oval^
+    fontsize: 25px
+    text:|
+       あれですよね、文章で図5参照
+      みたいなのって
+      図5を捜すのまではいいけど
+
+  balloon:
+    id: b1171
+    x: 10
+    y: 60
+    w: 80
+    h: 20
+    z: 1
+    shape: oval^
+    fontsize: 25px
+    text:|
+      図5を見た後元の文章どこだっけ
+      って迷子になりますよね。
+
+
+panel:
+  id:1350
+  page:p1030
+  w:100
+  h:1
+  strokeWidth:0
+
+  sfx:
+    id: s1020
+    x: 0
+    y: 140
+    text: ３. 推論を助ける理由
+    scale: 1
+    fontSize: 4
+    rotate: 0
+    stroke: #000000
+    fill: #a0f0a0
+
+panel:
+  id:1360
+  page:p1030
+  w:30
+  h:30
+  radius: 20
+  gutter:10
+
+  balloon:
+    id: b1171
+    x: 0
+    y: 0
+    w: 70
+    h: 20
+    z: 1
+    shape: oval^
+    fontsize: 25px
+    text:|
+      理解には推論が必要だ。
+
+  balloon:
+    id: b1171
+    x: 40
+    y: 20
+    w: 60
+    h: 20
+    z: 1
+    shape: oval^
+    fontsize: 25px
+    text:|
+      文章は頭の中で図を作る必要がある。
+
+panel:
+  id:1370
+  page:p1030
+  w:30
+  h:30
+  radius: 20
+  gutter:10
+
+  balloon:
+    id: b1171
+    x: 10
+    y: 10
+    w: 60
+    h: 20
+    z: 1
+    shape: oval^
+    fontsize: 25px
+    text:|
+      マンガは図が既にある。
+
+  balloon:
+    id: b1171
+    x: 10
+    y: 40
+    w: 60
+    h: 20
+    z: 1
+    shape: oval^
+    fontsize: 25px
+    text:|
+      つまり推論の負担を
+      外部化できる。
+
+
+  balloon:
+    id: b1171
+    x: 10
+    y: 60
+    w: 60
+    h: 20
+    z: 1
+    shape: oval^
+    fontsize: 25px
+    text:|
+      頭の中の作業を
+      減らせるんですね。
+
+
+
+page:
+  id: p1040
+  size: B5
+  margin: 5
+  unit: percent
+
+panel:
+  id:1410
+  page:p1040
+  w:100
+  h:1
+  strokeWidth:0
+
+  sfx:
+    id: s1020
+    x: 0
+    y: 140
+    text: ４. 読み始めやすい理由
+    scale: 1
+    fontSize: 4
+    rotate: 0
+    stroke: #000000
+    fill: #a0f0a0
+
+panel:
+  id:1420
+  page:p1040
+  w:30
+  h:30
+  radius: 20
+  gutter:10
+
+  balloon:
+    id: b1171
+    x: 10
+    y: 10
+    w: 60
+    h: 20
+    z: 1
+    shape: oval^
+    fontsize: 25px
+    text:|
+      最後は入口の広さ。
+
+  balloon:
+    id: b1171
+    x: 10
+    y: 30
+    w: 80
+    h: 30
+    z: 1
+    shape: oval^
+    fontsize: 25px
+    text:|
+       人は難しそうな文章を避ける。
+
+panel:
+  id:1430
+  page:p1040
+  w:30
+  h:30
+  radius: 20
+  gutter:10
+
+  balloon:
+    id: b1171
+    x: 10
+    y: 10
+    w: 60
+    h: 20
+    z: 1
+    shape: oval^
+    fontsize: 25px
+    text:|
+      マンガは理解できそうに見える。
+
+  balloon:
+    id: b1171
+    x: 10
+    y: 30
+    w: 80
+    h: 30
+    z: 1
+    shape: oval^
+    fontsize: 25px
+    text:|
+       それだけで読者が増える。
