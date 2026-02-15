@@ -687,19 +687,19 @@ function intersectsLocalRect(a, b) {
     && a.y < b.y + b.h
     && a.y + a.h > b.y;
 }
-function findFirstNonOverlapYAtX(panel, x, existingRects, boundsMaxY) {
+function findFirstNonOverlapYAtX(panel, x, existingRects, boundsMaxY, panelMargin) {
   let y = 0;
   const maxIterations = existingRects.length + 2;
   for (let i = 0; i < maxIterations; i += 1) {
     const candidate = { x, y, w: panel.w, h: panel.h };
     const hit = existingRects.find((rect) => intersectsLocalRect(candidate, rect));
     if (!hit) return y;
-    y = hit.y + hit.h;
+    y = hit.y + hit.h + panelMargin;
     if (!Number.isFinite(y)) return boundsMaxY;
   }
   return boundsMaxY;
 }
-function findFirstNonOverlapXAtY(panel, y, existingRects, boundsMaxX, horizontalDirection) {
+function findFirstNonOverlapXAtY(panel, y, existingRects, boundsMaxX, horizontalDirection, panelMargin) {
   const minX = 0;
   const maxX = boundsMaxX - panel.w;
   if (maxX < minX) return null;
@@ -711,7 +711,7 @@ function findFirstNonOverlapXAtY(panel, y, existingRects, boundsMaxX, horizontal
       const candidate = { x, y, w: panel.w, h: panel.h };
       const hit = existingRects.find((rect) => intersectsLocalRect(candidate, rect));
       if (!hit) return x;
-      x = hit.x - panel.w;
+      x = hit.x - panel.w - panelMargin;
     }
     return null;
   }
@@ -721,11 +721,11 @@ function findFirstNonOverlapXAtY(panel, y, existingRects, boundsMaxX, horizontal
     const candidate = { x, y, w: panel.w, h: panel.h };
     const hit = existingRects.find((rect) => intersectsLocalRect(candidate, rect));
     if (!hit) return x;
-    x = hit.x + hit.w;
+    x = hit.x + hit.w + panelMargin;
   }
   return null;
 }
-function autoPlacePanel(panel, previousPanel, existingRects, defaultPanelDirection, unit, inner) {
+function autoPlacePanel(panel, previousPanel, existingRects, defaultPanelDirection, unit, inner, panelMargin) {
   const boundsMaxX = unit === "px" ? inner.w : 100;
   const boundsMaxY = unit === "px" ? inner.h : 100;
   const fallbackHorizontal = defaultPanelDirection === "left.bottom" ? "left" : "right";
@@ -738,17 +738,17 @@ function autoPlacePanel(panel, previousPanel, existingRects, defaultPanelDirecti
 
   const placeHorizontal = (direction) => {
     const x = direction === "left"
-      ? previousPanel.x - panel.w
-      : previousPanel.x + previousPanel.w;
+      ? previousPanel.x - panel.w - panelMargin
+      : previousPanel.x + previousPanel.w + panelMargin;
     if (!isPanelXInBounds(panel, x, inner, unit)) return null;
-    const y = findFirstNonOverlapYAtX(panel, x, existingRects, boundsMaxY);
+    const y = findFirstNonOverlapYAtX(panel, x, existingRects, boundsMaxY, panelMargin);
     return { x, y };
   };
 
   const placeBottom = () => {
-    const y = previousPanel.y + previousPanel.h;
+    const y = previousPanel.y + previousPanel.h + panelMargin;
     if (y > boundsMaxY) return null;
-    const x = findFirstNonOverlapXAtY(panel, y, existingRects, boundsMaxX, fallbackHorizontal);
+    const x = findFirstNonOverlapXAtY(panel, y, existingRects, boundsMaxX, fallbackHorizontal, panelMargin);
     if (x === null) return null;
     return { x, y };
   };
@@ -771,7 +771,7 @@ function autoPlacePanel(panel, previousPanel, existingRects, defaultPanelDirecti
   if (choose(placeHorizontal(fallbackHorizontal))) return;
 
   panel.x = fallbackHorizontal === "left" ? boundsMaxX - panel.w : 0;
-  panel.y = previousPanel.y + previousPanel.h;
+  panel.y = previousPanel.y + previousPanel.h + panelMargin;
 }
 
 function render(scene) {
@@ -889,6 +889,8 @@ function render(scene) {
 function buildPageLayouts(scene) {
   const layouts = new Map();
   const defaultPanelDirection = normalizePanelDirection(scene.meta?.["base.panel.direction"], "right.bottom");
+  const rawPanelMargin = scene.meta?.["base.panel.margin"];
+  const defaultPanelMargin = Math.max(0, num(rawPanelMargin, 0));
   let offsetY = 0;
   for (const page of scene.pages) {
     const [w, h] = pageDimensions(page);
@@ -906,7 +908,7 @@ function buildPageLayouts(scene) {
       const panel = panelsInPage[i];
       if (panel._autoPlaced) {
         const previousPanel = i > 0 ? panelsInPage[i - 1] : null;
-        autoPlacePanel(panel, previousPanel, placedRects, defaultPanelDirection, page.unit, inner);
+        autoPlacePanel(panel, previousPanel, placedRects, defaultPanelDirection, page.unit, inner, defaultPanelMargin);
       }
       placedRects.push({ x: panel.x, y: panel.y, w: panel.w, h: panel.h });
       const panelRect = rectInPage(panel, inner, page.unit);
