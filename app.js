@@ -9,6 +9,7 @@ const TEXT_DIRECTIONS = new Set(["horizontal", "vertical"]);
 const HORIZONTAL_ALIGNS = new Set(["left", "center", "right"]);
 const VERTICAL_ALIGNS = new Set(["top", "center", "bottom"]);
 const PANEL_NEXT_DIRECTIONS = new Set(["left", "right", "bottom"]);
+const PANEL_BASE_DIRECTIONS = new Set(["right.bottom", "left.bottom"]);
 const BALLOON_TAIL_TARGET_Y_OFFSET = { px: 12, percent: 0 };
 const TEXT_METRICS_CONTEXT = document.createElement("canvas").getContext("2d");
 const MATH_EX_TO_PX = 8;
@@ -362,6 +363,16 @@ function validateAndBuild(blocks) {
     if (!dicts.pages.get(String(panel.page))) throw new Error(`Line ${panel._line}: 未定義 page 参照 ${panel.page}`);
     if (panel.w <= 0 || panel.h <= 0) throw new Error(`Line ${panel._line}: panel w/h は正数`);
   }
+  const basePanelDirection = normalizePanelDirection(scene.meta?.["base.panel.direction"], "right.bottom");
+  for (const panel of scene.panels) {
+    if (!panel.next) continue;
+    if (basePanelDirection === "right.bottom" && panel.next === "left") {
+      throw new Error(`Line ${panel._line}: base.panel.direction:right.bottom のとき panel next:left は指定できません`);
+    }
+    if (basePanelDirection === "left.bottom" && panel.next === "right") {
+      throw new Error(`Line ${panel._line}: base.panel.direction:left.bottom のとき panel next:right は指定できません`);
+    }
+  }
   const inPanelItems = ["actors", "objects", "boxarrows", "balloons", "captions", "sfx"];
   for (const type of inPanelItems) {
     for (const item of scene[type]) {
@@ -628,15 +639,47 @@ function findMinNonOverlapY(panel, inner, unit, existingRects) {
 
   return roundValue(lastResult.candidate.y);
 }
-function normalizePanelDirection(value, fallback = "bottom") {
+function normalizePanelDirection(value, fallback = "right.bottom") {
   const candidate = typeof value === "string" ? value.toLowerCase() : "";
-  if (PANEL_NEXT_DIRECTIONS.has(candidate)) return candidate;
+  if (PANEL_BASE_DIRECTIONS.has(candidate)) return candidate;
   return fallback;
 }
 function resolvePanelAutoDirection(panel, previousPanel, defaultDirection) {
   if (!panel._autoPlaced) return "bottom";
   if (previousPanel?.next) return previousPanel.next;
   return defaultDirection;
+}
+function panelCoordInInner(panel, previousRect, inner, unit, direction) {
+  if (!previousRect) return null;
+  if (unit === "px") {
+    if (direction === "right") {
+      return { x: previousRect.x + previousRect.w - inner.x, y: previousRect.y - inner.y };
+    }
+    if (direction === "left") {
+      return { x: previousRect.x - inner.x - panel.w, y: previousRect.y - inner.y };
+    }
+    return { x: previousRect.x - inner.x, y: previousRect.y + previousRect.h - inner.y };
+  }
+  if (direction === "right") {
+    return {
+      x: ((previousRect.x + previousRect.w - inner.x) / inner.w) * 100,
+      y: ((previousRect.y - inner.y) / inner.h) * 100,
+    };
+  }
+  if (direction === "left") {
+    return {
+      x: ((previousRect.x - inner.x) / inner.w) * 100 - panel.w,
+      y: ((previousRect.y - inner.y) / inner.h) * 100,
+    };
+  }
+  return {
+    x: ((previousRect.x - inner.x) / inner.w) * 100,
+    y: ((previousRect.y + previousRect.h - inner.y) / inner.h) * 100,
+  };
+}
+function isPanelXInBounds(panel, x, inner, unit) {
+  if (unit === "px") return x >= 0 && x + panel.w <= inner.w;
+  return x >= 0 && x + panel.w <= 100;
 }
 
 function render(scene) {
@@ -753,7 +796,7 @@ function render(scene) {
 }
 function buildPageLayouts(scene) {
   const layouts = new Map();
-  const defaultPanelDirection = normalizePanelDirection(scene.meta?.["base.panel.direction"], "bottom");
+  const defaultPanelDirection = normalizePanelDirection(scene.meta?.["base.panel.direction"], "right.bottom");
   let offsetY = 0;
   for (const page of scene.pages) {
     const [w, h] = pageDimensions(page);
@@ -774,27 +817,29 @@ function buildPageLayouts(scene) {
         const previousRect = i > 0 ? placedRects[i - 1] : null;
         const direction = resolvePanelAutoDirection(panel, previousPanel, defaultPanelDirection);
         if (previousRect) {
-          if (direction === "right") {
-            panel.x = page.unit === "px"
-              ? previousRect.x + previousRect.w - inner.x
-              : ((previousRect.x + previousRect.w - inner.x) / inner.w) * 100;
-            panel.y = page.unit === "px"
-              ? previousRect.y - inner.y
-              : ((previousRect.y - inner.y) / inner.h) * 100;
-          } else if (direction === "left") {
-            panel.x = page.unit === "px"
-              ? previousRect.x - inner.x - panel.w
-              : ((previousRect.x - inner.x) / inner.w) * 100 - panel.w;
-            panel.y = page.unit === "px"
-              ? previousRect.y - inner.y
-              : ((previousRect.y - inner.y) / inner.h) * 100;
-          } else {
-            panel.x = page.unit === "px"
-              ? previousRect.x - inner.x
-              : ((previousRect.x - inner.x) / inner.w) * 100;
-            panel.y = page.unit === "px"
-              ? previousRect.y + previousRect.h - inner.y
-              : ((previousRect.y + previousRect.h - inner.y) / inner.h) * 100;
+          const choiceOrder = direction === "right.bottom"
+            ? ["right", "bottom"]
+            : direction === "left.bottom"
+              ? ["left", "bottom"]
+              : [direction];
+          let placed = false;
+          for (const candidateDirection of choiceOrder) {
+            const coord = panelCoordInInner(panel, previousRect, inner, page.unit, candidateDirection);
+            if (!coord) continue;
+            if ((candidateDirection === "right" || candidateDirection === "left") && !isPanelXInBounds(panel, coord.x, inner, page.unit)) {
+              continue;
+            }
+            panel.x = coord.x;
+            panel.y = coord.y;
+            placed = true;
+            break;
+          }
+          if (!placed) {
+            const fallbackCoord = panelCoordInInner(panel, previousRect, inner, page.unit, "bottom");
+            if (fallbackCoord) {
+              panel.x = fallbackCoord.x;
+              panel.y = fallbackCoord.y;
+            }
           }
         }
         panel.y = findMinNonOverlapY(panel, inner, page.unit, placedRects);
