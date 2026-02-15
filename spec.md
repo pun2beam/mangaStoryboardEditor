@@ -33,6 +33,30 @@ webアプリとして作成し左ペインにDSLを入力し、そのDSLに基�
 * `:` の後に改行し、**2スペース以上**のインデントで `key:value`
 * ブロック間は空行があってもよい
 
+### 3.1.1 階層構文（実装対応）
+
+実装ではフラット構文に加えて、親子関係をインデントで表す**階層構文**にも対応する。
+
+* `page` の下に `panel` をネスト可能
+* `panel` の下に `actor/object/boxarrow/balloon/caption/sfx/asset` をネスト可能
+* 親参照キー（`panel.page`、`actor.panel` など）は省略可能で、その場合は親ブロックの `id` を自動補完する
+
+例:
+
+```msd
+page:
+  id:p1
+  size:B5
+  panel:
+    id:1
+    w:100
+    h:30
+    actor:
+      id:a1
+      x:20
+      y:80
+```
+
 ### 3.2 値の型
 
 * number: `12`, `3.14`, `-1`
@@ -90,6 +114,7 @@ SVG描画順は原則：
 * `actor.name.visible`（任意、`on`/`off`。`on` の場合、`actor.name` をキャラクターの上部に表示）
 * `text.direction`（任意、`horizontal`/`vertical`。既定: `horizontal`。全体の文字方向）
 * `base.panel.direction`（任意、`right.bottom`/`left.bottom`。panel自動配置の既定方向。既定: `right.bottom`）
+* `base.panel.margin`（任意、数値。panel自動配置時のコマ間余白。既定: `0`）
 
 例:
 
@@ -116,6 +141,8 @@ meta:
 * `bleed`（既定: 0）
 * `unit`（`percent`/`px`、既定: `percent`）
 * `bg`（背景色、既定: `white`）
+* `stroke`（ページ枠線色、既定: `#c9ced6`）
+* `strokeWidth`（ページ枠線幅、既定: `2`）
 
 例:
 
@@ -188,6 +215,8 @@ panel:
 * `facing`（`left`/`right`/`back`、既定`right`）
 * `pose`（既定`stand`）
 * `emotion`（既定`neutral`）
+* `eye`（`right`/`left`/`up`/`down`/`cry`/`close`/`wink`、既定`right`）
+* `head.shape`（`circle`/`square`/`none`、既定`circle`）
 * `name`（任意、デバッグ用）
 * `lookAt`（`actor:<id>` または `point(x,y)`、任意）
 * `attachments`（任意、配列。`asset`の`id`を`ref`で参照し、`dx`,`dy`,`s`,`rot`,`z`で相対配置）
@@ -443,6 +472,12 @@ balloon:
 ### 7.4 テキスト
 
 * SVGの `<text>` は自動折返しが弱いので、実装側で改行位置を計算し `<tspan>` を並べる（簡易折返しで良い） ([MDNウェブドキュメント][2])
+* `balloon` / `caption` では、`**強調**` による強調サイズ変更に加え、`$...$`（インライン）および `$$...$$`（ディスプレイ）を数式トークンとして扱い、MathJaxが利用可能な場合はSVGとして描画する
+
+### 7.5 複数ページの配置
+
+* 複数 `page` を定義した場合、実装では縦方向に順番に配置して1つのSVGとして出力する
+* 後続ページは、前ページの描画下端+1（表示上の最小間隔）だけ下に配置する
 
 ---
 
@@ -542,6 +577,7 @@ sfx:
 左：textarea（DSL入力）
 右：SVGプレビュー領域（スクロール可能）
 ペイン比率：初期 40% : 60%（真ん中をドラッグアンドドロップで変更可能）
+左ペイン上部に「IDを振り直し」ボタンを配置し、全ブロックIDを `1000, 1010, 1020...` 形式で再採番する（参照IDも同時更新）
 
 ### 9.2.リアルタイム更新
 入力変更から 200ms程度のデバウンス後に再パース・再描画
