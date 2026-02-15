@@ -1681,7 +1681,6 @@ panel:
   h:30
   radius: 20
 
-
   object:
     id:o1
     x:67
@@ -1800,7 +1799,7 @@ panel:
     tail: toActor(a1096)
     fontsize: 25px
     text: |
-      読みやすい
+      気軽に手に取ることができる
 
   balloon:
     id: b1171
@@ -1815,3 +1814,203 @@ panel:
     text: |
       つまり、学習に**有利な形式**なんだ。
 
+panel:
+  id:1260
+  page:p1020
+  w:100
+  h:1
+  strokeWidth:0
+
+  sfx:
+    id: s1020
+    x: 0
+    y: 140
+    text: 記憶に残る理由
+    scale: 1
+    fontSize: 4
+    rotate: 0
+    stroke: #000000
+    fill: #a0f0a0
+
+panel:
+  id:1270
+  page:p1020
+  w:38
+  h:30
+  radius: 20
+  gutter:10
+
+
+  balloon:
+    id: b1171
+    x: 0
+    y: 0
+    w: 50
+    h: 10
+    z: 1
+    shape: oval
+    tail: toActor(a1096)
+    fontsize: 25px
+    text: まず記憶の話から。
+
+  balloon:
+    id: b1171
+    x: 0
+    y: 10
+    w: 60
+    h: 30
+    z: 1
+    shape: oval
+    tail: toActor(a1096)
+    fontsize: 25px
+    text:|
+      人は語られた内容の評価を
+      内容それ自体だけではなく
+      語った人自体でも評価する。
+
+panel:
+  id:1280
+  page:p1020
+  w:60
+  h:30
+  radius: 20
+  gutter:10
+
+  balloon:
+    id: b1171
+    x: 0
+    y: 0
+    w: 70
+    h: 20
+    z: 1
+    shape: oval
+    tail: toActor(a1096)
+    fontsize: 25px
+    text:|
+      マンガは先生役や解説役を置ける。
+      それが理解の枠組みを作る。
+
+  balloon:
+    id: b1171
+    x: 40
+    y: 20
+    w: 60
+    h: 20
+    z: 1
+    shape: oval
+    tail: toActor(a1095)
+    fontsize: 25px
+    text:|
+      誰が話しているかで
+      内容の重みが変わるんですね。
+
+  balloon:
+    id: b1171
+    x: 10
+    y: 40
+    w: 60
+    h: 20
+    z: 1
+    shape: oval
+    tail: toActor(a1095)
+    fontsize: 25px
+    text:|
+      そう、
+      そして評価された内容を
+      無意識下で整理する。
+
+  balloon:
+    id: b1171
+    x: 10
+    y: 60
+    w: 60
+    h: 20
+    z: 1
+    shape: oval
+    tail: toActor(a1095)
+    fontsize: 25px
+    text:|
+      そもそも学習前は内容自体を
+      判断する知識がないから
+      外枠で判断するしかない
+
+
+panel:
+  id:1290
+  page:p1020
+  w:60
+  h:30
+  radius: 20
+  gutter:10
+
+  balloon:
+    id: b1171
+    x: 0
+    y: 0
+    w: 70
+    h: 20
+    z: 1
+    shape: oval
+    tail: toActor(a1095)
+    fontsize: 25px
+    text:|
+      さらにマンガには文字だけの情報より
+      記憶のトリガーの提供が多い。
+
+  balloon:
+    id: b1171
+    x: 0
+    y: 20
+    w: 60
+    h: 30
+    z: 1
+    shape: oval
+    tail: toActor(a1095)
+    fontsize: 25px
+    text:|
+      匂いが記憶のトリガーになるって話しは
+      よく知られた話だが、基本的に
+      たいていのものは記憶のトリガーになる。
+      絵やコマ割りの位置、内容に関係ないギャグ
+      だってトリガーになる。
+
+
+panel:
+  id:1300
+  page:p1020
+  w:38
+  h:30
+  radius: 20
+  gutter:10
+
+  balloon:
+    id: b1171
+    x: 40
+    y: 50
+    w: 60
+    h: 20
+    z: 1
+    shape: oval
+    tail: toActor(a1096)
+    fontsize: 25px
+    text:|
+      あー、なんとなくわかります
+      教科書に書いた落書きページに
+      公式が書かれていたのは覚えているけど
+      肝心の公式は覚えてないとかですね。
+
+
+  balloon:
+    id: b1171
+    x: 0
+    y: 70
+    w: 60
+    h: 20
+    z: 1
+    shape: oval
+    tail: toActor(a1095)
+    fontsize: 25px
+    text:|
+      う、、まぁ
+      覚えてないとあまり意味はないのだけれど、
+      そんな記憶でも捜すのには便利だよね。。。
