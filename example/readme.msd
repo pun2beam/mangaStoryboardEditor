@@ -3,6 +3,8 @@ meta:
   author: DEF
   actor.name.visible: on
   text.direction: horizontal
+  base.panel.direction:right.bottom
+  base.panel.margin:1.5
 
 page:
   id: p1000
@@ -1582,7 +1584,7 @@ balloon:
   fontsize: 25px
   text: |
     そう簡単に
-    上手くいくかな...
+    いくかな...
 
 caption:
   id: c1270
@@ -1600,44 +1602,216 @@ page:
   margin: 5
   unit: percent
 
-sfx:
-  id: s1020
-  panel: 1250
-  x: 0
-  y: -5
-  text: そもそもマンガによる解説ッて有効なの?
-  scale: 1
-  fontSize: 5
-  rotate: 0
-  stroke: #000000
-  fill: #a0f0a0
 
 panel:
-  id: 1250
+  id: 1249
   page: p1020
-  x: 0
-  y: 0
-  w: 100
+  w: 38
   h: 30
   radius: 20
 
-caption:
-  id: c1280
-  panel: 1250
-  x: 5
-  y: 5
-  w: 30
-  h: 40
-  z: 1
-  style: box
-  fontsize: 25px
-  align:left
-  text: |
-    **仮説**
-    ①記憶の仕組み的に有利
-    　・誰が話しているか 
-    　・記憶のフック
-    　・未記述のストーリー 
-    ②文章だけと絵付きの説明
-    　・参照コスト（一次元と二次元）
-    　・読解コスト
+  sfx:
+    id: s1020
+    x: 0
+    y: -5
+    text: そもそもマンガによる解説ッて有効なの?
+    scale: 1
+    fontSize: 10
+    rotate: 0
+    stroke: #000000
+    fill: #a0f0a0
+
+  actor:
+    id: a1095
+    x: 20
+    y: 100
+    z: -1
+    scale: 5
+    pose: neutral
+    emotion: neutral
+    facing: right
+    name: Hige君
+    attachments:
+      - ref: as1030
+
+  balloon:
+    id: b1170
+    x: -4
+    y: 4
+    w: 70
+    h: 20
+    z: 1
+    shape: oval
+    tail: toActor(a1095)
+    fontsize: 25px
+    text: |
+      そもそもマンガによる
+      解説ッて有効なんですか?
+
+  actor:
+    id: a1096
+    x: 70
+    y: 120
+    z: -1
+    scale: 6
+    pose: point
+    emotion: neutral
+    facing: right
+    name: Hoge君
+    attachments:
+      - ref: as1000
+
+  balloon:
+    id: b1171
+    x: 35
+    y: 30
+    w: 80
+    h: 20
+    z: 2
+    shape: oval
+    tail: toActor(a1096)
+    fontsize: 25px
+    text: |
+      私はいくつかの点で
+      有効であると考えているよ
+panel:
+  id:1250
+  page:p1020
+  w:60
+  h:30
+  radius: 20
+
+
+  object:
+    id:o1
+    x:67
+    y:6
+    w:50
+    h:90
+    z:^11
+    shape:rect
+    text:黒板
+
+  object:
+    id:o1
+    x:70
+    y:9
+    w:20
+    h:20
+    z:1
+    fontsize:60px
+    shape:oval
+    text:記憶
+
+  object:
+    id:o1
+    x:70
+    y:30
+    w:20
+    h:20
+    z:1
+    fontsize:60px
+    shape:oval
+    text:理解
+
+  object:
+    id:o1
+    x:70
+    y:51
+    w:20
+    h:20
+    z:1
+    fontsize:60px
+    shape:oval
+    text:推論
+
+  object:
+    id:o1
+    x:70
+    y:72
+    w:20
+    h:20
+    z:1
+    fontsize:60px
+    shape:oval
+    text:動機
+
+
+  balloon:
+    id: b1171
+    x: 3
+    y: 3
+    w: 30
+    h: 10
+    z: 1
+    shape: oval
+    tail: toActor(a1096)
+    fontsize: 25px
+    text: |
+      マンガは
+
+  balloon:
+    id: b1171
+    x: 3
+    y: 15
+    w: 60
+    h: 10
+    z: 1
+    shape: oval
+    tail: toActor(a1096)
+    fontsize: 25px
+    text: |
+      記憶に残りやすく
+
+  balloon:
+    id: b1171
+    x: 3
+    y: 36
+    w: 60
+    h: 10
+    z: 1
+    shape: oval
+    tail: toActor(a1096)
+    fontsize: 25px
+    text: |
+      理解しやすく
+
+  balloon:
+    id: b1171
+    x: 3
+    y: 57
+    w: 60
+    h: 10
+    z: 1
+    shape: oval
+    tail: toActor(a1096)
+    fontsize: 25px
+    text: |
+      推論を助け
+
+  balloon:
+    id: b1171
+    x: 3
+    y: 78
+    w: 60
+    h: 10
+    z: 1
+    shape: oval
+    tail: toActor(a1096)
+    fontsize: 25px
+    text: |
+      読みやすい
+
+  balloon:
+    id: b1171
+    x: 15
+    y: 93
+    w: 50
+    h: 10
+    z: 1
+    shape: oval
+    tail: toActor(a1096)
+    fontsize: 25px
+    text: |
+      つまり、学習に**有利な形式**なんだ。
+
