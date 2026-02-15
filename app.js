@@ -399,7 +399,7 @@ function validateAndBuild(blocks) {
     object.w = num(object.w ?? object.width, 10);
     object.h = num(object.h ?? object.height, 10);
     if (object.w <= 0 || object.h <= 0) throw new Error(`Line ${object._line}: object width/height は正数`);
-    object.shape = ["rect", "circle", "none"].includes(String(object.shape)) ? String(object.shape) : "rect";
+    object.shape = ["rect", "circle", "oval", "none"].includes(String(object.shape)) ? String(object.shape) : "rect";
     object.border = parseSizedValue(object.border, 1, pUnit(object, dicts, "panel"));
     object.fontSize = parseSizedValue(object.fontsize ?? object.fontSize, 4, pUnit(object, dicts, "panel"));
     object.align = object.align || "center";
@@ -1235,6 +1235,8 @@ function renderObject(object, panelRect, unit, defaultTextDirection) {
   } else if (object.shape === "circle") {
     const radius = Math.min(r.w, r.h) / 2;
     shape = `<circle cx="${r.x + r.w / 2}" cy="${r.y + r.h / 2}" r="${radius}" fill="none" stroke="black" stroke-width="${borderWidth}"/>`;
+  } else if (object.shape === "oval") {
+    shape = `<ellipse cx="${r.x + r.w / 2}" cy="${r.y + r.h / 2}" rx="${r.w / 2}" ry="${r.h / 2}" fill="none" stroke="black" stroke-width="${borderWidth}"/>`;
   }
   const text = renderText(object.text, r, object.fontSize, object.align, object.padding, unit, object.lineHeight, "center", object.textDirection || defaultTextDirection);
   return `<g>${shape}${text}</g>`;

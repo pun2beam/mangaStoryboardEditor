@@ -322,7 +322,7 @@ balloon:
 * `text`
   任意:
 * `w,h`（既定: 10）
-* `shape`（`rect`/`circle`/`none`、既定`rect`）
+* `shape`（`rect`/`circle`/`oval`/`none`、既定`rect`）
 * `border`（既定: 1）
 * `fontSize`, `padding`, `align`, `lineHeight`
 * `text.direction`（任意、`horizontal`/`vertical`。指定時はmetaより優先）
