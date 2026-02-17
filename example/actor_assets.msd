@@ -220,8 +220,11 @@ page:
       name: Hoge君
       attachments:
         - ref: as1000
-        - ref: as1102
+        - ref: as1101
         - ref: as1201
+            s: 1.53
+        - ref: as1205
+            s: 0.63 
         - ref: as1311
         - ref: as1401
         - ref: as1501
