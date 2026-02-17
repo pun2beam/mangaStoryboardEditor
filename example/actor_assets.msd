@@ -133,12 +133,14 @@ page:
       name: Hoge君
       attachments:
         - ref: as1000
-        - ref: as1101
+        - ref: as1102
+            dx: -5.5
+            dy: -58
         - ref: as1206
         - ref: as1306
-        - ref: as1401
+        - ref: as1402
         - ref: as1502
-        - ref: as1601
+        - ref: as1602
 
     actor:
       id: a1007
@@ -151,7 +153,9 @@ page:
       name: Hoge君
       attachments:
         - ref: as1000
-        - ref: as1101
+        - ref: as1102
+            dx: -8.5
+            dy: -55
         - ref: as1207
         - ref: as1307
         - ref: as1401
@@ -170,12 +174,16 @@ page:
       attachments:
         - ref: as1000
         - ref: as1101
+            dx: -10.5
+            dy: -55.5
         - ref: as1208
         - ref: as1209
         - ref: as1308
         - ref: as1401
         - ref: as1502
-        - ref: as1601
+        - ref: as1602
+            dx: -11.5
+            dy: -55
 
     actor:
       id: a1009
@@ -188,7 +196,7 @@ page:
       name: Hoge君
       attachments:
         - ref: as1000
-        - ref: as1101
+        - ref: as1105
         - ref: as1209
         - ref: as1309
         - ref: as1401
