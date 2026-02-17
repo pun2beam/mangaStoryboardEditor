@@ -180,7 +180,7 @@ page:
         - ref: as1209
         - ref: as1308
         - ref: as1401
-        - ref: as1502
+        - ref: as1504
         - ref: as1602
             dx: -11.5
             dy: -55
@@ -227,7 +227,7 @@ page:
             s: 0.63 
         - ref: as1311
         - ref: as1401
-        - ref: as1501
+        - ref: as1502
         - ref: as1601
     
     actor:
@@ -531,8 +531,8 @@ asset:
   w: 55
   h: 55
   dx: -4.5
-  dy: -41.5
-  s: 0.1
+  dy: -42.5
+  s: 0.15
   rot: 0
   z: 2
   src: ./assets/mouse7.svg
@@ -640,9 +640,9 @@ asset:
   id: as1502
   w: 55
   h: 55
-  dx: -8.5
-  dy: -59.5
-  s: 0.3
+  dx: -8.9
+  dy: -61.1
+  s: 0.35
   rot: 0
   z: 2
   src: ./assets/eyelines2.svg
@@ -657,6 +657,17 @@ asset:
   rot: 0
   z: 2
   src: ./assets/eyelines3.svg
+
+asset:
+  id: as1504
+  w: 55
+  h: 55
+  dx: -10.9
+  dy: -62.7
+  s: 0.37
+  rot: 180
+  z: 2
+  src: ./assets/eyelines1.svg
 
 asset:
   id: as1601
