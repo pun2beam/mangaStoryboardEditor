@@ -408,6 +408,7 @@ page:
       attachments:
         - ref: as1000
         - ref: as1102
+        - ref: as1205
         - ref: as1210
         - ref: as1309
         - ref: as1401
