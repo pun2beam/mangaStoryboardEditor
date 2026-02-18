@@ -326,34 +326,15 @@ function validateAndBuild(blocks) {
     scene[key].push({ ...b.props, _line: b.line, _order: b.order });
   }
   scene.meta["text.direction"] = normalizeTextDirection(scene.meta["text.direction"] ?? scene.meta.textDirection);
-  scene.meta["layout.percent.reference"] = resolvePercentReference(scene.meta);
-  const hasBaseWidth = typeof scene.meta["layout.base.width"] === "number";
-  const hasBaseHeight = typeof scene.meta["layout.base.height"] === "number";
-  if ((hasBaseWidth && !hasBaseHeight) || (!hasBaseWidth && hasBaseHeight)) {
-    throw new Error("meta.layout.base.width / meta.layout.base.height は両方指定してください");
-  }
-  if (hasBaseWidth && hasBaseHeight) {
-    if (scene.meta["layout.base.width"] <= 0 || scene.meta["layout.base.height"] <= 0) {
-      throw new Error("meta.layout.base.width / meta.layout.base.height は正数を指定してください");
-    }
-  }
-  if (scene.meta["layout.base.size"] !== undefined && scene.meta["layout.base.size"] !== null && scene.meta["layout.base.size"] !== "") {
-    scene.meta["layout.base.size"] = String(scene.meta["layout.base.size"]).trim();
-    if (!PAGE_SIZES[scene.meta["layout.base.size"]]) {
-      throw new Error("meta.layout.base.size は既知の用紙サイズを指定してください");
-    }
-  }
-  if (scene.meta["layout.percent.reference"] === "base-size" && !resolveLayoutBaseDimensions(scene.meta)) {
-    scene.meta["layout.base.size"] = "B5";
-  }
-  const layoutPageMode = resolveLayoutPageMode(scene.meta);
-  const allowsImplicitPage = layoutPageMode === "auto-extend" || layoutPageMode === "auto-append";
+  const layoutMeta = normalizeLayoutMeta(scene.meta);
+  scene.layoutMeta = layoutMeta;
+  const allowsImplicitPage = layoutMeta.page.mode === "auto-extend" || layoutMeta.page.mode === "auto-append";
   if (scene.pages.length === 0) {
     if (!allowsImplicitPage) {
-      throw new Error("page は1つ以上必要です");
+      throw new Error("layout.page.mode: fixed では page が1つ以上必要です（auto-extend/auto-append を使う場合のみ page 省略可）");
     }
     scene.pages.push({
-      id: "auto-page-1",
+      id: nextAutoPageId(new Set()),
       size: "B5",
       margin: 5,
       unit: "percent",
@@ -381,7 +362,11 @@ function validateAndBuild(blocks) {
   });
   for (const panel of scene.panels) {
     const panelRequiredFields = allowsImplicitPage ? ["id", "w", "h"] : ["id", "page", "w", "h"];
-    requireFields(panel, panelRequiredFields, "panel");
+    const missingPanelFields = panelRequiredFields.filter((field) => panel[field] === undefined || panel[field] === null || panel[field] === "");
+    if (missingPanelFields.length > 0) {
+      const modeLabel = layoutMeta.page.mode ?? "fixed";
+      throw new Error(`Line ${panel._line}: layout.page.mode:${modeLabel} では panel に ${missingPanelFields.join(",")} が必要です`);
+    }
     const hasPanelPage = !(panel.page === undefined || panel.page === null || panel.page === "");
     if (!hasPanelPage && allowsImplicitPage) {
       panel.page = String(scene.pages[0].id);
@@ -932,18 +917,19 @@ function render(scene) {
 }
 function buildPageLayouts(scene) {
   const layouts = new Map();
-  const layoutPageMode = resolveLayoutPageMode(scene.meta) || "fixed";
-  const percentReference = resolvePercentReference(scene.meta);
+  const layoutMeta = scene.layoutMeta ?? normalizeLayoutMeta(scene.meta);
+  const layoutPageMode = layoutMeta.page.mode ?? "fixed";
+  const percentReference = layoutMeta.percent.reference;
   const layoutBaseDimensions = resolveLayoutBaseDimensions(scene.meta);
-  const defaultPanelDirection = normalizePanelDirection(scene.meta?.["base.panel.direction"], "right.bottom");
-  const rawPanelMargin = scene.meta?.["base.panel.margin"];
-  const defaultPanelMargin = Math.max(0, num(rawPanelMargin, 0));
-  const pageGap = Math.max(0, num(scene.meta?.["layout.page.gap"], 1));
+  const defaultPanelDirection = layoutMeta.panel.direction;
+  const defaultPanelMargin = layoutMeta.panel.margin;
+  const pageGap = layoutMeta.page.gap;
+  const usedPageIds = new Set(scene.pages.map((page) => String(page.id)));
   let offsetY = 0;
   for (const page of scene.pages) {
     const [w, h] = pageDimensions(page);
     const panelsInPage = scene.panels.filter((panel) => String(panel.page) === String(page.id));
-    let nextAutoPageIndex = 1;
+    const autoPageSequence = { value: 1 };
     let pageVariant = page;
     let panelIndex = 0;
     while (panelIndex < panelsInPage.length || pageVariant === page) {
@@ -993,8 +979,7 @@ function buildPageLayouts(scene) {
       if (layoutPageMode !== "auto-append" || panelIndex >= panelsInPage.length) {
         break;
       }
-      const autoPageId = `${page.id}__auto-${nextAutoPageIndex}`;
-      nextAutoPageIndex += 1;
+      const autoPageId = nextAutoPageId(usedPageIds, autoPageSequence);
       pageVariant = {
         ...page,
         id: autoPageId,
@@ -1040,6 +1025,52 @@ function resolveLayoutPageMode(meta) {
   }
   return layoutPageMode;
 }
+function normalizeLayoutMeta(meta) {
+  const normalizedMeta = meta ?? {};
+  const pageMode = resolveLayoutPageMode(normalizedMeta) || "fixed";
+  const percentReference = resolvePercentReference(normalizedMeta);
+  const hasBaseWidth = typeof normalizedMeta["layout.base.width"] === "number";
+  const hasBaseHeight = typeof normalizedMeta["layout.base.height"] === "number";
+  if ((hasBaseWidth && !hasBaseHeight) || (!hasBaseWidth && hasBaseHeight)) {
+    throw new Error("meta.layout.base.width / meta.layout.base.height は両方指定してください");
+  }
+  if (hasBaseWidth && hasBaseHeight) {
+    if (normalizedMeta["layout.base.width"] <= 0 || normalizedMeta["layout.base.height"] <= 0) {
+      throw new Error("meta.layout.base.width / meta.layout.base.height は正数を指定してください");
+    }
+  }
+  if (normalizedMeta["layout.base.size"] !== undefined && normalizedMeta["layout.base.size"] !== null && normalizedMeta["layout.base.size"] !== "") {
+    normalizedMeta["layout.base.size"] = String(normalizedMeta["layout.base.size"]).trim();
+    if (!PAGE_SIZES[normalizedMeta["layout.base.size"]]) {
+      throw new Error("meta.layout.base.size は既知の用紙サイズを指定してください");
+    }
+  }
+  if (percentReference === "base-size" && !resolveLayoutBaseDimensions(normalizedMeta)) {
+    normalizedMeta["layout.base.size"] = "B5";
+  }
+  const persistGeneratedRaw = normalizedMeta["layout.page.persistGenerated"];
+  const persistGenerated = persistGeneratedRaw === true || String(persistGeneratedRaw ?? "").toLowerCase() === "true";
+  const panelDirection = normalizePanelDirection(normalizedMeta?.["base.panel.direction"], "right.bottom");
+  const panelMargin = Math.max(0, num(normalizedMeta?.["base.panel.margin"], 0));
+  const pageGap = Math.max(0, num(normalizedMeta?.["layout.page.gap"], 1));
+  normalizedMeta["layout.page.mode"] = pageMode;
+  normalizedMeta["layout.percent.reference"] = percentReference;
+  normalizedMeta["layout.page.persistGenerated"] = persistGenerated;
+  return {
+    page: {
+      mode: pageMode,
+      persistGenerated,
+      gap: pageGap,
+    },
+    percent: {
+      reference: percentReference,
+    },
+    panel: {
+      direction: panelDirection,
+      margin: panelMargin,
+    },
+  };
+}
 function resolvePercentReference(meta) {
   const raw = meta?.["layout.percent.reference"] ?? meta?.layoutPercentReference;
   if (raw === undefined || raw === null || raw === "") return "page-inner";
@@ -1048,6 +1079,17 @@ function resolvePercentReference(meta) {
     throw new Error("meta.layout.percent.reference は page-inner / base-size のいずれかを指定してください");
   }
   return normalized;
+}
+function nextAutoPageId(usedPageIds, sequenceState = { value: 1 }) {
+  let index = Math.max(1, Number(sequenceState.value) || 1);
+  let candidate = `auto-p${index}`;
+  while (usedPageIds.has(candidate)) {
+    index += 1;
+    candidate = `auto-p${index}`;
+  }
+  usedPageIds.add(candidate);
+  sequenceState.value = index + 1;
+  return candidate;
 }
 function resolveLayoutBaseDimensions(meta) {
   const baseWidth = meta?.["layout.base.width"];
@@ -1871,9 +1913,15 @@ function stringifyHierarchicalBlocks(blocks) {
   return out.join("\n").trimEnd();
 }
 function stringifyBlocks(blocks) {
-  const prefersHierarchical = blocks.some((block) => block.sourceFormat === "hierarchical");
-  if (prefersHierarchical) return stringifyHierarchicalBlocks(blocks);
-  return stringifyFlatBlocks(blocks);
+  const metaBlock = blocks.find((block) => block.type === "meta");
+  const layoutMeta = normalizeLayoutMeta(metaBlock?.props ?? {});
+  let blocksForSerialization = blocks;
+  if (!layoutMeta.page.persistGenerated) {
+    blocksForSerialization = blocks.filter((block) => !(block.type === "page" && String(block.props.id ?? "").startsWith("auto-p")));
+  }
+  const prefersHierarchical = blocksForSerialization.some((block) => block.sourceFormat === "hierarchical");
+  if (prefersHierarchical) return stringifyHierarchicalBlocks(blocksForSerialization);
+  return stringifyFlatBlocks(blocksForSerialization);
 }
 function buildIdRemap(blocks) {
   const countersByType = {};
@@ -1937,7 +1985,36 @@ function setupRenumberIds() {
     blocks.sort((a, b) => a.order - b.order);
     const remap = buildIdRemap(blocks);
     rewriteReferences(blocks, remap);
-    validateAndBuild(blocks);
+    const scene = validateAndBuild(blocks);
+    if (scene.layoutMeta?.page.persistGenerated) {
+      const pageLayouts = buildPageLayouts(scene);
+      const existingPageIds = new Set(blocks.filter((block) => block.type === "page").map((block) => String(block.props.id ?? "")));
+      const insertionOrderBase = blocks.length;
+      let generatedOrder = 0;
+      for (const { page } of pageLayouts.values()) {
+        const pageId = String(page.id);
+        if (!page._virtual || existingPageIds.has(pageId)) continue;
+        blocks.push({
+          type: "page",
+          props: {
+            id: pageId,
+            size: page.size,
+            ...(page.size === "custom" ? { width: page.width, height: page.height } : {}),
+            margin: page.margin,
+            unit: page.unit,
+            bg: page.bg,
+            stroke: page.stroke,
+            strokeWidth: page.strokeWidth,
+          },
+          line: 0,
+          order: insertionOrderBase + generatedOrder,
+          sourceFormat: blocks.some((block) => block.sourceFormat === "hierarchical") ? "hierarchical" : "flat",
+          autoParentRefFields: [],
+        });
+        existingPageIds.add(pageId);
+        generatedOrder += 1;
+      }
+    }
     els.input.value = stringifyBlocks(blocks);
     update();
   });
