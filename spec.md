@@ -89,6 +89,10 @@ page:
 
   * 例: `x:0, y:0, w:100, h:50` は上半分
 * オプションで `unit:px` をページに指定した場合はピクセル指定（数値をpxとみなす）
+* `page.unit:percent` のとき、座標・サイズの `%` 解釈は `meta.layout.percent.reference` に従う
+
+  * `page-inner`（既定/互換）: そのページの内側領域（margin除外）を基準に `%` を解釈
+  * `base-size`: `meta.layout.base.width/height`（または `layout.base.size`）を基準に `%` を解釈し、**最終描画時に各ページ実寸へ投影**する
 
 ### 4.2 Z順（重なり）
 
@@ -116,6 +120,9 @@ SVG描画順は原則：
 * `base.panel.direction`（任意、`right.bottom`/`left.bottom`。panel自動配置の既定方向。既定: `right.bottom`）
 * `base.panel.margin`（任意、数値。panel自動配置時のコマ間余白。既定: `0`）
 * `layout.page.mode`（任意、`auto-extend`/`auto-append`。指定時は `page` と `panel.page` を省略可能にし、省略分は自動採番ページへ割り当てる）
+* `layout.base.width`, `layout.base.height`（任意、数値。`page.unit:percent` の正規化基準となるベースサイズ。両方指定が必要）
+* `layout.base.size`（任意、`B5`/`A4` など。`layout.base.width/height` の簡易指定）
+* `layout.percent.reference`（任意、`page-inner`/`base-size`。`page.unit:percent` の参照基準。未指定は `page-inner` で既存互換）
 
 例:
 
@@ -448,6 +455,9 @@ balloon:
 * AABB判定において、辺や頂点がちょうど接するだけ（`a.x+a.w == b.x` 等）は **重なりなし** とする
 * 自動配置時の `y.base` 探索は、`unit:px` は1px刻み、`unit:percent` は0.01刻み（小数第2位まで許容）で下方向へ探索する
 * `unit:percent` の場合、原則 `0..100` を推奨（範囲外は許容するが警告）
+* `meta.layout.percent.reference` は `page-inner` / `base-size` のいずれか
+* `meta.layout.percent.reference: base-size` で `layout.base.*` 未指定時は `layout.base.size:B5` とみなす
+* `meta.layout.base.width` と `meta.layout.base.height` は同時指定（正数）
 * `tail:toActor(a1)` の参照先が存在する
 * `pose`/`emotion` が未対応値の場合、既定にフォールバック（か警告）
 
