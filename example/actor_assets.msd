@@ -225,7 +225,7 @@ page:
             s: 1.53
         - ref: as1205
             s: 0.63 
-        - ref: as1311
+        - ref: as1310
         - ref: as1401
         - ref: as1502
         - ref: as1601
@@ -243,7 +243,7 @@ page:
         - ref: as1000
         - ref: as1102
         - ref: as1202
-        - ref: as1312
+        - ref: as1311
         - ref: as1402
         - ref: as1503
         - ref: as1602
@@ -263,7 +263,7 @@ page:
             dx: -6 
             dy: -56
         - ref: as1204
-        - ref: as1313
+        - ref: as1312
         - ref: as1401
         - ref: as1503
         - ref: as1601
@@ -272,6 +272,25 @@ page:
     actor:
       id: a1013
       x: 40
+      y: 90
+      scale: 5
+      pose: point
+      emotion: neutral
+      facing: left
+      name: Hoge君
+      attachments:
+        - ref: as1000
+        - ref: as1106
+        - ref: as1207
+        - ref: as1313
+        - ref: as1402
+        - ref: as1503
+        - ref: as1801
+        - ref: as1802
+
+    actor:
+      id: a1014
+      x: 50
       y: 90
       scale: 5
       pose: point
@@ -360,6 +379,17 @@ asset:
   rot: 0
   z: 3
   src: ./assets/eyes5.svg
+
+asset:
+  id: as1106
+  w: 55
+  h: 55
+  dx: -9.5
+  dy: -57.0
+  s: 0.32
+  rot: 0
+  z: 3
+  src: ./assets/eyes6.svg
 
 asset:
   id: as1201
@@ -701,3 +731,25 @@ asset:
   rot: 10
   z: 1
   src: ./assets/hat1.svg
+
+asset:
+  id: as1801
+  w: 55
+  h: 55
+  dx: -9.5
+  dy: -47.5
+  s: 0.11
+  rot: 0
+  z: 1
+  src: ./assets/shadow1.svg
+
+asset:
+  id: as1802
+  w: 55
+  h: 55
+  dx: 4.5
+  dy: -57.5
+  s: 0.11
+  rot: 0
+  z: 1
+  src: ./assets/shadow1.svg
