@@ -484,8 +484,23 @@ balloon:
 
 ### 7.5 複数ページの配置
 
-* 複数 `page` を定義した場合、実装では縦方向に順番に配置して1つのSVGとして出力する
-* 後続ページは、前ページの描画下端+1（表示上の最小間隔）だけ下に配置する
+`buildPageLayouts(scene)` は `meta.layout.page.mode`（`fixed` / `auto-extend` / `auto-append`）に従ってページ境界を確定する。未指定時は `fixed` と同等に扱う。
+
+* `fixed`
+  * 各ページのフレーム高は `page.height`（サイズ定義）で固定。
+  * panelがページ下端を超えてもページ境界は拡張しない。
+* `auto-extend`
+  * 各ページについて panel の最下端（`maxPanelBottom`）を計測し、ページ確定高を `max(frame.h, maxPanelBottom + innerBottomPadding)` とする。
+  * `innerBottomPadding` はページの下マージン相当（`frame.h - (inner.y - frame.y + inner.h)`）。
+  * `renderPageFrames` にはこの可変フレーム高を渡して描画する。
+* `auto-append`
+  * panel配置中、次panelの下端が現在ページ下端を超える時点で新規ページを自動生成する。
+  * 以降のpanelは新規ページのローカル座標系（そのページの `inner`）で再配置し、必要に応じて同様に追加ページを連鎖生成する。
+
+ページ間の縦オフセットは、従来の `offsetY = maxY + 1` ではなく「確定ページ高 + ギャップ」で決定する。
+
+* `offsetY(next) = offsetY(current) + confirmedPageHeight + gap`
+* `gap` は `meta.layout.page.gap` で指定し、既定値は `1`。
 
 ---
 

@@ -326,10 +326,7 @@ function validateAndBuild(blocks) {
     scene[key].push({ ...b.props, _line: b.line, _order: b.order });
   }
   scene.meta["text.direction"] = normalizeTextDirection(scene.meta["text.direction"] ?? scene.meta.textDirection);
-  const layoutPageModeRaw = scene.meta?.["layout.page.mode"] ?? scene.meta?.layoutPageMode;
-  const layoutPageMode = layoutPageModeRaw === undefined || layoutPageModeRaw === null || layoutPageModeRaw === ""
-    ? undefined
-    : String(layoutPageModeRaw).toLowerCase();
+  const layoutPageMode = resolveLayoutPageMode(scene.meta);
   const allowsImplicitPage = layoutPageMode === "auto-extend" || layoutPageMode === "auto-append";
   if (scene.pages.length === 0) {
     if (!allowsImplicitPage) {
@@ -912,34 +909,65 @@ function render(scene) {
 }
 function buildPageLayouts(scene) {
   const layouts = new Map();
+  const layoutPageMode = resolveLayoutPageMode(scene.meta) || "fixed";
   const defaultPanelDirection = normalizePanelDirection(scene.meta?.["base.panel.direction"], "right.bottom");
   const rawPanelMargin = scene.meta?.["base.panel.margin"];
   const defaultPanelMargin = Math.max(0, num(rawPanelMargin, 0));
+  const pageGap = Math.max(0, num(scene.meta?.["layout.page.gap"], 1));
   let offsetY = 0;
   for (const page of scene.pages) {
     const [w, h] = pageDimensions(page);
-    const frame = { x: 0, y: offsetY, w, h };
-    const inner = {
-      x: frame.x + page.margin / 100 * w,
-      y: frame.y + page.margin / 100 * h,
-      w: w * (1 - page.margin / 50),
-      h: h * (1 - page.margin / 50),
-    };
     const panelsInPage = scene.panels.filter((panel) => String(panel.page) === String(page.id));
-    const placedRects = [];
-    let maxY = frame.y + frame.h;
-    for (let i = 0; i < panelsInPage.length; i += 1) {
-      const panel = panelsInPage[i];
-      if (panel._autoPlaced) {
-        const previousPanel = i > 0 ? panelsInPage[i - 1] : null;
-        autoPlacePanel(panel, previousPanel, placedRects, defaultPanelDirection, page.unit, inner, defaultPanelMargin);
+    let nextAutoPageIndex = 1;
+    let pageVariant = page;
+    let panelIndex = 0;
+    while (panelIndex < panelsInPage.length || pageVariant === page) {
+      const frame = { x: 0, y: offsetY, w, h };
+      const inner = {
+        x: frame.x + pageVariant.margin / 100 * w,
+        y: frame.y + pageVariant.margin / 100 * h,
+        w: w * (1 - pageVariant.margin / 50),
+        h: h * (1 - pageVariant.margin / 50),
+      };
+      const placedRects = [];
+      let maxPanelBottom = 0;
+      while (panelIndex < panelsInPage.length) {
+        const panel = panelsInPage[panelIndex];
+        if (panel._autoPlaced) {
+          const previousPanel = placedRects.length > 0 ? panelsInPage[panelIndex - 1] : null;
+          autoPlacePanel(panel, previousPanel, placedRects, defaultPanelDirection, pageVariant.unit, inner, defaultPanelMargin);
+        }
+        const panelRect = rectInPage(panel, inner, pageVariant.unit);
+        const panelBottom = panelRect.y + panelRect.h - frame.y;
+        if (layoutPageMode === "auto-append" && panelBottom > frame.h && placedRects.length > 0) {
+          break;
+        }
+        panel.page = String(pageVariant.id);
+        placedRects.push({ x: panel.x, y: panel.y, w: panel.w, h: panel.h });
+        maxPanelBottom = Math.max(maxPanelBottom, panelBottom);
+        panelIndex += 1;
       }
-      placedRects.push({ x: panel.x, y: panel.y, w: panel.w, h: panel.h });
-      const panelRect = rectInPage(panel, inner, page.unit);
-      maxY = Math.max(maxY, panelRect.y + panelRect.h);
+
+      const innerBottomPadding = frame.h - (inner.y - frame.y + inner.h);
+      const frameHeight = layoutPageMode === "auto-extend"
+        ? Math.max(frame.h, maxPanelBottom + innerBottomPadding)
+        : frame.h;
+      const maxY = frame.y + frameHeight;
+      const finalFrame = { ...frame, h: frameHeight };
+      layouts.set(String(pageVariant.id), { page: pageVariant, frame: finalFrame, inner, maxY });
+      offsetY = maxY + pageGap;
+
+      if (layoutPageMode !== "auto-append" || panelIndex >= panelsInPage.length) {
+        break;
+      }
+      const autoPageId = `${page.id}__auto-${nextAutoPageIndex}`;
+      nextAutoPageIndex += 1;
+      pageVariant = {
+        ...page,
+        id: autoPageId,
+        _virtual: true,
+      };
     }
-    layouts.set(String(page.id), { page, frame, inner, maxY });
-    offsetY = maxY + 1;
   }
   return layouts;
 }
@@ -964,8 +992,20 @@ function canvasBounds(pageLayouts) {
   const values = Array.from(pageLayouts.values());
   return {
     w: values.reduce((max, { frame }) => Math.max(max, frame.x + frame.w), 0),
-    h: values.reduce((max, { maxY }) => Math.max(max, maxY), 0),
+    h: values.reduce((max, { frame }) => Math.max(max, frame.y + frame.h), 0),
   };
+}
+
+function resolveLayoutPageMode(meta) {
+  const layoutPageModeRaw = meta?.["layout.page.mode"] ?? meta?.layoutPageMode;
+  if (layoutPageModeRaw === undefined || layoutPageModeRaw === null || layoutPageModeRaw === "") {
+    return undefined;
+  }
+  const layoutPageMode = String(layoutPageModeRaw).toLowerCase();
+  if (!["fixed", "auto-extend", "auto-append"].includes(layoutPageMode)) {
+    throw new Error("meta.layout.page.mode は fixed / auto-extend / auto-append のいずれかを指定してください");
+  }
+  return layoutPageMode;
 }
 function renderActor(actor, panelRect, unit, showActorName, assetMap) {
   const p = pointInPanel(actor.x, actor.y, panelRect, unit);
