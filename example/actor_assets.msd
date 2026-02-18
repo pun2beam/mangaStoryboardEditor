@@ -241,6 +241,7 @@ page:
       name: Hoge君
       attachments:
         - ref: as1000
+        - ref: as1106
         - ref: as1102
         - ref: as1202
         - ref: as1311
@@ -259,6 +260,7 @@ page:
       name: Hoge君
       attachments:
         - ref: as1000
+        - ref: as1106
         - ref: as1102
             dx: -6 
             dy: -56
@@ -299,6 +301,7 @@ page:
       name: Hoge君
       attachments:
         - ref: as1000
+        - ref: as1106
         - ref: as1102
             dx: -7.5
             dy: -58
@@ -318,7 +321,7 @@ asset:
   id: as1000
   w: 55
   h: 55
-  dx: -16.5
+  dx: -17.9
   dy: -63.5
   s: 0.6
   rot: 0
