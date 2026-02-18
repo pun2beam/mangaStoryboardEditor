@@ -314,8 +314,37 @@ page:
         - ref: as1503
         - ref: as1602
         - ref: as1701
-            dx: -1-.5
+            dx: -12
             dy: -88
+
+    actor:
+      id: a1015
+      x: 60
+      y: 90
+      scale: 5
+      pose: point
+      emotion: neutral
+      facing: left
+      name: Hoge君
+      attachments:
+        - ref: as1000
+        - ref: as1106
+            dx: -9.5
+            dy: -55.5
+        - ref: as1105
+            dx: -9.6
+            dy: -55.8
+        - ref: as1210
+        - ref: as1302
+        - ref: as1501
+            dx: -9
+            dy: -62
+            s: 0.34
+        - ref: as1503
+            dx: -11
+            dy: -57.5
+        - ref: as1602
+            dy: -53.7
 
 asset:
   id: as1000
@@ -332,7 +361,7 @@ asset:
   id: as1101
   w: 55
   h: 55
-  dx: -8.5
+  dx: -9.3
   dy: -57.5
   s: 0.3
   rot: 0
@@ -494,6 +523,17 @@ asset:
   src: ./assets/hair9.svg
 
 asset:
+  id: as1210
+  w: 55
+  h: 55
+  dx: -15.4
+  dy: -65.4
+  s: 0.55
+  rot: 0
+  z: 2
+  src: ./assets/hair10.svg
+
+asset:
   id: as1301
   w: 55
   h: 55
@@ -508,9 +548,9 @@ asset:
   id: as1302
   w: 55
   h: 55
-  dx: -4.5
-  dy: -41.5
-  s: 0.1
+  dx: -5.5
+  dy: -42.5
+  s: 0.15
   rot: 0
   z: 2
   src: ./assets/mouse2.svg
