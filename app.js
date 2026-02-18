@@ -326,6 +326,26 @@ function validateAndBuild(blocks) {
     scene[key].push({ ...b.props, _line: b.line, _order: b.order });
   }
   scene.meta["text.direction"] = normalizeTextDirection(scene.meta["text.direction"] ?? scene.meta.textDirection);
+  scene.meta["layout.percent.reference"] = resolvePercentReference(scene.meta);
+  const hasBaseWidth = typeof scene.meta["layout.base.width"] === "number";
+  const hasBaseHeight = typeof scene.meta["layout.base.height"] === "number";
+  if ((hasBaseWidth && !hasBaseHeight) || (!hasBaseWidth && hasBaseHeight)) {
+    throw new Error("meta.layout.base.width / meta.layout.base.height は両方指定してください");
+  }
+  if (hasBaseWidth && hasBaseHeight) {
+    if (scene.meta["layout.base.width"] <= 0 || scene.meta["layout.base.height"] <= 0) {
+      throw new Error("meta.layout.base.width / meta.layout.base.height は正数を指定してください");
+    }
+  }
+  if (scene.meta["layout.base.size"] !== undefined && scene.meta["layout.base.size"] !== null && scene.meta["layout.base.size"] !== "") {
+    scene.meta["layout.base.size"] = String(scene.meta["layout.base.size"]).trim();
+    if (!PAGE_SIZES[scene.meta["layout.base.size"]]) {
+      throw new Error("meta.layout.base.size は既知の用紙サイズを指定してください");
+    }
+  }
+  if (scene.meta["layout.percent.reference"] === "base-size" && !resolveLayoutBaseDimensions(scene.meta)) {
+    scene.meta["layout.base.size"] = "B5";
+  }
   const layoutPageMode = resolveLayoutPageMode(scene.meta);
   const allowsImplicitPage = layoutPageMode === "auto-extend" || layoutPageMode === "auto-append";
   if (scene.pages.length === 0) {
@@ -629,9 +649,10 @@ function findMinNonOverlapY(panel, inner, unit, existingRects) {
       const failure = detectFailure(candidate, allowOverflowY);
       if (failure) return { ok: false, failure, candidate };
       const candidateRect = rectInPage(candidate, inner, unit);
-      const hit = existingRects.find((rect) => intersectsRect(candidateRect, rect));
+      const hit = existingRects.find((rect) => intersectsRect(rectTarget(candidateRect), rectTarget(rect)));
       if (!hit) return { ok: true, candidate };
-      const nextY = fromCoord(hit.y + hit.h - inner.y);
+      const hitRect = rectTarget(hit);
+      const nextY = fromCoord(hitRect.y + hitRect.h - inner.y);
       if (!Number.isFinite(nextY)) return { ok: false, failure: "invalid-next-y", candidate };
       baseY = Math.max(baseY + step, nextY);
     }
@@ -824,7 +845,8 @@ function render(scene) {
     const key = String(panelId);
     if (panelClipIds.has(key)) return panelClipIds.get(key);
     const clipId = `panel-clip-${key}`;
-    defs.push(`<clipPath id="${clipId}"><rect x="${panelRect.x}" y="${panelRect.y}" width="${panelRect.w}" height="${panelRect.h}"/></clipPath>`);
+    const clipRect = rectTarget(panelRect);
+        defs.push(`<clipPath id="${clipId}"><rect x="${clipRect.x}" y="${clipRect.y}" width="${clipRect.w}" height="${clipRect.h}"/></clipPath>`);
     panelClipIds.set(key, clipId);
     return clipId;
   }
@@ -838,7 +860,7 @@ function render(scene) {
     if (entry.kind === "panel") {
       const panelRect = panelRects.get(String(entry.data.id));
       if (!panelRect) continue;
-      const r = panelRect;
+      const r = rectTarget(panelRect);
       body.push(`<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="${entry.data.fill || "none"}" stroke="${entry.data.stroke || "black"}" stroke-width="${num(entry.data.strokeWidth, 3)}" rx="${num(entry.data.radius, 0)}" ry="${num(entry.data.radius, 0)}"/>`);
     } else if (entry.kind === "asset") {
       const panel = panelMap.get(String(entry.data.panel));
@@ -849,7 +871,8 @@ function render(scene) {
       let clip = "";
       if (entry.data.clipToPanel) {
         const clipId = `clip-${entry.data.id}`;
-        defs.push(`<clipPath id="${clipId}"><rect x="${panelRect.x}" y="${panelRect.y}" width="${panelRect.w}" height="${panelRect.h}"/></clipPath>`);
+        const clipRect = rectTarget(panelRect);
+        defs.push(`<clipPath id="${clipId}"><rect x="${clipRect.x}" y="${clipRect.y}" width="${clipRect.w}" height="${clipRect.h}"/></clipPath>`);
         clip = ` clip-path="url(#${clipId})"`;
       }
       const imageMarkup = `<image x="${box.x}" y="${box.y}" width="${box.w}" height="${box.h}" href="${escapeXml(entry.data.src)}" opacity="${entry.data.opacity}"${clip}/>`;
@@ -910,6 +933,8 @@ function render(scene) {
 function buildPageLayouts(scene) {
   const layouts = new Map();
   const layoutPageMode = resolveLayoutPageMode(scene.meta) || "fixed";
+  const percentReference = resolvePercentReference(scene.meta);
+  const layoutBaseDimensions = resolveLayoutBaseDimensions(scene.meta);
   const defaultPanelDirection = normalizePanelDirection(scene.meta?.["base.panel.direction"], "right.bottom");
   const rawPanelMargin = scene.meta?.["base.panel.margin"];
   const defaultPanelMargin = Math.max(0, num(rawPanelMargin, 0));
@@ -929,15 +954,23 @@ function buildPageLayouts(scene) {
         w: w * (1 - pageVariant.margin / 50),
         h: h * (1 - pageVariant.margin / 50),
       };
+      const baseInner = layoutBaseDimensions
+        ? {
+          x: inner.x,
+          y: inner.y,
+          w: layoutBaseDimensions[0] * (1 - pageVariant.margin / 50),
+          h: layoutBaseDimensions[1] * (1 - pageVariant.margin / 50),
+        }
+        : inner;
       const placedRects = [];
       let maxPanelBottom = 0;
       while (panelIndex < panelsInPage.length) {
         const panel = panelsInPage[panelIndex];
         if (panel._autoPlaced) {
           const previousPanel = placedRects.length > 0 ? panelsInPage[panelIndex - 1] : null;
-          autoPlacePanel(panel, previousPanel, placedRects, defaultPanelDirection, pageVariant.unit, inner, defaultPanelMargin);
+          autoPlacePanel(panel, previousPanel, placedRects, defaultPanelDirection, pageVariant.unit, percentReference === "base-size" ? baseInner : inner, defaultPanelMargin);
         }
-        const panelRect = rectInPage(panel, inner, pageVariant.unit);
+        const panelRect = rectTarget(rectInPage(panel, inner, pageVariant.unit, percentReference, baseInner));
         const panelBottom = panelRect.y + panelRect.h - frame.y;
         if (layoutPageMode === "auto-append" && panelBottom > frame.h && placedRects.length > 0) {
           break;
@@ -954,7 +987,7 @@ function buildPageLayouts(scene) {
         : frame.h;
       const maxY = frame.y + frameHeight;
       const finalFrame = { ...frame, h: frameHeight };
-      layouts.set(String(pageVariant.id), { page: pageVariant, frame: finalFrame, inner, maxY });
+      layouts.set(String(pageVariant.id), { page: pageVariant, frame: finalFrame, inner, baseInner, percentReference, maxY });
       offsetY = maxY + pageGap;
 
       if (layoutPageMode !== "auto-append" || panelIndex >= panelsInPage.length) {
@@ -976,7 +1009,7 @@ function buildPanelRects(scene, pageLayouts) {
   for (const panel of scene.panels) {
     const pageLayout = pageLayouts.get(String(panel.page));
     if (!pageLayout) continue;
-    panelRects.set(String(panel.id), rectInPage(panel, pageLayout.inner, pageLayout.page.unit));
+    panelRects.set(String(panel.id), rectInPage(panel, pageLayout.inner, pageLayout.page.unit, pageLayout.percentReference, pageLayout.baseInner));
   }
   return panelRects;
 }
@@ -1006,6 +1039,42 @@ function resolveLayoutPageMode(meta) {
     throw new Error("meta.layout.page.mode は fixed / auto-extend / auto-append のいずれかを指定してください");
   }
   return layoutPageMode;
+}
+function resolvePercentReference(meta) {
+  const raw = meta?.["layout.percent.reference"] ?? meta?.layoutPercentReference;
+  if (raw === undefined || raw === null || raw === "") return "page-inner";
+  const normalized = String(raw).toLowerCase();
+  if (!["page-inner", "base-size"].includes(normalized)) {
+    throw new Error("meta.layout.percent.reference は page-inner / base-size のいずれかを指定してください");
+  }
+  return normalized;
+}
+function resolveLayoutBaseDimensions(meta) {
+  const baseWidth = meta?.["layout.base.width"];
+  const baseHeight = meta?.["layout.base.height"];
+  if (typeof baseWidth === "number" && typeof baseHeight === "number") {
+    return [baseWidth, baseHeight];
+  }
+  const baseSize = String(meta?.["layout.base.size"] ?? "").trim();
+  if (baseSize) return PAGE_SIZES[baseSize] || PAGE_SIZES.B5;
+  return null;
+}
+function rectTarget(rect) {
+  return rect?.draw || rect;
+}
+function rectBasis(rect) {
+  return rect?.basis || rectTarget(rect);
+}
+function projectRect(rect, fromRect, toRect) {
+  if (!fromRect || !toRect || fromRect === toRect) return { ...rect };
+  const scaleX = fromRect.w === 0 ? 1 : toRect.w / fromRect.w;
+  const scaleY = fromRect.h === 0 ? 1 : toRect.h / fromRect.h;
+  return {
+    x: toRect.x + (rect.x - fromRect.x) * scaleX,
+    y: toRect.y + (rect.y - fromRect.y) * scaleY,
+    w: rect.w * scaleX,
+    h: rect.h * scaleY,
+  };
 }
 function renderActor(actor, panelRect, unit, showActorName, assetMap) {
   const p = pointInPanel(actor.x, actor.y, panelRect, unit);
@@ -1284,7 +1353,7 @@ function renderCaption(caption, panelRect, unit, defaultTextDirection) {
 }
 function renderSfx(sfx, panelRect, unit, defaultTextDirection) {
   const p = pointInPanel(sfx.x, sfx.y, panelRect, unit);
-  const fontSize = unit === "percent" ? sfx.fontSize / 100 * panelRect.w : sfx.fontSize;
+  const fontSize = sizeInUnit(sfx.fontSize, panelRect, unit, "x");
   const direction = sfx.textDirection || defaultTextDirection;
   const textAttrs = direction === "vertical" ? ' writing-mode="vertical-rl" text-orientation="upright"' : '';
   return `<text x="${p.x}" y="${p.y}" font-size="${fontSize}" transform="rotate(${sfx.rotate} ${p.x} ${p.y}) scale(${sfx.scale})" fill="${sfx.fill}" stroke="${sfx.stroke || "none"}" font-weight="700"${textAttrs}>${escapeXml(sfx.text)}</text>`;
@@ -1560,31 +1629,51 @@ function normalizeTextSize(fontSize, defaultUnit) {
   }
   return { value: num(fontSize, 4), unit: defaultUnit };
 }
-function rectInPage(box, inner, unit) {
+function rectInPage(box, inner, unit, percentReference = "page-inner", baseRect = null) {
   if (unit === "px") return { x: inner.x + box.x, y: inner.y + box.y, w: box.w, h: box.h };
-  return {
-    x: inner.x + inner.w * (box.x / 100),
-    y: inner.y + inner.h * (box.y / 100),
-    w: inner.w * (box.w / 100),
-    h: inner.h * (box.h / 100),
+  const basisRect = percentReference === "base-size" && baseRect ? baseRect : inner;
+  const basisProjection = {
+    x: basisRect.x + basisRect.w * (box.x / 100),
+    y: basisRect.y + basisRect.h * (box.y / 100),
+    w: basisRect.w * (box.w / 100),
+    h: basisRect.h * (box.h / 100),
   };
+  if (basisRect === inner) return basisProjection;
+  return { draw: projectRect(basisProjection, basisRect, inner), basis: basisProjection };
 }
 function withinPanel(box, panelRect, unit) {
-  if (unit === "px") return { x: panelRect.x + box.x, y: panelRect.y + box.y, w: box.w, h: box.h };
-  return {
-    x: panelRect.x + panelRect.w * (box.x / 100),
-    y: panelRect.y + panelRect.h * (box.y / 100),
-    w: panelRect.w * (box.w / 100),
-    h: panelRect.h * (box.h / 100),
+  const targetRect = rectTarget(panelRect);
+  const basisRect = rectBasis(panelRect);
+  if (unit === "px") return { x: targetRect.x + box.x, y: targetRect.y + box.y, w: box.w, h: box.h };
+  const basisProjection = {
+    x: basisRect.x + basisRect.w * (box.x / 100),
+    y: basisRect.y + basisRect.h * (box.y / 100),
+    w: basisRect.w * (box.w / 100),
+    h: basisRect.h * (box.h / 100),
   };
+  return projectRect(basisProjection, basisRect, targetRect);
 }
 function pointInPanel(x, y, panelRect, unit) {
-  if (unit === "px") return { x: panelRect.x + x, y: panelRect.y + y };
-  return { x: panelRect.x + panelRect.w * (x / 100), y: panelRect.y + panelRect.h * (y / 100) };
+  const targetRect = rectTarget(panelRect);
+  const basisRect = rectBasis(panelRect);
+  if (unit === "px") return { x: targetRect.x + x, y: targetRect.y + y };
+  const p = {
+    x: basisRect.x + basisRect.w * (x / 100),
+    y: basisRect.y + basisRect.h * (y / 100),
+  };
+  return {
+    x: targetRect.x + (p.x - basisRect.x) * (basisRect.w === 0 ? 1 : targetRect.w / basisRect.w),
+    y: targetRect.y + (p.y - basisRect.y) * (basisRect.h === 0 ? 1 : targetRect.h / basisRect.h),
+  };
 }
 function sizeInUnit(v, rect, unit, axis) {
+  const basisRect = rectBasis(rect);
+  const targetRect = rectTarget(rect);
   if (unit === "px") return v;
-  return axis === "x" ? rect.w * (v / 100) : rect.h * (v / 100);
+  const basisSize = axis === "x" ? basisRect.w : basisRect.h;
+  const targetSize = axis === "x" ? targetRect.w : targetRect.h;
+  const basisValue = basisSize * (v / 100);
+  return basisValue * (basisSize === 0 ? 1 : targetSize / basisSize);
 }
 function pageDimensions(page) {
   if (page.size === "custom") return [page.width, page.height];

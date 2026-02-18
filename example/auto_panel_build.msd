@@ -1,6 +1,9 @@
 meta:
   base.panel.direction:right.bottom
   base.panel.margin:1.5
+  layout.percent.reference:base-size
+  layout.base.size:B5
+  # base-size を基準に % を解釈し、拡張ページでは実ページ寸法へ投影されるため見た目比率を維持できる
 
 page:
   id: p1020
