@@ -225,7 +225,6 @@ page:
         - ref: as1201
             s: 1.53
         - ref: as1205
-            s: 0.63 
         - ref: as1310
         - ref: as1401
         - ref: as1502
@@ -496,7 +495,7 @@ asset:
   id: as1201
   w: 55
   h: 55
-  dx: -39.2
+  dx: -39.8
   dy: -98.5
   s: 1.5
   rot: 0
@@ -540,9 +539,9 @@ asset:
   id: as1205
   w: 55
   h: 55
-  dx: -17.9
+  dx: -18.9
   dy: -64.5
-  s: 0.6
+  s: 0.65
   rot: 0
   z: -1
   src: ./assets/hair5.svg
