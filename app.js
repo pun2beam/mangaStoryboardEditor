@@ -326,7 +326,25 @@ function validateAndBuild(blocks) {
     scene[key].push({ ...b.props, _line: b.line, _order: b.order });
   }
   scene.meta["text.direction"] = normalizeTextDirection(scene.meta["text.direction"] ?? scene.meta.textDirection);
-  if (scene.pages.length === 0) throw new Error("page は1つ以上必要です");
+  const layoutPageModeRaw = scene.meta?.["layout.page.mode"] ?? scene.meta?.layoutPageMode;
+  const layoutPageMode = layoutPageModeRaw === undefined || layoutPageModeRaw === null || layoutPageModeRaw === ""
+    ? undefined
+    : String(layoutPageModeRaw).toLowerCase();
+  const allowsImplicitPage = layoutPageMode === "auto-extend" || layoutPageMode === "auto-append";
+  if (scene.pages.length === 0) {
+    if (!allowsImplicitPage) {
+      throw new Error("page は1つ以上必要です");
+    }
+    scene.pages.push({
+      id: "auto-page-1",
+      size: "B5",
+      margin: 5,
+      unit: "percent",
+      _line: 0,
+      _order: -1,
+      _virtual: true,
+    });
+  }
   const dicts = {
     pages: byId(scene.pages, "page"),
     panels: byId(scene.panels, "panel"),
@@ -345,7 +363,13 @@ function validateAndBuild(blocks) {
     }
   });
   for (const panel of scene.panels) {
-    requireFields(panel, ["id", "page", "w", "h"], "panel");
+    const panelRequiredFields = allowsImplicitPage ? ["id", "w", "h"] : ["id", "page", "w", "h"];
+    requireFields(panel, panelRequiredFields, "panel");
+    const hasPanelPage = !(panel.page === undefined || panel.page === null || panel.page === "");
+    if (!hasPanelPage && allowsImplicitPage) {
+      panel.page = String(scene.pages[0].id);
+      panel._autoAssignedPage = true;
+    }
     const hasX = !(panel.x === undefined || panel.x === null || panel.x === "");
     const hasY = !(panel.y === undefined || panel.y === null || panel.y === "");
     // 既存DSL互換: x,y が両方ある場合は明示座標を優先し、欠ける場合のみ自動配置対象にする。

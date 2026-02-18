@@ -115,6 +115,7 @@ SVG描画順は原則：
 * `text.direction`（任意、`horizontal`/`vertical`。既定: `horizontal`。全体の文字方向）
 * `base.panel.direction`（任意、`right.bottom`/`left.bottom`。panel自動配置の既定方向。既定: `right.bottom`）
 * `base.panel.margin`（任意、数値。panel自動配置時のコマ間余白。既定: `0`）
+* `layout.page.mode`（任意、`auto-extend`/`auto-append`。指定時は `page` と `panel.page` を省略可能にし、省略分は自動採番ページへ割り当てる）
 
 例:
 
@@ -127,9 +128,9 @@ meta:
 
 ---
 
-### 5.2 `page`（必須、複数可）
+### 5.2 `page`（条件付き必須、複数可）
 
-ページ設定。最低1つ必要。
+ページ設定。既定では最低1つ必要。`meta.layout.page.mode` が `auto-extend` または `auto-append` の場合は省略可能（実装は仮想ベースページを自動生成）とする。
 
 必須:
 
@@ -162,8 +163,13 @@ page:
 必須:
 
 * `id`
-* `page`（参照）
 * `w,h`
+
+条件付き必須:
+
+* `page`（参照）
+  * `meta.layout.page.mode` 未指定時は必須（既存DSL互換）
+  * `meta.layout.page.mode` が `auto-extend` / `auto-append` の場合は任意（省略時はレイアウトエンジンが自動採番した page に割り当てる）
 
 任意:
 
@@ -186,6 +192,7 @@ page:
 
 * 既存DSL互換のため、`x,y` が指定されている場合はその値を優先し、従来どおり明示位置として扱う。
 * `x,y` のいずれかが欠ける場合のみ自動配置対象とする。
+* `panel.page` 省略時（`meta.layout.page.mode: auto-extend/auto-append` のみ許可）は、レイアウトエンジンが `page` を自動採番して割り当てる。`page` ブロックが存在しない場合は仮想ベースページを `auto-page-1` として生成し、未指定panelはこのページに割り当てる。
 
 例:
 
@@ -427,7 +434,8 @@ balloon:
 
 実装は最低限これを満たす。
 
-* `page` は1つ以上
+* `meta.layout.page.mode` が未指定時、`page` は1つ以上必須（既存DSL互換）
+* `meta.layout.page.mode` が `auto-extend` または `auto-append` の場合、`page` は省略可能（仮想ベースページを自動生成）
 * 各 `id` は同一型内で一意（推奨: 全体で一意でもよい）
 * `panel` は参照先 `page` が存在する
 * `actor/object/boxarrow/balloon/caption/sfx` は参照先 `panel` が存在する
