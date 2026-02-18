@@ -119,10 +119,25 @@ SVG描画順は原則：
 * `text.direction`（任意、`horizontal`/`vertical`。既定: `horizontal`。全体の文字方向）
 * `base.panel.direction`（任意、`right.bottom`/`left.bottom`。panel自動配置の既定方向。既定: `right.bottom`）
 * `base.panel.margin`（任意、数値。panel自動配置時のコマ間余白。既定: `0`）
-* `layout.page.mode`（任意、`auto-extend`/`auto-append`。指定時は `page` と `panel.page` を省略可能にし、省略分は自動採番ページへ割り当てる）
-* `layout.base.width`, `layout.base.height`（任意、数値。`page.unit:percent` の正規化基準となるベースサイズ。両方指定が必要）
-* `layout.base.size`（任意、`B5`/`A4` など。`layout.base.width/height` の簡易指定）
-* `layout.percent.reference`（任意、`page-inner`/`base-size`。`page.unit:percent` の参照基準。未指定は `page-inner` で既存互換）
+
+#### `layout.*` 名前空間
+
+`meta` 直下にレイアウト制御用の `layout.*` キー群を定義する。
+
+| キー | 必須 | 許容値 / 型 | 既定値 | 互換挙動 |
+|---|---|---|---|---|
+| `layout.page.mode` | 任意 | `fixed` / `auto-extend` / `auto-append` | `fixed` | 未指定時は `fixed` として扱い、従来どおり `page` と `panel.page` を必須にする。`auto-extend`/`auto-append` の場合のみ `page` / `panel.page` 省略を許可する。 |
+| `layout.page.persistGenerated` | 任意 | `true` / `false`（bool） | `false` | 未指定時は `false` として扱い、レイアウト処理で自動生成された page（例: `auto-p1`）は stringify 時にDSLへ書き戻さない。 |
+| `layout.page.gap` | 任意 | 数値（0以上） | `1` | 未指定時は `1` として扱い、従来のページ間隔を維持する。 |
+| `layout.base.width` | 任意 | 数値（正） | なし | `layout.base.height` と片方のみ指定された場合はエラー。 |
+| `layout.base.height` | 任意 | 数値（正） | なし | `layout.base.width` と片方のみ指定された場合はエラー。 |
+| `layout.base.size` | 任意 | `B5` / `A4` など既知サイズ名 | なし（ただし `layout.percent.reference:base-size` で基準不足時は `B5` にフォールバック） | 既知サイズでなければエラー。 |
+| `layout.percent.reference` | 任意 | `page-inner` / `base-size` | `page-inner` | 未指定時は `page-inner` として既存互換。 |
+
+補足:
+
+* 自動生成 page ID は `auto-p1`, `auto-p2`, ... の連番を使用し、既存 ID と衝突する場合は空き番号が見つかるまで再試行する。
+* `base.panel.direction` と `base.panel.margin` は `layout.*` と同様に正規化され、全レイアウト処理で共通設定として利用される。
 
 例:
 
