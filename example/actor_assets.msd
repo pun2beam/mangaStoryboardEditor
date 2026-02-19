@@ -546,9 +546,9 @@ asset:
   id: as1206
   w: 55
   h: 55
-  dx: -11.9
+  dx: -12.9
   dy: -70.0
-  s: 0.45
+  s: 0.47
   rot: 0
   z: 2
   src: ./assets/hair6.svg
