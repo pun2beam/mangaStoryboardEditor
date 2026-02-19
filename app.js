@@ -785,7 +785,7 @@ function estimateItemRectInPanel(item, kind) {
   if (kind === "actor") {
     const s = 20 * num(item.scale, 1);
     const w = s * 0.18;
-    const h = s * 0.28;
+    const h = s * 0.54;
     return { x: item.x - w / 2, y: item.y - h, w, h };
   }
   if (kind === "sfx") {
