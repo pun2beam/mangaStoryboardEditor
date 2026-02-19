@@ -852,28 +852,42 @@ function autoPlacePanelItems(scene, dicts) {
 
       const w = Math.max(0, baseRect.w);
       const h = Math.max(0, baseRect.h);
+      const fitsWithinPanel = w <= maxX && h <= maxY;
       const boundsMaxX = Math.max(0, maxX - w);
       const boundsMaxY = Math.max(0, maxY - h);
       let chosen = null;
-      for (let y = 0; y <= boundsMaxY; y += step) {
-        for (let x = 0; x <= boundsMaxX; x += step) {
-          const candidate = { x, y, w, h };
-          if (!occupied.some((r) => intersectsLocalRect(candidate, r))) {
-            chosen = candidate;
-            break;
+
+      if (fitsWithinPanel) {
+        for (let y = 0; y <= boundsMaxY; y += step) {
+          for (let x = 0; x <= boundsMaxX; x += step) {
+            const candidate = { x, y, w, h };
+            if (!occupied.some((r) => intersectsLocalRect(candidate, r))) {
+              chosen = candidate;
+              break;
+            }
           }
+          if (chosen) break;
         }
-        if (chosen) break;
       }
+
       if (!chosen) {
-        chosen = { x: 0, y: Math.max(0, maxY - h), w, h };
+        if (fitsWithinPanel) {
+          chosen = { x: 0, y: Math.max(0, maxY - h), w, h };
+        } else if (kind === "actor") {
+          chosen = { x: (maxX - w) / 2, y: maxY - h, w, h };
+        } else if (kind === "sfx") {
+          chosen = { x: 0, y: maxY - h * 0.8, w, h };
+        } else {
+          chosen = { x: 0, y: 0, w, h };
+        }
       }
+
       applyRectToItem(item, chosen, kind);
       occupied.push({
         x: Math.max(0, chosen.x - margin),
         y: Math.max(0, chosen.y - margin),
-        w: chosen.w + margin * 2,
-        h: chosen.h + margin * 2,
+        w: Math.min(maxX, chosen.w + margin * 2),
+        h: Math.min(maxY, chosen.h + margin * 2),
       });
     }
   }
