@@ -584,6 +584,27 @@ function resolveActorInheritance(actors) {
   const actorMap = new Map(actors.map((actor) => [String(actor.id), actor]));
   const state = new Map();
   const resolvingStack = [];
+  const mergeAttachmentsByRef = (baseAttachments, ownAttachments) => {
+    const merged = [];
+    const indexByRef = new Map();
+    for (const attachment of baseAttachments) {
+      const copy = { ...attachment };
+      merged.push(copy);
+      indexByRef.set(String(copy.ref), merged.length - 1);
+    }
+    for (const attachment of ownAttachments) {
+      const ref = String(attachment.ref);
+      const ownCopy = { ...attachment };
+      const baseIndex = indexByRef.get(ref);
+      if (baseIndex === undefined) {
+        merged.push(ownCopy);
+        indexByRef.set(ref, merged.length - 1);
+      } else {
+        merged[baseIndex] = { ...merged[baseIndex], ...ownCopy };
+      }
+    }
+    return merged;
+  };
   const mergeActor = (actor) => {
     const actorId = String(actor.id);
     const visitState = state.get(actorId);
@@ -610,7 +631,7 @@ function resolveActorInheritance(actors) {
       delete inherited.extends;
       Object.assign(actor, inherited, ownProps);
       if (Array.isArray(inherited.attachments) && Array.isArray(ownProps.attachments)) {
-        actor.attachments = [...inherited.attachments, ...ownProps.attachments];
+        actor.attachments = mergeAttachmentsByRef(inherited.attachments, ownProps.attachments);
       }
       actor.extends = baseId;
     }
