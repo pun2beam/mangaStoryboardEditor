@@ -237,9 +237,11 @@ panel:
 必須:
 
 * `id`
-* `panel`（参照）
+
+任意:
+* `panel`（参照。指定時はコマ内へ表示。未指定時はテンプレートとして単体表示しない）
+* `extends`（任意、継承元 `actor` の `id`）
 * `x,y`（足元の基準点を推奨）
-  任意:
 * `scale`（既定1.0）
 * `facing`（`left`/`right`/`back`、既定`right`）
 * `pose`（既定`stand`）
@@ -466,9 +468,11 @@ balloon:
 * `meta.layout.page.mode` が `auto-extend` または `auto-append` の場合、`page` は省略可能（仮想ベースページを自動生成）
 * 各 `id` は同一型内で一意（推奨: 全体で一意でもよい）
 * `panel` は参照先 `page` が存在する
-* `actor/object/boxarrow/balloon/caption/sfx` は参照先 `panel` が存在する
+* `object/boxarrow/balloon/caption/sfx` は参照先 `panel` が存在する
+* `actor` は `panel` を持つ場合のみ参照先 `panel` が存在する
 * `asset` は `panel` を持つ場合のみ参照先 `panel` が存在する
 * `actor.attachments[].ref` の参照先 `asset` が存在する
+* `actor.extends` の参照先 `actor` が存在し、循環継承しない
 * `w,h` は数値で、`w,h > 0`
 * `panel` の `x,y` は任意。`x,y` の両方が指定される場合はその値を優先し、いずれか欠ける場合は自動配置対象として扱う
 * 自動配置アルゴリズムの衝突回避対象は、**同一 `page` にすでに存在する `panel`** のみとする（他ページのpanelは対象外）
