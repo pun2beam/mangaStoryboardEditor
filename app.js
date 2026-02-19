@@ -422,7 +422,11 @@ function validateAndBuild(blocks) {
       throw new Error(`Line ${panel._line}: base.panel.direction:left.bottom のとき panel next:right は指定できません`);
     }
   }
-  const inPanelItems = ["actors", "objects", "boxarrows", "balloons", "captions", "sfx"];
+  for (const actor of scene.actors) {
+    requireFields(actor, ["id"], "actor");
+  }
+  resolveActorInheritance(scene.actors);
+  const inPanelItems = ["objects", "boxarrows", "balloons", "captions", "sfx"];
   for (const type of inPanelItems) {
     for (const item of scene[type]) {
       requireFields(item, ["id", "panel"], type.slice(0, -1));
@@ -430,6 +434,14 @@ function validateAndBuild(blocks) {
       if (item.styleRef && !dicts.styles.get(String(item.styleRef))) {
         throw new Error(`Line ${item._line}: 未定義 styleRef ${item.styleRef}`);
       }
+    }
+  }
+  for (const actor of scene.actors) {
+    if (actor.panel !== undefined && actor.panel !== null && actor.panel !== "") {
+      if (!dicts.panels.get(String(actor.panel))) throw new Error(`Line ${actor._line}: 未定義 panel 参照 ${actor.panel}`);
+    }
+    if (actor.styleRef && !dicts.styles.get(String(actor.styleRef))) {
+      throw new Error(`Line ${actor._line}: 未定義 styleRef ${actor.styleRef}`);
     }
   }
   for (const actor of scene.actors) {
@@ -567,6 +579,42 @@ function normalizeAttachments(value, line) {
     }
     return { ...attachment };
   });
+}
+function resolveActorInheritance(actors) {
+  const actorMap = new Map(actors.map((actor) => [String(actor.id), actor]));
+  const state = new Map();
+  const resolvingStack = [];
+  const mergeActor = (actor) => {
+    const actorId = String(actor.id);
+    const visitState = state.get(actorId);
+    if (visitState === "resolved") return actor;
+    if (visitState === "resolving") {
+      const cycleStart = resolvingStack.indexOf(actorId);
+      const cyclePath = [...resolvingStack.slice(cycleStart), actorId].join(" -> ");
+      throw new Error(`Line ${actor._line}: actor 継承が循環しています (${cyclePath})`);
+    }
+    state.set(actorId, "resolving");
+    resolvingStack.push(actorId);
+    const baseIdRaw = actor.extends;
+    if (baseIdRaw !== undefined && baseIdRaw !== null && baseIdRaw !== "") {
+      const baseId = String(baseIdRaw);
+      const baseActor = actorMap.get(baseId);
+      if (!baseActor) {
+        throw new Error(`Line ${actor._line}: 未定義 actor 継承元 ${baseId}`);
+      }
+      const resolvedBase = mergeActor(baseActor);
+      const inherited = { ...resolvedBase };
+      delete inherited._line;
+      delete inherited._order;
+      delete inherited.extends;
+      Object.assign(actor, inherited, actor);
+      actor.extends = baseId;
+    }
+    resolvingStack.pop();
+    state.set(actorId, "resolved");
+    return actor;
+  };
+  for (const actor of actors) mergeActor(actor);
 }
 function byId(arr, type) {
   const map = new Map();
@@ -997,7 +1045,11 @@ function render(scene) {
       entries.push({ kind: "asset", z: a.z ?? 0, order: a._order, data: a });
     }
   }
-  for (const a of scene.actors) entries.push({ kind: "actor", z: a.z ?? 0, order: a._order, data: a });
+  for (const a of scene.actors) {
+    if (a.panel !== undefined && a.panel !== null && a.panel !== "") {
+      entries.push({ kind: "actor", z: a.z ?? 0, order: a._order, data: a });
+    }
+  }
   for (const o of scene.objects) entries.push({ kind: "object", z: o.z ?? 0, order: o._order, data: o });
   for (const ba of scene.boxarrows) entries.push({ kind: "boxarrow", z: ba.z ?? 0, order: ba._order, data: ba });
   for (const b of scene.balloons) entries.push({ kind: "balloon", z: b.z ?? 0, order: b._order, data: b });
