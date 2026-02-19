@@ -789,7 +789,7 @@ function estimateItemRectInPanel(item, kind) {
     const s = 20 * num(item.scale, 1);
     const w = s * 0.10;
     const h = s * 0.54;
-    return { x: baseX - w / 2, y: baseY - h, w, h };
+    return { x: baseX , y: baseY, w, h };
   }
   if (kind === "sfx") {
     const text = String(item.text ?? "");
