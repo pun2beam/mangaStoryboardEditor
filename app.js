@@ -73,6 +73,7 @@ let lastGoodSvg = "";
 let debounceId = null;
 let viewState = { scale: 1, panX: 0, panY: 0 };
 let currentScene = null;
+let isObjectDragging = false;
 function parseDsl(text) {
   const lines = text.replace(/\r\n?/g, "\n").split("\n");
   const blocks = [];
@@ -1978,6 +1979,52 @@ function pointInPanel(x, y, panelRect, unit) {
     y: targetRect.y + (p.y - basisRect.y) * (basisRect.h === 0 ? 1 : targetRect.h / basisRect.h),
   };
 }
+function pointFromPanel(point, panelRect, unit) {
+  const targetRect = rectTarget(panelRect);
+  const basisRect = rectBasis(panelRect);
+  if (unit === "px") return { x: point.x - targetRect.x, y: point.y - targetRect.y };
+  const projected = {
+    x: basisRect.x + (point.x - targetRect.x) * (targetRect.w === 0 ? 1 : basisRect.w / targetRect.w),
+    y: basisRect.y + (point.y - targetRect.y) * (targetRect.h === 0 ? 1 : basisRect.h / targetRect.h),
+  };
+  return {
+    x: basisRect.w === 0 ? 0 : ((projected.x - basisRect.x) / basisRect.w) * 100,
+    y: basisRect.h === 0 ? 0 : ((projected.y - basisRect.y) / basisRect.h) * 100,
+  };
+}
+function rectFromPanel(rect, panelRect, unit) {
+  const targetRect = rectTarget(panelRect);
+  const basisRect = rectBasis(panelRect);
+  if (unit === "px") {
+    return { x: rect.x - targetRect.x, y: rect.y - targetRect.y, w: rect.w, h: rect.h };
+  }
+  const projected = projectRect(rect, targetRect, basisRect);
+  return {
+    x: basisRect.w === 0 ? 0 : ((projected.x - basisRect.x) / basisRect.w) * 100,
+    y: basisRect.h === 0 ? 0 : ((projected.y - basisRect.y) / basisRect.h) * 100,
+    w: basisRect.w === 0 ? 0 : (projected.w / basisRect.w) * 100,
+    h: basisRect.h === 0 ? 0 : (projected.h / basisRect.h) * 100,
+  };
+}
+function clampPointToRect(point, rect) {
+  return {
+    x: Math.max(rect.x, Math.min(rect.x + rect.w, point.x)),
+    y: Math.max(rect.y, Math.min(rect.y + rect.h, point.y)),
+  };
+}
+function clampRectToRect(rect, bounds) {
+  const maxX = bounds.x + Math.max(0, bounds.w - rect.w);
+  const maxY = bounds.y + Math.max(0, bounds.h - rect.h);
+  return {
+    ...rect,
+    x: Math.max(bounds.x, Math.min(maxX, rect.x)),
+    y: Math.max(bounds.y, Math.min(maxY, rect.y)),
+  };
+}
+function roundedCoord(value, unit) {
+  if (unit === "px") return Math.round(value);
+  return Math.round(value * 100) / 100;
+}
 function sizeInUnit(v, rect, unit, axis) {
   const basisRect = rectBasis(rect);
   const targetRect = rectTarget(rect);
@@ -2039,6 +2086,8 @@ function setupPanZoom() {
     update();
   }, { passive: false });
   els.viewport.addEventListener("mousedown", (e) => {
+    if (isObjectDragging) return;
+    if (e.target.closest?.("[data-kind][data-id]")) return;
     dragging = true;
     prev = { x: e.clientX, y: e.clientY };
   });
@@ -2052,6 +2101,127 @@ function setupPanZoom() {
     viewState.panY += dy;
     update();
   });
+}
+function setupObjectDrag() {
+  const DRAGGABLE_KINDS = new Set(["actor", "object", "balloon", "caption"]);
+  let state = null;
+
+  function scenePointFromEvent(event) {
+    const group = els.canvas.querySelector("svg > g");
+    if (!group || typeof group.getScreenCTM !== "function") return null;
+    const matrix = group.getScreenCTM();
+    if (!matrix) return null;
+    const svg = group.ownerSVGElement;
+    if (!svg || typeof svg.createSVGPoint !== "function") return null;
+    const pt = svg.createSVGPoint();
+    pt.x = event.clientX;
+    pt.y = event.clientY;
+    return pt.matrixTransform(matrix.inverse());
+  }
+
+  function findBlock(blocks, kind, id) {
+    return blocks.find((block) => block.type === kind && String(block.props.id) === id);
+  }
+
+  els.canvas.addEventListener("pointerdown", (event) => {
+    if (!currentScene) return;
+    const target = event.target.closest?.("[data-kind][data-id]");
+    if (!target) return;
+    const kind = target.dataset.kind;
+    const id = target.dataset.id;
+    if (!DRAGGABLE_KINDS.has(kind) || !id) return;
+    const item = currentScene[`${kind}s`]?.find((entry) => String(entry.id) === id);
+    if (!item) return;
+    const panel = currentScene.panels.find((entry) => String(entry.id) === String(item.panel));
+    if (!panel) return;
+    const pageLayouts = buildPageLayouts(currentScene);
+    const panelRects = buildPanelRects(currentScene, pageLayouts);
+    const panelRect = panelRects.get(String(panel.id));
+    const pageLayout = pageLayouts.get(String(panel.page));
+    if (!panelRect || !pageLayout) return;
+    const start = scenePointFromEvent(event);
+    if (!start) return;
+    const unit = pageLayout.page.unit;
+    const originalRect = (kind === "actor")
+      ? null
+      : withinPanel(item, panelRect, unit);
+    const originalPoint = kind === "actor"
+      ? pointInPanel(item.x, item.y, panelRect, unit)
+      : null;
+    const originalTransform = target.getAttribute("transform") || "";
+    target.setPointerCapture(event.pointerId);
+    isObjectDragging = true;
+    state = {
+      pointerId: event.pointerId,
+      target,
+      kind,
+      id,
+      start,
+      panelRect,
+      unit,
+      originalRect,
+      originalPoint,
+      originalTransform,
+    };
+    event.preventDefault();
+  });
+
+  els.canvas.addEventListener("pointermove", (event) => {
+    if (!state || event.pointerId !== state.pointerId) return;
+    const point = scenePointFromEvent(event);
+    if (!point) return;
+    const dx = point.x - state.start.x;
+    const dy = point.y - state.start.y;
+    const dragTransform = ` translate(${dx},${dy})`;
+    state.target.setAttribute("transform", `${state.originalTransform}${dragTransform}`.trim());
+    event.preventDefault();
+  });
+
+  const finishDrag = (event) => {
+    if (!state || event.pointerId !== state.pointerId) return;
+    const point = scenePointFromEvent(event) || state.start;
+    const dx = point.x - state.start.x;
+    const dy = point.y - state.start.y;
+    try {
+      if (state.kind === "actor" && state.originalPoint) {
+        const moved = { x: state.originalPoint.x + dx, y: state.originalPoint.y + dy };
+        const clamped = clampPointToRect(moved, rectTarget(state.panelRect));
+        const next = pointFromPanel(clamped, state.panelRect, state.unit);
+        const blocks = parseBlocks(els.input.value);
+        const block = findBlock(blocks, state.kind, state.id);
+        if (block) {
+          block.props.x = roundedCoord(next.x, state.unit);
+          block.props.y = roundedCoord(next.y, state.unit);
+          els.input.value = stringifyBlocks(blocks);
+          update();
+        }
+      } else if (state.originalRect) {
+        const moved = {
+          ...state.originalRect,
+          x: state.originalRect.x + dx,
+          y: state.originalRect.y + dy,
+        };
+        const clamped = clampRectToRect(moved, rectTarget(state.panelRect));
+        const next = rectFromPanel(clamped, state.panelRect, state.unit);
+        const blocks = parseBlocks(els.input.value);
+        const block = findBlock(blocks, state.kind, state.id);
+        if (block) {
+          block.props.x = roundedCoord(next.x, state.unit);
+          block.props.y = roundedCoord(next.y, state.unit);
+          els.input.value = stringifyBlocks(blocks);
+          update();
+        }
+      }
+    } finally {
+      state.target.setAttribute("transform", state.originalTransform);
+      state.target.releasePointerCapture(state.pointerId);
+      state = null;
+      isObjectDragging = false;
+    }
+  };
+
+  els.canvas.addEventListener("pointerup", finishDrag);
+  els.canvas.addEventListener("pointercancel", finishDrag);
 }
 function setupDownload() {
   els.downloadBtn.addEventListener("click", () => {
@@ -2306,6 +2476,7 @@ async function init() {
   els.input.addEventListener("input", debouncedUpdate);
   setupResize();
   setupPanZoom();
+  setupObjectDrag();
   setupDownload();
   setupRenumberIds();
   update();
