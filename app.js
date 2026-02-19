@@ -449,6 +449,7 @@ function validateAndBuild(blocks) {
     actor.pose = ACTOR_TYPES.has(actor.pose) ? actor.pose : "stand";
     actor.emotion = EMOTIONS.has(actor.emotion) ? actor.emotion : "neutral";
     actor.scale = num(actor.scale, 1);
+    actor.rot = num(actor.rot, 0);
     actor.facing = FACING_TYPES.has(actor.facing) ? actor.facing : "right";
     actor.eye = EYE_TYPES.has(actor.eye) ? actor.eye : "right";
     actor["head.shape"] = HEAD_SHAPES.has(actor["head.shape"]) ? actor["head.shape"] : "circle";
@@ -1379,6 +1380,7 @@ function projectRect(rect, fromRect, toRect) {
 function renderActor(actor, panelRect, unit, showActorName, assetMap) {
   const p = pointInPanel(actor.x, actor.y, panelRect, unit);
   const s = 20 * actor.scale;
+  const rot = num(actor.rot, 0);
   const mirror = actor.facing === "left" ? -1 : 1;
   const pose = poseSegments(actor.pose, s);
   const attachments = resolveActorAttachments(actor, assetMap);
@@ -1391,7 +1393,8 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap) {
   const nameLabel = showActorName && actor.name
     ? `<text x="0" y="${-s * 2.9}" font-size="${Math.max(10, s * 0.55)}" text-anchor="middle" dominant-baseline="auto" fill="black">${escapeXml(String(actor.name))}</text>`
     : "";
-  return `<g transform="translate(${p.x},${p.y})">
+  const groupTransform = rot ? `translate(${p.x},${p.y}) rotate(${rot})` : `translate(${p.x},${p.y})`;
+  return `<g transform="${groupTransform}">
     <g transform="scale(${mirror},1)">
       ${underlayAttachments}
       ${headMarkup}

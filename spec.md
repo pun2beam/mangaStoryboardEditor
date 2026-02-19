@@ -243,6 +243,7 @@ panel:
 * `extends`（任意、継承元 `actor` の `id`）
 * `x,y`（足元の基準点を推奨）
 * `scale`（既定1.0）
+* `rot`（度。足元基準で回転。既定0）
 * `facing`（`left`/`right`/`back`、既定`right`）
 * `pose`（既定`stand`）
 * `emotion`（既定`neutral`）
