@@ -2235,16 +2235,14 @@ function setupObjectDrag() {
       let nextPosition = null;
       if (state.kind === "actor" && state.originalPoint) {
         const moved = { x: state.originalPoint.x + dx, y: state.originalPoint.y + dy };
-        const clamped = clampPointToRect(moved, rectTarget(state.panelRect));
-        nextPosition = pointFromPanel(clamped, state.panelRect, state.unit);
+        nextPosition = pointFromPanel(moved, state.panelRect, state.unit);
       } else if (state.originalRect) {
         const moved = {
           ...state.originalRect,
           x: state.originalRect.x + dx,
           y: state.originalRect.y + dy,
         };
-        const clamped = clampRectToRect(moved, rectTarget(state.panelRect));
-        nextPosition = rectFromPanel(clamped, state.panelRect, state.unit);
+        nextPosition = rectFromPanel(moved, state.panelRect, state.unit);
       }
       if (nextPosition) {
         const blocks = parseBlocks(els.input.value);
