@@ -815,6 +815,36 @@ function applyRectToItem(item, rect, kind) {
   item.x = rect.x;
   item.y = rect.y;
 }
+function clipRectToPanelBounds(rect, maxX, maxY) {
+  const left = clamp(rect.x, 0, maxX);
+  const top = clamp(rect.y, 0, maxY);
+  const right = clamp(rect.x + rect.w, 0, maxX);
+  const bottom = clamp(rect.y + rect.h, 0, maxY);
+  return { x: left, y: top, w: Math.max(0, right - left), h: Math.max(0, bottom - top) };
+}
+function chooseOversizedRect(kind, occupied, maxX, maxY, w, h, step) {
+  if (kind !== "actor") return null;
+  let best = null;
+  let bestHits = Number.POSITIVE_INFINITY;
+  let bestOverlap = Number.POSITIVE_INFINITY;
+  for (let x = 0; x <= maxX; x += step) {
+    const candidate = { x: x - w / 2, y: maxY - h, w, h };
+    const clipped = clipRectToPanelBounds(candidate, maxX, maxY);
+    const hits = occupied.filter((r) => intersectsLocalRect(clipped, r));
+    const overlap = hits.reduce((sum, r) => {
+      const ix = Math.max(0, Math.min(clipped.x + clipped.w, r.x + r.w) - Math.max(clipped.x, r.x));
+      const iy = Math.max(0, Math.min(clipped.y + clipped.h, r.y + r.h) - Math.max(clipped.y, r.y));
+      return sum + ix * iy;
+    }, 0);
+    if (hits.length < bestHits || (hits.length === bestHits && overlap < bestOverlap)) {
+      best = candidate;
+      bestHits = hits.length;
+      bestOverlap = overlap;
+      if (bestHits === 0 && bestOverlap === 0) break;
+    }
+  }
+  return best;
+}
 function autoPlacePanelItems(scene, dicts) {
   const panelEntries = new Map();
   const register = (kind, item) => {
@@ -852,29 +882,46 @@ function autoPlacePanelItems(scene, dicts) {
 
       const w = Math.max(0, baseRect.w);
       const h = Math.max(0, baseRect.h);
+      const fitsWithinPanel = w <= maxX && h <= maxY;
       const boundsMaxX = Math.max(0, maxX - w);
       const boundsMaxY = Math.max(0, maxY - h);
       let chosen = null;
-      for (let y = 0; y <= boundsMaxY; y += step) {
-        for (let x = 0; x <= boundsMaxX; x += step) {
-          const candidate = { x, y, w, h };
-          if (!occupied.some((r) => intersectsLocalRect(candidate, r))) {
-            chosen = candidate;
-            break;
+
+      if (fitsWithinPanel) {
+        for (let y = 0; y <= boundsMaxY; y += step) {
+          for (let x = 0; x <= boundsMaxX; x += step) {
+            const candidate = { x, y, w, h };
+            if (!occupied.some((r) => intersectsLocalRect(candidate, r))) {
+              chosen = candidate;
+              break;
+            }
+          }
+          if (chosen) break;
+        }
+      }
+
+      if (!chosen) {
+        if (fitsWithinPanel) {
+          chosen = { x: 0, y: Math.max(0, maxY - h), w, h };
+        } else {
+          chosen = chooseOversizedRect(kind, occupied, maxX, maxY, w, h, step);
+          if (!chosen && kind === "sfx") {
+            chosen = { x: 0, y: maxY - h * 0.8, w, h };
+          }
+          if (!chosen) {
+            chosen = { x: 0, y: 0, w, h };
           }
         }
-        if (chosen) break;
       }
-      if (!chosen) {
-        chosen = { x: 0, y: Math.max(0, maxY - h), w, h };
-      }
+
       applyRectToItem(item, chosen, kind);
-      occupied.push({
-        x: Math.max(0, chosen.x - margin),
-        y: Math.max(0, chosen.y - margin),
+      const occupiedRect = clipRectToPanelBounds({
+        x: chosen.x - margin,
+        y: chosen.y - margin,
         w: chosen.w + margin * 2,
         h: chosen.h + margin * 2,
-      });
+      }, maxX, maxY);
+      occupied.push(occupiedRect);
     }
   }
 }
