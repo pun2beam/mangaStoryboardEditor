@@ -783,7 +783,7 @@ function findFirstNonOverlapXAtY(panel, y, existingRects, boundsMaxX, horizontal
 }
 function estimateItemRectInPanel(item, kind) {
   if (kind === "actor") {
-    const s = 4 * num(item.scale, 1);
+    const s = 20 * num(item.scale, 1);
     const w = s * 1.8;
     const h = s * 2.8;
     return { x: item.x - w / 2, y: item.y - h, w, h };
