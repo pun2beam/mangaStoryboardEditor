@@ -205,8 +205,31 @@ function parseHierarchicalBlock(lines, startIndex, baseIndent) {
 function flattenHierarchicalBlocks(nodes) {
   const blocks = [];
   let order = 0;
+  const usedPanelIds = new Set();
+  let panelIdCount = 1;
+  const collectPanelIds = (list) => {
+    for (const node of list) {
+      if (node.type === "panel" && node.props.id !== undefined && node.props.id !== null && node.props.id !== "") {
+        usedPanelIds.add(String(node.props.id));
+      }
+      collectPanelIds(node.children);
+    }
+  };
+  const nextAutoPanelId = () => {
+    while (true) {
+      const candidate = nextIdForType("panel", panelIdCount);
+      panelIdCount += 1;
+      if (usedPanelIds.has(candidate)) continue;
+      usedPanelIds.add(candidate);
+      return candidate;
+    }
+  };
+  collectPanelIds(nodes);
   const walk = (node, context) => {
     const props = { ...node.props };
+    if (node.type === "panel" && (props.id === undefined || props.id === null || props.id === "")) {
+      props.id = nextAutoPanelId();
+    }
     const autoParentRefFields = [];
     const parentRef = HIERARCHY_PARENT_REF[node.type];
     if (parentRef && (props[parentRef.field] === undefined || props[parentRef.field] === null || props[parentRef.field] === "")) {
