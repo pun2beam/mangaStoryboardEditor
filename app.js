@@ -2183,18 +2183,11 @@ function setupObjectDrag() {
     const dx = point.x - state.start.x;
     const dy = point.y - state.start.y;
     try {
+      let nextPosition = null;
       if (state.kind === "actor" && state.originalPoint) {
         const moved = { x: state.originalPoint.x + dx, y: state.originalPoint.y + dy };
         const clamped = clampPointToRect(moved, rectTarget(state.panelRect));
-        const next = pointFromPanel(clamped, state.panelRect, state.unit);
-        const blocks = parseBlocks(els.input.value);
-        const block = findBlock(blocks, state.kind, state.id);
-        if (block) {
-          block.props.x = roundedCoord(next.x, state.unit);
-          block.props.y = roundedCoord(next.y, state.unit);
-          els.input.value = stringifyBlocks(blocks);
-          update();
-        }
+        nextPosition = pointFromPanel(clamped, state.panelRect, state.unit);
       } else if (state.originalRect) {
         const moved = {
           ...state.originalRect,
@@ -2202,13 +2195,16 @@ function setupObjectDrag() {
           y: state.originalRect.y + dy,
         };
         const clamped = clampRectToRect(moved, rectTarget(state.panelRect));
-        const next = rectFromPanel(clamped, state.panelRect, state.unit);
+        nextPosition = rectFromPanel(clamped, state.panelRect, state.unit);
+      }
+      if (nextPosition) {
         const blocks = parseBlocks(els.input.value);
         const block = findBlock(blocks, state.kind, state.id);
         if (block) {
-          block.props.x = roundedCoord(next.x, state.unit);
-          block.props.y = roundedCoord(next.y, state.unit);
-          els.input.value = stringifyBlocks(blocks);
+          block.props.x = roundedCoord(nextPosition.x, state.unit);
+          block.props.y = roundedCoord(nextPosition.y, state.unit);
+          const updatedBlocks = blocks;
+          els.input.value = stringifyBlocks(updatedBlocks);
           update();
         }
       }
