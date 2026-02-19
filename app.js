@@ -895,8 +895,8 @@ function autoPlacePanelItems(scene, dicts) {
       let chosen = null;
 
       if (fitsWithinPanel) {
-        for (let y = 0; y <= boundsMaxY; y += step) {
-          for (let x = 0; x <= boundsMaxX; x += step) {
+        for (let y = margin; y <= boundsMaxY; y += step) {
+          for (let x = margin; x <= boundsMaxX; x += step) {
             const candidate = { x, y, w, h };
             if (!occupied.some((r) => intersectsLocalRect(candidate, r))) {
               chosen = candidate;
