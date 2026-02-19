@@ -1115,6 +1115,7 @@ function render(scene) {
   entries.sort((a, b) => a.z - b.z || a.order - b.order);
   const defs = [];
   const body = [];
+  const dragHandles = [];
   const panelClipIds = new Map();
   function getPanelClipId(panelId, panelRect) {
     const key = String(panelId);
@@ -1161,7 +1162,7 @@ function render(scene) {
       body.push(clipWhenBehindPanel(entry, panel, panelRect, actorMarkup));
       if (isDragHandleModeEnabled()) {
         const handleMarkup = renderDragHandle(entry.kind, entry.data.id, entry.data, panelRect, pageLayout.page.unit);
-        if (handleMarkup) body.push(clipWhenBehindPanel(entry, panel, panelRect, handleMarkup));
+        if (handleMarkup) dragHandles.push(clipWhenBehindPanel(entry, panel, panelRect, handleMarkup));
       }
     } else if (entry.kind === "object") {
       const panel = panelMap.get(String(entry.data.panel));
@@ -1172,7 +1173,7 @@ function render(scene) {
       body.push(clipWhenBehindPanel(entry, panel, panelRect, objectMarkup));
       if (isDragHandleModeEnabled()) {
         const handleMarkup = renderDragHandle(entry.kind, entry.data.id, entry.data, panelRect, pageLayout.page.unit);
-        if (handleMarkup) body.push(clipWhenBehindPanel(entry, panel, panelRect, handleMarkup));
+        if (handleMarkup) dragHandles.push(clipWhenBehindPanel(entry, panel, panelRect, handleMarkup));
       }
     } else if (entry.kind === "boxarrow") {
       const panel = panelMap.get(String(entry.data.panel));
@@ -1190,7 +1191,7 @@ function render(scene) {
       body.push(clipWhenBehindPanel(entry, panel, panelRect, balloonMarkup));
       if (isDragHandleModeEnabled()) {
         const handleMarkup = renderDragHandle(entry.kind, entry.data.id, entry.data, panelRect, pageLayout.page.unit);
-        if (handleMarkup) body.push(clipWhenBehindPanel(entry, panel, panelRect, handleMarkup));
+        if (handleMarkup) dragHandles.push(clipWhenBehindPanel(entry, panel, panelRect, handleMarkup));
       }
     } else if (entry.kind === "caption") {
       const panel = panelMap.get(String(entry.data.panel));
@@ -1201,7 +1202,7 @@ function render(scene) {
       body.push(clipWhenBehindPanel(entry, panel, panelRect, captionMarkup));
       if (isDragHandleModeEnabled()) {
         const handleMarkup = renderDragHandle(entry.kind, entry.data.id, entry.data, panelRect, pageLayout.page.unit);
-        if (handleMarkup) body.push(clipWhenBehindPanel(entry, panel, panelRect, handleMarkup));
+        if (handleMarkup) dragHandles.push(clipWhenBehindPanel(entry, panel, panelRect, handleMarkup));
       }
     } else if (entry.kind === "sfx") {
       const panel = panelMap.get(String(entry.data.panel));
@@ -1218,6 +1219,7 @@ function render(scene) {
   <g transform="translate(${viewState.panX},${viewState.panY}) scale(${viewState.scale})">
     ${renderPageFrames(pageLayouts)}
     ${body.join("\n")}
+    ${dragHandles.join("\n")}
   </g>
 </svg>`;
 }
