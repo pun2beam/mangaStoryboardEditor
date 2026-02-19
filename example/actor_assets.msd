@@ -46,6 +46,7 @@ panel:
       - ref: as1401
       - ref: as1501
       - ref: as1601
+      - ref: as1901
 
   actor:
     id: a1002
@@ -64,6 +65,7 @@ panel:
       - ref: as1402
       - ref: as1502
       - ref: as1602
+      - ref: as1902
 
   actor:
     id: a1003
@@ -81,6 +83,7 @@ panel:
       - ref: as1303
       - ref: as1401
       - ref: as1601
+      - ref: as1903
 
   actor:
     id: a1004
@@ -98,6 +101,7 @@ panel:
       - ref: as1304
       - ref: as1402
       - ref: as1602
+      - ref: as1902
 
   actor:
     id: a1005
@@ -118,6 +122,7 @@ panel:
       - ref: as1401
       - ref: as1503
       - ref: as1601
+      - ref: as1902
 
   actor:
     id: a1006
@@ -138,6 +143,7 @@ panel:
       - ref: as1402
       - ref: as1502
       - ref: as1602
+      - ref: as1902
 
   actor:
     id: a1007
@@ -158,6 +164,7 @@ panel:
       - ref: as1401
       - ref: as1501
       - ref: as1601
+      - ref: as1902
 
   actor:
     id: a1008
@@ -181,6 +188,7 @@ panel:
       - ref: as1602
           dx: -11.5
           dy: -55
+      - ref: as1902
 
   actor:
     id: a1009
@@ -199,6 +207,7 @@ panel:
       - ref: as1401
       - ref: as1501
       - ref: as1601
+      - ref: as1902
 
 panel:
   id: 1401
@@ -225,6 +234,7 @@ panel:
       - ref: as1401
       - ref: as1502
       - ref: as1601
+      - ref: as1902
   
   actor:
     id: a1011
@@ -244,6 +254,7 @@ panel:
       - ref: as1402
       - ref: as1503
       - ref: as1602
+      - ref: as1902
 
   actor:
     id: a1012
@@ -266,6 +277,7 @@ panel:
       - ref: as1503
       - ref: as1601
       - ref: as1701
+      - ref: as1902
 
   actor:
     id: a1013
@@ -285,6 +297,7 @@ panel:
       - ref: as1503
       - ref: as1801
       - ref: as1802
+      - ref: as1902
 
   actor:
     id: a1014
@@ -312,6 +325,7 @@ panel:
       - ref: as1701
           dx: -12
           dy: -88
+      - ref: as1902
 
   actor:
     id: a1015
@@ -341,6 +355,7 @@ panel:
           dy: -57.5
       - ref: as1602
           dy: -53.7
+      - ref: as1902
 
   actor:
     id: a1016
@@ -371,6 +386,7 @@ panel:
           dy: -57.5
       - ref: as1602
           dy: -53.7
+      - ref: as1902
 
   actor:
     id: a1017
@@ -390,6 +406,7 @@ panel:
       - ref: as1402
       - ref: as1503
       - ref: as1601
+      - ref: as1902
 
   actor:
     id: a1018
@@ -409,6 +426,7 @@ panel:
       - ref: as1401
       - ref: as1501
       - ref: as1602
+      - ref: as1902
 
 asset:
   id: as1000
@@ -860,3 +878,36 @@ asset:
   rot: 0
   z: 1
   src: ./assets/shadow1.svg
+
+asset:
+  id: as1901
+  w: 55
+  h: 55
+  dx: -5
+  dy: -46.5
+  s: 0.10
+  rot: 0
+  z: 1
+  src: ./assets/nose1.svg
+
+asset:
+  id: as1902
+  w: 55
+  h: 55
+  dx: -4.5
+  dy: -45.5
+  s: 0.09
+  rot: 0
+  z: 1
+  src: ./assets/nose2.svg
+
+asset:
+  id: as1903
+  w: 55
+  h: 55
+  dx: -4
+  dy: -45.5
+  s: 0.10
+  rot: 0
+  z: 1
+  src: ./assets/nose3.svg
