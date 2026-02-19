@@ -75,6 +75,15 @@ page:
     y: 36
     w: 90
     h: 30
+    # 継承確認ケース: a1020 の pose/emotion/scale は親(a1000)より子の指定が優先される
+    actor:
+      id: a1020
+      extends: a1000
+      x: 52
+      y: 88
+      pose: run
+      emotion: panic
+      scale: 8
 
 asset:
   id: as1000

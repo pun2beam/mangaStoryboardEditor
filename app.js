@@ -603,11 +603,12 @@ function resolveActorInheritance(actors) {
         throw new Error(`Line ${actor._line}: 未定義 actor 継承元 ${baseId}`);
       }
       const resolvedBase = mergeActor(baseActor);
+      const ownProps = { ...actor };
       const inherited = { ...resolvedBase };
       delete inherited._line;
       delete inherited._order;
       delete inherited.extends;
-      Object.assign(actor, inherited, actor);
+      Object.assign(actor, inherited, ownProps);
       actor.extends = baseId;
     }
     resolvingStack.pop();
