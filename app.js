@@ -1294,7 +1294,7 @@ function projectRect(rect, fromRect, toRect) {
 }
 function renderActor(actor, panelRect, unit, showActorName, assetMap) {
   const p = pointInPanel(actor.x, actor.y, panelRect, unit);
-  const s = 4 * actor.scale;
+  const s = 20 * actor.scale;
   const mirror = actor.facing === "left" ? -1 : 1;
   const pose = poseSegments(actor.pose, s);
   const attachments = resolveActorAttachments(actor, assetMap);
