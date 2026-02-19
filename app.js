@@ -866,8 +866,10 @@ function autoPlacePanelItems(scene, dicts) {
   for (const [panelId, entries] of panelEntries.entries()) {
     const panel = dicts.panels.get(panelId);
     if (!panel) continue;
-    const maxX = panel.w;
-    const maxY = panel.h;
+    const page = dicts.pages.get(String(panel.page));
+    const unit = page?.unit || "percent";
+    const maxX = unit === "px" ? panel.w : 100;
+    const maxY = unit === "px" ? panel.h : 100;
     const occupied = [];
     const step = 2;
     const margin = 1;
