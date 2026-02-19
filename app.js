@@ -788,7 +788,7 @@ function estimateItemRectInPanel(item, kind) {
   if (kind === "actor") {
     const s = 20 * num(item.scale, 1);
     const w = s * 0.08;
-    const h = s * 0.70;
+    const h = s * 0.80;
     const x = hasFixedPosition ? baseX - w / 2 : 0;
     const y = hasFixedPosition ? baseY - h : 0;
     return { x: x , y: y, w, h };
