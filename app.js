@@ -1115,6 +1115,7 @@ function render(scene) {
   entries.sort((a, b) => a.z - b.z || a.order - b.order);
   const defs = [];
   const body = [];
+  const dragHandleMode = isDragHandleModeEnabled();
   const panelClipIds = new Map();
   function getPanelClipId(panelId, panelRect) {
     const key = String(panelId);
@@ -1157,9 +1158,9 @@ function render(scene) {
       const pageLayout = panel ? pageLayouts.get(String(panel.page)) : null;
       const panelRect = panelRects.get(String(entry.data.panel));
       if (!pageLayout || !panelRect) continue;
-      const actorMarkup = renderActor(entry.data, panelRect, pageLayout.page.unit, showActorName, assetMap, entry.kind, entry.data.id);
+      const actorMarkup = renderActor(entry.data, panelRect, pageLayout.page.unit, showActorName, assetMap, entry.kind, entry.data.id, !dragHandleMode);
       body.push(clipWhenBehindPanel(entry, panel, panelRect, actorMarkup));
-      if (isDragHandleModeEnabled()) {
+      if (dragHandleMode) {
         const handleMarkup = renderDragHandle(entry.kind, entry.data.id, entry.data, panelRect, pageLayout.page.unit);
         if (handleMarkup) body.push(clipWhenBehindPanel(entry, panel, panelRect, handleMarkup));
       }
@@ -1168,9 +1169,9 @@ function render(scene) {
       const pageLayout = panel ? pageLayouts.get(String(panel.page)) : null;
       const panelRect = panelRects.get(String(entry.data.panel));
       if (!pageLayout || !panelRect) continue;
-      const objectMarkup = renderObject(entry.data, panelRect, pageLayout.page.unit, defaultTextDirection, entry.kind, entry.data.id);
+      const objectMarkup = renderObject(entry.data, panelRect, pageLayout.page.unit, defaultTextDirection, entry.kind, entry.data.id, !dragHandleMode);
       body.push(clipWhenBehindPanel(entry, panel, panelRect, objectMarkup));
-      if (isDragHandleModeEnabled()) {
+      if (dragHandleMode) {
         const handleMarkup = renderDragHandle(entry.kind, entry.data.id, entry.data, panelRect, pageLayout.page.unit);
         if (handleMarkup) body.push(clipWhenBehindPanel(entry, panel, panelRect, handleMarkup));
       }
@@ -1186,9 +1187,9 @@ function render(scene) {
       const pageLayout = panel ? pageLayouts.get(String(panel.page)) : null;
       const panelRect = panelRects.get(String(entry.data.panel));
       if (!pageLayout || !panelRect) continue;
-      const balloonMarkup = renderBalloon(entry.data, panelRect, pageLayout.page.unit, actorMap, panelMap, panelRects, pageLayouts, defaultTextDirection, entry.kind, entry.data.id);
+      const balloonMarkup = renderBalloon(entry.data, panelRect, pageLayout.page.unit, actorMap, panelMap, panelRects, pageLayouts, defaultTextDirection, entry.kind, entry.data.id, !dragHandleMode);
       body.push(clipWhenBehindPanel(entry, panel, panelRect, balloonMarkup));
-      if (isDragHandleModeEnabled()) {
+      if (dragHandleMode) {
         const handleMarkup = renderDragHandle(entry.kind, entry.data.id, entry.data, panelRect, pageLayout.page.unit);
         if (handleMarkup) body.push(clipWhenBehindPanel(entry, panel, panelRect, handleMarkup));
       }
@@ -1197,9 +1198,9 @@ function render(scene) {
       const pageLayout = panel ? pageLayouts.get(String(panel.page)) : null;
       const panelRect = panelRects.get(String(entry.data.panel));
       if (!pageLayout || !panelRect) continue;
-      const captionMarkup = renderCaption(entry.data, panelRect, pageLayout.page.unit, defaultTextDirection, entry.kind, entry.data.id);
+      const captionMarkup = renderCaption(entry.data, panelRect, pageLayout.page.unit, defaultTextDirection, entry.kind, entry.data.id, !dragHandleMode);
       body.push(clipWhenBehindPanel(entry, panel, panelRect, captionMarkup));
-      if (isDragHandleModeEnabled()) {
+      if (dragHandleMode) {
         const handleMarkup = renderDragHandle(entry.kind, entry.data.id, entry.data, panelRect, pageLayout.page.unit);
         if (handleMarkup) body.push(clipWhenBehindPanel(entry, panel, panelRect, handleMarkup));
       }
@@ -1427,7 +1428,7 @@ function projectRect(rect, fromRect, toRect) {
 function renderDataAttrs(kind, id) {
   return ` data-kind="${escapeXml(String(kind))}" data-id="${escapeXml(String(id))}"`;
 }
-function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) {
+function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id, includeLegacyHitArea = true) {
   const p = pointInPanel(actor.x, actor.y, panelRect, unit);
   const s = 20 * actor.scale;
   const rot = num(actor.rot, 0);
@@ -1446,8 +1447,11 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
   const groupTransform = rot ? `translate(${p.x},${p.y}) rotate(${rot})` : `translate(${p.x},${p.y})`;
   const attrs = renderDataAttrs(kind, id);
   const hitSize = s * 3.2;
+  const hitArea = includeLegacyHitArea
+    ? `<circle cx="0" cy="${-s * 1.4}" r="${hitSize}" fill="transparent" pointer-events="all"/>`
+    : "";
   return `<g transform="${groupTransform}"${attrs}>
-    <circle cx="0" cy="${-s * 1.4}" r="${hitSize}" fill="transparent" pointer-events="all"/>
+    ${hitArea}
     <g transform="scale(${mirror},1)">
       ${underlayAttachments}
       ${headMarkup}
@@ -1548,7 +1552,7 @@ function emotionPath(emotion, s) {
   if (emotion === "panic") return `<circle cx="0" cy="${mouthY}" r="${s * 0.1}" fill="none" stroke="black" stroke-width="1.5"/>`;
   return `<line x1="${-s * 0.15}" y1="${mouthY}" x2="${s * 0.15}" y2="${mouthY}" stroke="black" stroke-width="1.5"/>`;
 }
-function renderBalloon(balloon, panelRect, unit, actorMap, panelMap, panelRects, pageLayouts, defaultTextDirection, kind, id) {
+function renderBalloon(balloon, panelRect, unit, actorMap, panelMap, panelRects, pageLayouts, defaultTextDirection, kind, id, includeLegacyHitArea = true) {
   const r = withinPanel(balloon, panelRect, unit);
   const attrs = renderDataAttrs(kind, id);
   const balloonCenter = { x: r.x + r.w / 2, y: r.y + r.h / 2 };
@@ -1561,6 +1565,9 @@ function renderBalloon(balloon, panelRect, unit, actorMap, panelMap, panelRects,
   } else {
     shape = `<ellipse cx="${r.x + r.w / 2}" cy="${r.y + r.h / 2}" rx="${r.w / 2}" ry="${r.h / 2}" fill="white" stroke="black"/>`;
   }
+  const hitArea = includeLegacyHitArea
+    ? `<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="transparent" pointer-events="all"/>`
+    : "";
   let tail = "";
   if (typeof balloon.tail === "string" && balloon.tail.startsWith("toActor(")) {
     const id = balloon.tail.match(/^toActor\((.+)\)$/)?.[1];
@@ -1571,7 +1578,7 @@ function renderBalloon(balloon, panelRect, unit, actorMap, panelMap, panelRects,
       const actorPage = actorPanel ? pageLayouts.get(String(actorPanel.page)) : null;
       if (!pRect || !actorPage) {
         const text = renderText(balloon.text, r, balloon.fontSize, balloon.align, balloon.padding, unit, balloon.lineHeight, "center", balloon.textDirection || defaultTextDirection, true, balloon.emphasisFontSize);
-        return `<g${attrs}><rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="transparent" pointer-events="all"/>${shape}${text}</g>`;
+        return `<g${attrs}>${hitArea}${shape}${text}</g>`;
       }
       const actorUnit = actorPage.page.unit;
       const targetYOffset = actorUnit === "px" ? BALLOON_TAIL_TARGET_Y_OFFSET.px : BALLOON_TAIL_TARGET_Y_OFFSET.percent;
@@ -1610,7 +1617,7 @@ function renderBalloon(balloon, panelRect, unit, actorMap, panelMap, panelRects,
     }
   }
   const text = renderText(balloon.text, r, balloon.fontSize, balloon.align, balloon.padding, unit, balloon.lineHeight, "center", balloon.textDirection || defaultTextDirection, true, balloon.emphasisFontSize);
-  return `<g${attrs}><rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="transparent" pointer-events="all"/>${tail}${shape}${text}</g>`;
+  return `<g${attrs}>${hitArea}${tail}${shape}${text}</g>`;
 }
 function renderThoughtTailBubbles(balloonAnchor, targetAnchor, balloonRect) {
   const diameterBase = Math.max(6, Math.min(balloonRect.w, balloonRect.h) * 0.08);
@@ -1690,7 +1697,7 @@ function anchorPointOnRectTowardPoint(rect, fromPoint, towardPoint) {
   const closest = candidates[0];
   return { x: closest.x, y: closest.y };
 }
-function renderCaption(caption, panelRect, unit, defaultTextDirection, kind, id) {
+function renderCaption(caption, panelRect, unit, defaultTextDirection, kind, id, includeLegacyHitArea = true) {
   const r = withinPanel(caption, panelRect, unit);
   const attrs = renderDataAttrs(kind, id);
   const box = caption.style === "none" ? "" : `<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="white" stroke="black"/>`;
@@ -1707,7 +1714,10 @@ function renderCaption(caption, panelRect, unit, defaultTextDirection, kind, id)
     true,
     caption.emphasisFontSize,
   );
-  return `<g${attrs}><rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="transparent" pointer-events="all"/>${box}${text}</g>`;
+  const hitArea = includeLegacyHitArea
+    ? `<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="transparent" pointer-events="all"/>`
+    : "";
+  return `<g${attrs}>${hitArea}${box}${text}</g>`;
 }
 function renderSfx(sfx, panelRect, unit, defaultTextDirection) {
   const p = pointInPanel(sfx.x, sfx.y, panelRect, unit);
@@ -1716,7 +1726,7 @@ function renderSfx(sfx, panelRect, unit, defaultTextDirection) {
   const textAttrs = direction === "vertical" ? ' writing-mode="vertical-rl" text-orientation="upright"' : '';
   return `<text x="${p.x}" y="${p.y}" font-size="${fontSize}" transform="rotate(${sfx.rotate} ${p.x} ${p.y}) scale(${sfx.scale})" fill="${sfx.fill}" stroke="${sfx.stroke || "none"}" font-weight="700"${textAttrs}>${escapeXml(sfx.text)}</text>`;
 }
-function renderObject(object, panelRect, unit, defaultTextDirection, kind, id) {
+function renderObject(object, panelRect, unit, defaultTextDirection, kind, id, includeLegacyHitArea = true) {
   const r = withinPanel({ ...object, w: object.w, h: object.h }, panelRect, unit);
   const attrs = renderDataAttrs(kind, id);
   const border = normalizeTextSize(object.border, unit);
@@ -1731,7 +1741,10 @@ function renderObject(object, panelRect, unit, defaultTextDirection, kind, id) {
     shape = `<ellipse cx="${r.x + r.w / 2}" cy="${r.y + r.h / 2}" rx="${r.w / 2}" ry="${r.h / 2}" fill="none" stroke="black" stroke-width="${borderWidth}"/>`;
   }
   const text = renderText(object.text, r, object.fontSize, object.align, object.padding, unit, object.lineHeight, "center", object.textDirection || defaultTextDirection);
-  return `<g${attrs}><rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="transparent" pointer-events="all"/>${shape}${text}</g>`;
+  const hitArea = includeLegacyHitArea
+    ? `<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="transparent" pointer-events="all"/>`
+    : "";
+  return `<g${attrs}>${hitArea}${shape}${text}</g>`;
 }
 function renderBoxArrow(boxarrow, panelRect, unit) {
   const center = pointInPanel(boxarrow.x, boxarrow.y, panelRect, unit);
