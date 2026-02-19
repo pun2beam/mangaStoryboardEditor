@@ -782,11 +782,14 @@ function findFirstNonOverlapXAtY(panel, y, existingRects, boundsMaxX, horizontal
   return null;
 }
 function estimateItemRectInPanel(item, kind) {
+  const hasFixedPosition = !item._autoPosition;
+  const baseX = hasFixedPosition ? num(item.x, 0) : 0;
+  const baseY = hasFixedPosition ? num(item.y, 0) : 0;
   if (kind === "actor") {
     const s = 20 * num(item.scale, 1);
     const w = s * 0.10;
     const h = s * 0.54;
-    return { x: item.x - w / 2, y: item.y - h, w, h };
+    return { x: baseX - w / 2, y: baseY - h, w, h };
   }
   if (kind === "sfx") {
     const text = String(item.text ?? "");
@@ -797,9 +800,9 @@ function estimateItemRectInPanel(item, kind) {
     const estimatedHeight = fontSize * 1.4;
     const w = (isVertical ? estimatedHeight : estimatedWidth) * scale;
     const h = (isVertical ? estimatedWidth : estimatedHeight) * scale;
-    return { x: item.x, y: item.y - h * 0.8, w, h };
+    return { x: baseX, y: baseY - h * 0.8, w, h };
   }
-  return { x: item.x, y: item.y, w: num(item.w, 0), h: num(item.h, 0) };
+  return { x: baseX, y: baseY, w: num(item.w, 0), h: num(item.h, 0) };
 }
 function applyRectToItem(item, rect, kind) {
   if (kind === "actor") {
