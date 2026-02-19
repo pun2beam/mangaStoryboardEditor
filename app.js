@@ -433,6 +433,7 @@ function validateAndBuild(blocks) {
     }
   }
   for (const actor of scene.actors) {
+    actor._autoPosition = actor.x === undefined || actor.x === null || actor.x === "" || actor.y === undefined || actor.y === null || actor.y === "";
     actor.pose = ACTOR_TYPES.has(actor.pose) ? actor.pose : "stand";
     actor.emotion = EMOTIONS.has(actor.emotion) ? actor.emotion : "neutral";
     actor.scale = num(actor.scale, 1);
@@ -444,7 +445,8 @@ function validateAndBuild(blocks) {
     actor.attachments = normalizeAttachments(actor.attachments, actor._line);
   }
   for (const object of scene.objects) {
-    requireFields(object, ["x", "y", "text"], "object");
+    object._autoPosition = object.x === undefined || object.x === null || object.x === "" || object.y === undefined || object.y === null || object.y === "";
+    requireFields(object, ["text"], "object");
     object.w = num(object.w ?? object.width, 10);
     object.h = num(object.h ?? object.height, 10);
     if (object.w <= 0 || object.h <= 0) throw new Error(`Line ${object._line}: object width/height は正数`);
@@ -469,7 +471,8 @@ function validateAndBuild(blocks) {
     boxarrow.fill = boxarrow.fill || "#a0f0a0";
   }
   for (const balloon of scene.balloons) {
-    requireFields(balloon, ["x", "y", "w", "h", "text"], "balloon");
+    balloon._autoPosition = balloon.x === undefined || balloon.x === null || balloon.x === "" || balloon.y === undefined || balloon.y === null || balloon.y === "";
+    requireFields(balloon, ["w", "h", "text"], "balloon");
     balloon.shape = balloon.shape || "oval";
     balloon.align = balloon.align || "center";
     balloon.fontSize = parseSizedValue(balloon.fontsize ?? balloon.fontSize, 4, pUnit(balloon, dicts, "panel"));
@@ -500,7 +503,8 @@ function validateAndBuild(blocks) {
     balloon.tail = tail;
   }
   for (const caption of scene.captions) {
-    requireFields(caption, ["x", "y", "w", "h", "text"], "caption");
+    caption._autoPosition = caption.x === undefined || caption.x === null || caption.x === "" || caption.y === undefined || caption.y === null || caption.y === "";
+    requireFields(caption, ["w", "h", "text"], "caption");
     caption.style = caption.style || "box";
     caption.align = normalizeHorizontalAlign(caption.align, "center");
     caption.valign = normalizeVerticalAlign(caption.valign ?? caption.vAlign ?? caption.verticalAlign, "top");
@@ -513,7 +517,8 @@ function validateAndBuild(blocks) {
     caption.textDirection = normalizeTextDirection(caption["text.direction"] ?? caption.textDirection, scene.meta["text.direction"]);
   }
   for (const s of scene.sfx) {
-    requireFields(s, ["x", "y", "text"], "sfx");
+    s._autoPosition = s.x === undefined || s.x === null || s.x === "" || s.y === undefined || s.y === null || s.y === "";
+    requireFields(s, ["text"], "sfx");
     s.scale = num(s.scale, 1);
     s.rotate = num(s.rotate, 0);
     s.fontSize = num(s.fontSize, 8);
@@ -547,6 +552,7 @@ function validateAndBuild(blocks) {
       attachment.z = typeof attachment.z === "number" ? attachment.z : null;
     }
   }
+  autoPlacePanelItems(scene, dicts);
   return scene;
 }
 function normalizeAttachments(value, line) {
@@ -775,6 +781,104 @@ function findFirstNonOverlapXAtY(panel, y, existingRects, boundsMaxX, horizontal
   }
   return null;
 }
+function estimateItemRectInPanel(item, kind) {
+  if (kind === "actor") {
+    const s = 20 * num(item.scale, 1);
+    const w = s * 1.8;
+    const h = s * 2.8;
+    return { x: item.x - w / 2, y: item.y - h, w, h };
+  }
+  if (kind === "sfx") {
+    const text = String(item.text ?? "");
+    const scale = num(item.scale, 1);
+    const fontSize = num(item.fontSize, 8);
+    const isVertical = (item.textDirection || "horizontal") === "vertical";
+    const estimatedWidth = Math.max(fontSize, text.length * fontSize * 0.7);
+    const estimatedHeight = fontSize * 1.4;
+    const w = (isVertical ? estimatedHeight : estimatedWidth) * scale;
+    const h = (isVertical ? estimatedWidth : estimatedHeight) * scale;
+    return { x: item.x, y: item.y - h * 0.8, w, h };
+  }
+  return { x: item.x, y: item.y, w: num(item.w, 0), h: num(item.h, 0) };
+}
+function applyRectToItem(item, rect, kind) {
+  if (kind === "actor") {
+    item.x = rect.x + rect.w / 2;
+    item.y = rect.y + rect.h;
+    return;
+  }
+  if (kind === "sfx") {
+    item.x = rect.x;
+    item.y = rect.y + rect.h * 0.8;
+    return;
+  }
+  item.x = rect.x;
+  item.y = rect.y;
+}
+function autoPlacePanelItems(scene, dicts) {
+  const panelEntries = new Map();
+  const register = (kind, item) => {
+    const key = String(item.panel);
+    if (!panelEntries.has(key)) panelEntries.set(key, []);
+    panelEntries.get(key).push({ kind, item });
+  };
+  for (const actor of scene.actors) register("actor", actor);
+  for (const object of scene.objects) register("object", object);
+  for (const balloon of scene.balloons) register("balloon", balloon);
+  for (const caption of scene.captions) register("caption", caption);
+  for (const sfx of scene.sfx) register("sfx", sfx);
+
+  for (const [panelId, entries] of panelEntries.entries()) {
+    const panel = dicts.panels.get(panelId);
+    if (!panel) continue;
+    const maxX = panel.w;
+    const maxY = panel.h;
+    const occupied = [];
+    const step = 2;
+    const margin = 1;
+    entries.sort((a, b) => a.item._order - b.item._order);
+
+    for (const { kind, item } of entries) {
+      const baseRect = estimateItemRectInPanel(item, kind);
+      if (!item._autoPosition) {
+        occupied.push({
+          x: Math.max(0, baseRect.x - margin),
+          y: Math.max(0, baseRect.y - margin),
+          w: baseRect.w + margin * 2,
+          h: baseRect.h + margin * 2,
+        });
+        continue;
+      }
+
+      const w = Math.max(0, baseRect.w);
+      const h = Math.max(0, baseRect.h);
+      const boundsMaxX = Math.max(0, maxX - w);
+      const boundsMaxY = Math.max(0, maxY - h);
+      let chosen = null;
+      for (let y = 0; y <= boundsMaxY; y += step) {
+        for (let x = 0; x <= boundsMaxX; x += step) {
+          const candidate = { x, y, w, h };
+          if (!occupied.some((r) => intersectsLocalRect(candidate, r))) {
+            chosen = candidate;
+            break;
+          }
+        }
+        if (chosen) break;
+      }
+      if (!chosen) {
+        chosen = { x: 0, y: Math.max(0, maxY - h), w, h };
+      }
+      applyRectToItem(item, chosen, kind);
+      occupied.push({
+        x: Math.max(0, chosen.x - margin),
+        y: Math.max(0, chosen.y - margin),
+        w: chosen.w + margin * 2,
+        h: chosen.h + margin * 2,
+      });
+    }
+  }
+}
+
 function autoPlacePanel(panel, previousPanel, existingRects, defaultPanelDirection, unit, inner, panelMargin) {
   const boundsMaxX = unit === "px" ? inner.w : 100;
   const boundsMaxY = unit === "px" ? inner.h : 100;
