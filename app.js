@@ -1126,14 +1126,14 @@ function render(scene) {
       const pageLayout = panel ? pageLayouts.get(String(panel.page)) : null;
       const panelRect = panelRects.get(String(entry.data.panel));
       if (!pageLayout || !panelRect) continue;
-      const actorMarkup = renderActor(entry.data, panelRect, pageLayout.page.unit, showActorName, assetMap);
+      const actorMarkup = renderActor(entry.data, panelRect, pageLayout.page.unit, showActorName, assetMap, entry.kind, entry.data.id);
       body.push(clipWhenBehindPanel(entry, panel, panelRect, actorMarkup));
     } else if (entry.kind === "object") {
       const panel = panelMap.get(String(entry.data.panel));
       const pageLayout = panel ? pageLayouts.get(String(panel.page)) : null;
       const panelRect = panelRects.get(String(entry.data.panel));
       if (!pageLayout || !panelRect) continue;
-      const objectMarkup = renderObject(entry.data, panelRect, pageLayout.page.unit, defaultTextDirection);
+      const objectMarkup = renderObject(entry.data, panelRect, pageLayout.page.unit, defaultTextDirection, entry.kind, entry.data.id);
       body.push(clipWhenBehindPanel(entry, panel, panelRect, objectMarkup));
     } else if (entry.kind === "boxarrow") {
       const panel = panelMap.get(String(entry.data.panel));
@@ -1147,14 +1147,14 @@ function render(scene) {
       const pageLayout = panel ? pageLayouts.get(String(panel.page)) : null;
       const panelRect = panelRects.get(String(entry.data.panel));
       if (!pageLayout || !panelRect) continue;
-      const balloonMarkup = renderBalloon(entry.data, panelRect, pageLayout.page.unit, actorMap, panelMap, panelRects, pageLayouts, defaultTextDirection);
+      const balloonMarkup = renderBalloon(entry.data, panelRect, pageLayout.page.unit, actorMap, panelMap, panelRects, pageLayouts, defaultTextDirection, entry.kind, entry.data.id);
       body.push(clipWhenBehindPanel(entry, panel, panelRect, balloonMarkup));
     } else if (entry.kind === "caption") {
       const panel = panelMap.get(String(entry.data.panel));
       const pageLayout = panel ? pageLayouts.get(String(panel.page)) : null;
       const panelRect = panelRects.get(String(entry.data.panel));
       if (!pageLayout || !panelRect) continue;
-      const captionMarkup = renderCaption(entry.data, panelRect, pageLayout.page.unit, defaultTextDirection);
+      const captionMarkup = renderCaption(entry.data, panelRect, pageLayout.page.unit, defaultTextDirection, entry.kind, entry.data.id);
       body.push(clipWhenBehindPanel(entry, panel, panelRect, captionMarkup));
     } else if (entry.kind === "sfx") {
       const panel = panelMap.get(String(entry.data.panel));
@@ -1377,7 +1377,10 @@ function projectRect(rect, fromRect, toRect) {
     h: rect.h * scaleY,
   };
 }
-function renderActor(actor, panelRect, unit, showActorName, assetMap) {
+function renderDataAttrs(kind, id) {
+  return ` data-kind="${escapeXml(String(kind))}" data-id="${escapeXml(String(id))}"`;
+}
+function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) {
   const p = pointInPanel(actor.x, actor.y, panelRect, unit);
   const s = 20 * actor.scale;
   const rot = num(actor.rot, 0);
@@ -1394,7 +1397,10 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap) {
     ? `<text x="0" y="${-s * 2.9}" font-size="${Math.max(10, s * 0.55)}" text-anchor="middle" dominant-baseline="auto" fill="black">${escapeXml(String(actor.name))}</text>`
     : "";
   const groupTransform = rot ? `translate(${p.x},${p.y}) rotate(${rot})` : `translate(${p.x},${p.y})`;
-  return `<g transform="${groupTransform}">
+  const attrs = renderDataAttrs(kind, id);
+  const hitSize = s * 3.2;
+  return `<g transform="${groupTransform}"${attrs}>
+    <circle cx="0" cy="${-s * 1.4}" r="${hitSize}" fill="transparent" pointer-events="all"/>
     <g transform="scale(${mirror},1)">
       ${underlayAttachments}
       ${headMarkup}
@@ -1495,8 +1501,9 @@ function emotionPath(emotion, s) {
   if (emotion === "panic") return `<circle cx="0" cy="${mouthY}" r="${s * 0.1}" fill="none" stroke="black" stroke-width="1.5"/>`;
   return `<line x1="${-s * 0.15}" y1="${mouthY}" x2="${s * 0.15}" y2="${mouthY}" stroke="black" stroke-width="1.5"/>`;
 }
-function renderBalloon(balloon, panelRect, unit, actorMap, panelMap, panelRects, pageLayouts, defaultTextDirection) {
+function renderBalloon(balloon, panelRect, unit, actorMap, panelMap, panelRects, pageLayouts, defaultTextDirection, kind, id) {
   const r = withinPanel(balloon, panelRect, unit);
+  const attrs = renderDataAttrs(kind, id);
   const balloonCenter = { x: r.x + r.w / 2, y: r.y + r.h / 2 };
   const isThoughtBalloon = balloon.shape === "thought";
   let shape = "";
@@ -1517,7 +1524,7 @@ function renderBalloon(balloon, panelRect, unit, actorMap, panelMap, panelRects,
       const actorPage = actorPanel ? pageLayouts.get(String(actorPanel.page)) : null;
       if (!pRect || !actorPage) {
         const text = renderText(balloon.text, r, balloon.fontSize, balloon.align, balloon.padding, unit, balloon.lineHeight, "center", balloon.textDirection || defaultTextDirection, true, balloon.emphasisFontSize);
-        return `<g>${shape}${text}</g>`;
+        return `<g${attrs}><rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="transparent" pointer-events="all"/>${shape}${text}</g>`;
       }
       const actorUnit = actorPage.page.unit;
       const targetYOffset = actorUnit === "px" ? BALLOON_TAIL_TARGET_Y_OFFSET.px : BALLOON_TAIL_TARGET_Y_OFFSET.percent;
@@ -1556,7 +1563,7 @@ function renderBalloon(balloon, panelRect, unit, actorMap, panelMap, panelRects,
     }
   }
   const text = renderText(balloon.text, r, balloon.fontSize, balloon.align, balloon.padding, unit, balloon.lineHeight, "center", balloon.textDirection || defaultTextDirection, true, balloon.emphasisFontSize);
-  return `<g>${tail}${shape}${text}</g>`;
+  return `<g${attrs}><rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="transparent" pointer-events="all"/>${tail}${shape}${text}</g>`;
 }
 function renderThoughtTailBubbles(balloonAnchor, targetAnchor, balloonRect) {
   const diameterBase = Math.max(6, Math.min(balloonRect.w, balloonRect.h) * 0.08);
@@ -1636,8 +1643,9 @@ function anchorPointOnRectTowardPoint(rect, fromPoint, towardPoint) {
   const closest = candidates[0];
   return { x: closest.x, y: closest.y };
 }
-function renderCaption(caption, panelRect, unit, defaultTextDirection) {
+function renderCaption(caption, panelRect, unit, defaultTextDirection, kind, id) {
   const r = withinPanel(caption, panelRect, unit);
+  const attrs = renderDataAttrs(kind, id);
   const box = caption.style === "none" ? "" : `<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="white" stroke="black"/>`;
   const text = renderText(
     caption.text,
@@ -1652,7 +1660,7 @@ function renderCaption(caption, panelRect, unit, defaultTextDirection) {
     true,
     caption.emphasisFontSize,
   );
-  return `<g>${box}${text}</g>`;
+  return `<g${attrs}><rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="transparent" pointer-events="all"/>${box}${text}</g>`;
 }
 function renderSfx(sfx, panelRect, unit, defaultTextDirection) {
   const p = pointInPanel(sfx.x, sfx.y, panelRect, unit);
@@ -1661,8 +1669,9 @@ function renderSfx(sfx, panelRect, unit, defaultTextDirection) {
   const textAttrs = direction === "vertical" ? ' writing-mode="vertical-rl" text-orientation="upright"' : '';
   return `<text x="${p.x}" y="${p.y}" font-size="${fontSize}" transform="rotate(${sfx.rotate} ${p.x} ${p.y}) scale(${sfx.scale})" fill="${sfx.fill}" stroke="${sfx.stroke || "none"}" font-weight="700"${textAttrs}>${escapeXml(sfx.text)}</text>`;
 }
-function renderObject(object, panelRect, unit, defaultTextDirection) {
+function renderObject(object, panelRect, unit, defaultTextDirection, kind, id) {
   const r = withinPanel({ ...object, w: object.w, h: object.h }, panelRect, unit);
+  const attrs = renderDataAttrs(kind, id);
   const border = normalizeTextSize(object.border, unit);
   const borderWidth = border.unit === "percent" ? sizeInUnit(border.value, r, "percent", "x") : border.value;
   let shape = "";
@@ -1675,7 +1684,7 @@ function renderObject(object, panelRect, unit, defaultTextDirection) {
     shape = `<ellipse cx="${r.x + r.w / 2}" cy="${r.y + r.h / 2}" rx="${r.w / 2}" ry="${r.h / 2}" fill="none" stroke="black" stroke-width="${borderWidth}"/>`;
   }
   const text = renderText(object.text, r, object.fontSize, object.align, object.padding, unit, object.lineHeight, "center", object.textDirection || defaultTextDirection);
-  return `<g>${shape}${text}</g>`;
+  return `<g${attrs}><rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="transparent" pointer-events="all"/>${shape}${text}</g>`;
 }
 function renderBoxArrow(boxarrow, panelRect, unit) {
   const center = pointInPanel(boxarrow.x, boxarrow.y, panelRect, unit);
