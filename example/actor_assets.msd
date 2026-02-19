@@ -5,414 +5,410 @@ meta:
   text.direction: horizontal
   base.panel.direction: right.bottom
   base.panel.margin: 1.5
+  layout.page.mode:auto-extend
 
-page:
-  id: p1040
-  size: B5
-  margin: 5
-  unit: percent
-  panel:
-    id: 1390
-    w: 100
-    h: 1
-    strokeWidth: 0
-    sfx:
-      id: s1060
-      x: 0
-      y: 140
-      text: キャラクターアセット
-      scale: 1
-      fontSize: 4
-      rotate: 0
-      stroke: #000000
-      fill: #a0f0a0
+panel:
+  id: 1390
+  w: 100
+  h: 1
+  strokeWidth: 0
+  sfx:
+    id: s1060
+    x: 0
+    y: 140
+    text: キャラクターアセット
+    scale: 1
+    fontSize: 4
+    rotate: 0
+    stroke: #000000
+    fill: #a0f0a0
 
-  panel:
-    id: 1400
-    w: 100
-    h: 20
-    radius: 20
-    
-    actor:
-      id: a1001
-      x: 10
-      y: 90
-      scale: 5
-      pose: point
-      emotion: neutral
-      facing: right
-      name: Hoge君
-      attachments:
-        - ref: as1000
-        - ref: as1101
-        - ref: as1201
-        - ref: as1301
-        - ref: as1401
-        - ref: as1501
-        - ref: as1601
+panel:
+  id: 1400
+  w: 100
+  h: 20
+  radius: 20
+  
+  actor:
+    id: a1001
+    x: 10
+    y: 90
+    scale: 5
+    pose: point
+    emotion: neutral
+    facing: right
+    name: Hoge君
+    attachments:
+      - ref: as1000
+      - ref: as1101
+      - ref: as1201
+      - ref: as1301
+      - ref: as1401
+      - ref: as1501
+      - ref: as1601
 
-    actor:
-      id: a1002
-      x: 20
-      y: 90
-      scale: 5
-      pose: point
-      emotion: neutral
-      facing: right
-      name: Hoge君
-      attachments:
-        - ref: as1000
-        - ref: as1102
-        - ref: as1202
-        - ref: as1302
-        - ref: as1402
-        - ref: as1502
-        - ref: as1602
+  actor:
+    id: a1002
+    x: 20
+    y: 90
+    scale: 5
+    pose: point
+    emotion: neutral
+    facing: right
+    name: Hoge君
+    attachments:
+      - ref: as1000
+      - ref: as1102
+      - ref: as1202
+      - ref: as1302
+      - ref: as1402
+      - ref: as1502
+      - ref: as1602
 
-    actor:
-      id: a1003
-      x: 30
-      y: 90
-      scale: 5
-      pose: point
-      emotion: neutral
-      facing: right
-      name: Hoge君
-      attachments:
-        - ref: as1000
-        - ref: as1103
-        - ref: as1203
-        - ref: as1303
-        - ref: as1401
-        - ref: as1601
+  actor:
+    id: a1003
+    x: 30
+    y: 90
+    scale: 5
+    pose: point
+    emotion: neutral
+    facing: right
+    name: Hoge君
+    attachments:
+      - ref: as1000
+      - ref: as1103
+      - ref: as1203
+      - ref: as1303
+      - ref: as1401
+      - ref: as1601
 
-    actor:
-      id: a1004
-      x: 40
-      y: 90
-      scale: 5
-      pose: point
-      emotion: neutral
-      facing: right
-      name: Hoge君
-      attachments:
-        - ref: as1000
-        - ref: as1104
-        - ref: as1204
-        - ref: as1304
-        - ref: as1402
-        - ref: as1602
+  actor:
+    id: a1004
+    x: 40
+    y: 90
+    scale: 5
+    pose: point
+    emotion: neutral
+    facing: right
+    name: Hoge君
+    attachments:
+      - ref: as1000
+      - ref: as1104
+      - ref: as1204
+      - ref: as1304
+      - ref: as1402
+      - ref: as1602
 
-    actor:
-      id: a1005
-      x: 50
-      y: 90
-      scale: 5
-      pose: point
-      emotion: neutral
-      facing: right
-      name: Hoge君
-      attachments:
-        - ref: as1000
-        - ref: as1106
-        - ref: as1105
-        - ref: as1205
-        - ref: as1207
-        - ref: as1305
-        - ref: as1401
-        - ref: as1503
-        - ref: as1601
+  actor:
+    id: a1005
+    x: 50
+    y: 90
+    scale: 5
+    pose: point
+    emotion: neutral
+    facing: right
+    name: Hoge君
+    attachments:
+      - ref: as1000
+      - ref: as1106
+      - ref: as1105
+      - ref: as1205
+      - ref: as1207
+      - ref: as1305
+      - ref: as1401
+      - ref: as1503
+      - ref: as1601
 
-    actor:
-      id: a1006
-      x: 60
-      y: 90
-      scale: 5
-      pose: point
-      emotion: neutral
-      facing: right
-      name: Hoge君
-      attachments:
-        - ref: as1000
-        - ref: as1102
-            dx: -5.5
-            dy: -58
-        - ref: as1206
-        - ref: as1306
-        - ref: as1402
-        - ref: as1502
-        - ref: as1602
+  actor:
+    id: a1006
+    x: 60
+    y: 90
+    scale: 5
+    pose: point
+    emotion: neutral
+    facing: right
+    name: Hoge君
+    attachments:
+      - ref: as1000
+      - ref: as1102
+          dx: -5.5
+          dy: -58
+      - ref: as1206
+      - ref: as1306
+      - ref: as1402
+      - ref: as1502
+      - ref: as1602
 
-    actor:
-      id: a1007
-      x: 70
-      y: 90
-      scale: 5
-      pose: point
-      emotion: neutral
-      facing: right
-      name: Hoge君
-      attachments:
-        - ref: as1000
-        - ref: as1102
-            dx: -8.5
-            dy: -55
-        - ref: as1207
-        - ref: as1307
-        - ref: as1401
-        - ref: as1501
-        - ref: as1601
+  actor:
+    id: a1007
+    x: 70
+    y: 90
+    scale: 5
+    pose: point
+    emotion: neutral
+    facing: right
+    name: Hoge君
+    attachments:
+      - ref: as1000
+      - ref: as1102
+          dx: -8.5
+          dy: -55
+      - ref: as1207
+      - ref: as1307
+      - ref: as1401
+      - ref: as1501
+      - ref: as1601
 
-    actor:
-      id: a1008
-      x: 80
-      y: 90
-      scale: 5
-      pose: point
-      emotion: neutral
-      facing: right
-      name: Hoge君
-      attachments:
-        - ref: as1000
-        - ref: as1101
-            dx: -10.5
-            dy: -55.5
-        - ref: as1208
-        - ref: as1209
-        - ref: as1308
-        - ref: as1401
-        - ref: as1504
-        - ref: as1602
-            dx: -11.5
-            dy: -55
+  actor:
+    id: a1008
+    x: 80
+    y: 90
+    scale: 5
+    pose: point
+    emotion: neutral
+    facing: right
+    name: Hoge君
+    attachments:
+      - ref: as1000
+      - ref: as1101
+          dx: -10.5
+          dy: -55.5
+      - ref: as1208
+      - ref: as1209
+      - ref: as1308
+      - ref: as1401
+      - ref: as1504
+      - ref: as1602
+          dx: -11.5
+          dy: -55
 
-    actor:
-      id: a1009
-      x: 90
-      y: 90
-      scale: 5
-      pose: point
-      emotion: neutral
-      facing: right
-      name: Hoge君
-      attachments:
-        - ref: as1000
-        - ref: as1105
-        - ref: as1209
-        - ref: as1309
-        - ref: as1401
-        - ref: as1501
-        - ref: as1601
+  actor:
+    id: a1009
+    x: 90
+    y: 90
+    scale: 5
+    pose: point
+    emotion: neutral
+    facing: right
+    name: Hoge君
+    attachments:
+      - ref: as1000
+      - ref: as1105
+      - ref: as1209
+      - ref: as1309
+      - ref: as1401
+      - ref: as1501
+      - ref: as1601
 
-  panel:
-    id: 1401
-    w: 100
-    h: 20
-    radius: 20
-    
-    actor:
-      id: a1010
-      x: 10
-      y: 90
-      scale: 5
-      pose: point
-      emotion: neutral
-      facing: left
-      name: Hoge君
-      attachments:
-        - ref: as1000
-        - ref: as1101
-        - ref: as1201
-            s: 1.53
-        - ref: as1205
-        - ref: as1310
-        - ref: as1401
-        - ref: as1502
-        - ref: as1601
-    
-    actor:
-      id: a1011
-      x: 20
-      y: 90
-      scale: 5
-      pose: point
-      emotion: neutral
-      facing: left
-      name: Hoge君
-      attachments:
-        - ref: as1000
-        - ref: as1106
-        - ref: as1102
-        - ref: as1202
-        - ref: as1311
-        - ref: as1402
-        - ref: as1503
-        - ref: as1602
+panel:
+  id: 1401
+  w: 100
+  h: 20
+  radius: 20
+  
+  actor:
+    id: a1010
+    x: 10
+    y: 90
+    scale: 5
+    pose: point
+    emotion: neutral
+    facing: left
+    name: Hoge君
+    attachments:
+      - ref: as1000
+      - ref: as1101
+      - ref: as1201
+          s: 1.53
+      - ref: as1205
+      - ref: as1310
+      - ref: as1401
+      - ref: as1502
+      - ref: as1601
+  
+  actor:
+    id: a1011
+    x: 20
+    y: 90
+    scale: 5
+    pose: point
+    emotion: neutral
+    facing: left
+    name: Hoge君
+    attachments:
+      - ref: as1000
+      - ref: as1106
+      - ref: as1102
+      - ref: as1202
+      - ref: as1311
+      - ref: as1402
+      - ref: as1503
+      - ref: as1602
 
-    actor:
-      id: a1012
-      x: 30
-      y: 90
-      scale: 5
-      pose: point
-      emotion: neutral
-      facing: left
-      name: Hoge君
-      attachments:
-        - ref: as1000
-        - ref: as1106
-        - ref: as1102
-            dx: -6 
-            dy: -56
-        - ref: as1204
-        - ref: as1312
-        - ref: as1401
-        - ref: as1503
-        - ref: as1601
-        - ref: as1701
+  actor:
+    id: a1012
+    x: 30
+    y: 90
+    scale: 5
+    pose: point
+    emotion: neutral
+    facing: left
+    name: Hoge君
+    attachments:
+      - ref: as1000
+      - ref: as1106
+      - ref: as1102
+          dx: -6 
+          dy: -56
+      - ref: as1204
+      - ref: as1312
+      - ref: as1401
+      - ref: as1503
+      - ref: as1601
+      - ref: as1701
 
-    actor:
-      id: a1013
-      x: 40
-      y: 90
-      scale: 5
-      pose: point
-      emotion: neutral
-      facing: left
-      name: Hoge君
-      attachments:
-        - ref: as1000
-        - ref: as1106
-        - ref: as1207
-        - ref: as1313
-        - ref: as1402
-        - ref: as1503
-        - ref: as1801
-        - ref: as1802
+  actor:
+    id: a1013
+    x: 40
+    y: 90
+    scale: 5
+    pose: point
+    emotion: neutral
+    facing: left
+    name: Hoge君
+    attachments:
+      - ref: as1000
+      - ref: as1106
+      - ref: as1207
+      - ref: as1313
+      - ref: as1402
+      - ref: as1503
+      - ref: as1801
+      - ref: as1802
 
-    actor:
-      id: a1014
-      x: 50
-      y: 90
-      scale: 5
-      pose: point
-      emotion: neutral
-      facing: left
-      name: Hoge君
-      attachments:
-        - ref: as1000
-        - ref: as1106
-        - ref: as1102
-            dx: -7.5
-            dy: -58
-        - ref: as1204
-        - ref: as1306
-            dx: -7
-            dy: -43
-            s: 0.16
-        - ref: as1401
-        - ref: as1503
-        - ref: as1602
-        - ref: as1701
-            dx: -12
-            dy: -88
+  actor:
+    id: a1014
+    x: 50
+    y: 90
+    scale: 5
+    pose: point
+    emotion: neutral
+    facing: left
+    name: Hoge君
+    attachments:
+      - ref: as1000
+      - ref: as1106
+      - ref: as1102
+          dx: -7.5
+          dy: -58
+      - ref: as1204
+      - ref: as1306
+          dx: -7
+          dy: -43
+          s: 0.16
+      - ref: as1401
+      - ref: as1503
+      - ref: as1602
+      - ref: as1701
+          dx: -12
+          dy: -88
 
-    actor:
-      id: a1015
-      x: 60
-      y: 90
-      scale: 5
-      pose: point
-      emotion: neutral
-      facing: left
-      name: Hoge君
-      attachments:
-        - ref: as1000
-        - ref: as1106
-            dx: -9.5
-            dy: -55.5
-        - ref: as1105
-            dx: -9.6
-            dy: -55.8
-        - ref: as1210
-        - ref: as1302
-        - ref: as1501
-            dx: -9
-            dy: -62
-            s: 0.34
-        - ref: as1503
-            dx: -11
-            dy: -57.5
-        - ref: as1602
-            dy: -53.7
+  actor:
+    id: a1015
+    x: 60
+    y: 90
+    scale: 5
+    pose: point
+    emotion: neutral
+    facing: left
+    name: Hoge君
+    attachments:
+      - ref: as1000
+      - ref: as1106
+          dx: -9.5
+          dy: -55.5
+      - ref: as1105
+          dx: -9.6
+          dy: -55.8
+      - ref: as1210
+      - ref: as1302
+      - ref: as1501
+          dx: -9
+          dy: -62
+          s: 0.34
+      - ref: as1503
+          dx: -11
+          dy: -57.5
+      - ref: as1602
+          dy: -53.7
 
-    actor:
-      id: a1016
-      x: 70
-      y: 90
-      scale: 5
-      pose: point
-      emotion: neutral
-      facing: left
-      name: Hoge君
-      attachments:
-        - ref: as1000
-        - ref: as1106
-            dx: -9.5
-            dy: -55.5
-        - ref: as1105
-            dx: -9.6
-            dy: -55.8
-        - ref: as1205
-        - ref: as1210
-        - ref: as1304
-        - ref: as1502
-            dx: -9
-            dy: -62
-            s: 0.34
-        - ref: as1503
-            dx: -11
-            dy: -57.5
-        - ref: as1602
-            dy: -53.7
+  actor:
+    id: a1016
+    x: 70
+    y: 90
+    scale: 5
+    pose: point
+    emotion: neutral
+    facing: left
+    name: Hoge君
+    attachments:
+      - ref: as1000
+      - ref: as1106
+          dx: -9.5
+          dy: -55.5
+      - ref: as1105
+          dx: -9.6
+          dy: -55.8
+      - ref: as1205
+      - ref: as1210
+      - ref: as1304
+      - ref: as1502
+          dx: -9
+          dy: -62
+          s: 0.34
+      - ref: as1503
+          dx: -11
+          dy: -57.5
+      - ref: as1602
+          dy: -53.7
 
-    actor:
-      id: a1017
-      x: 80
-      y: 90
-      scale: 5
-      pose: point
-      emotion: neutral
-      facing: left
-      name: Hoge君
-      attachments:
-        - ref: as1000
-        - ref: as1106
-        - ref: as1101
-        - ref: as1210
-        - ref: as1308
-        - ref: as1402
-        - ref: as1503
-        - ref: as1601
+  actor:
+    id: a1017
+    x: 80
+    y: 90
+    scale: 5
+    pose: point
+    emotion: neutral
+    facing: left
+    name: Hoge君
+    attachments:
+      - ref: as1000
+      - ref: as1106
+      - ref: as1101
+      - ref: as1210
+      - ref: as1308
+      - ref: as1402
+      - ref: as1503
+      - ref: as1601
 
-    actor:
-      id: a1018
-      x: 90
-      y: 90
-      scale: 5
-      pose: point
-      emotion: neutral
-      facing: left
-      name: Hoge君
-      attachments:
-        - ref: as1000
-        - ref: as1102
-        - ref: as1205
-        - ref: as1210
-        - ref: as1309
-        - ref: as1401
-        - ref: as1501
-        - ref: as1602
+  actor:
+    id: a1018
+    x: 90
+    y: 90
+    scale: 5
+    pose: point
+    emotion: neutral
+    facing: left
+    name: Hoge君
+    attachments:
+      - ref: as1000
+      - ref: as1102
+      - ref: as1205
+      - ref: as1210
+      - ref: as1309
+      - ref: as1401
+      - ref: as1501
+      - ref: as1602
 
 asset:
   id: as1000
