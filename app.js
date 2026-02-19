@@ -609,6 +609,9 @@ function resolveActorInheritance(actors) {
       delete inherited._order;
       delete inherited.extends;
       Object.assign(actor, inherited, ownProps);
+      if (Array.isArray(inherited.attachments) && Array.isArray(ownProps.attachments)) {
+        actor.attachments = [...inherited.attachments, ...ownProps.attachments];
+      }
       actor.extends = baseId;
     }
     resolvingStack.pop();
