@@ -66,6 +66,7 @@ const els = {
   canvas: document.getElementById("svgCanvas"),
   resizer: document.getElementById("resizer"),
   downloadBtn: document.getElementById("downloadSvgBtn"),
+  dragHandleToggle: document.getElementById("showDragHandles"),
   renumberBtn: document.getElementById("renumberIdsBtn"),
   split: document.querySelector(".split-root"),
 };
@@ -74,6 +75,35 @@ let debounceId = null;
 let viewState = { scale: 1, panX: 0, panY: 0 };
 let currentScene = null;
 let isObjectDragging = false;
+function isDragHandleModeEnabled() {
+  return Boolean(els.dragHandleToggle?.checked);
+}
+function dragHandleRectFor(kind, item, panelRect, unit) {
+  const target = rectTarget(panelRect);
+  const offset = 10;
+  const size = 14;
+  let anchor = null;
+  if (kind === "actor") {
+    const point = pointInPanel(item.x, item.y, panelRect, unit);
+    anchor = { x: point.x - 12, y: point.y - (20 * num(item.scale, 1)) * 2.8 };
+  } else {
+    const box = withinPanel({ ...item, w: item.w, h: item.h }, panelRect, unit);
+    anchor = { x: box.x, y: box.y };
+  }
+  if (!anchor) return null;
+  const rawRect = { x: anchor.x - offset, y: anchor.y - offset, w: size, h: size };
+  return clampRectToRect(rawRect, target);
+}
+function renderDragHandle(kind, id, item, panelRect, unit) {
+  const handleRect = dragHandleRectFor(kind, item, panelRect, unit);
+  if (!handleRect) return "";
+  const attrs = renderDataAttrs(kind, id);
+  const centerX = handleRect.x + handleRect.w / 2;
+  const centerY = handleRect.y + handleRect.h / 2;
+  const arm = Math.max(3, handleRect.w * 0.35);
+  const radius = Math.max(2.5, handleRect.w * 0.18);
+  return `<g${attrs} data-drag-handle="true" class="drag-handle"><rect x="${handleRect.x}" y="${handleRect.y}" width="${handleRect.w}" height="${handleRect.h}" fill="white" stroke="black" stroke-width="1.2" rx="2" ry="2"/><line x1="${centerX - arm}" y1="${centerY}" x2="${centerX + arm}" y2="${centerY}" stroke="black" stroke-width="1.2"/><line x1="${centerX}" y1="${centerY - arm}" x2="${centerX}" y2="${centerY + arm}" stroke="black" stroke-width="1.2"/><circle cx="${centerX}" cy="${centerY}" r="${radius}" fill="white" stroke="black" stroke-width="1"/></g>`;
+}
 function parseDsl(text) {
   const lines = text.replace(/\r\n?/g, "\n").split("\n");
   const blocks = [];
@@ -1129,6 +1159,10 @@ function render(scene) {
       if (!pageLayout || !panelRect) continue;
       const actorMarkup = renderActor(entry.data, panelRect, pageLayout.page.unit, showActorName, assetMap, entry.kind, entry.data.id);
       body.push(clipWhenBehindPanel(entry, panel, panelRect, actorMarkup));
+      if (isDragHandleModeEnabled()) {
+        const handleMarkup = renderDragHandle(entry.kind, entry.data.id, entry.data, panelRect, pageLayout.page.unit);
+        if (handleMarkup) body.push(clipWhenBehindPanel(entry, panel, panelRect, handleMarkup));
+      }
     } else if (entry.kind === "object") {
       const panel = panelMap.get(String(entry.data.panel));
       const pageLayout = panel ? pageLayouts.get(String(panel.page)) : null;
@@ -1136,6 +1170,10 @@ function render(scene) {
       if (!pageLayout || !panelRect) continue;
       const objectMarkup = renderObject(entry.data, panelRect, pageLayout.page.unit, defaultTextDirection, entry.kind, entry.data.id);
       body.push(clipWhenBehindPanel(entry, panel, panelRect, objectMarkup));
+      if (isDragHandleModeEnabled()) {
+        const handleMarkup = renderDragHandle(entry.kind, entry.data.id, entry.data, panelRect, pageLayout.page.unit);
+        if (handleMarkup) body.push(clipWhenBehindPanel(entry, panel, panelRect, handleMarkup));
+      }
     } else if (entry.kind === "boxarrow") {
       const panel = panelMap.get(String(entry.data.panel));
       const pageLayout = panel ? pageLayouts.get(String(panel.page)) : null;
@@ -1150,6 +1188,10 @@ function render(scene) {
       if (!pageLayout || !panelRect) continue;
       const balloonMarkup = renderBalloon(entry.data, panelRect, pageLayout.page.unit, actorMap, panelMap, panelRects, pageLayouts, defaultTextDirection, entry.kind, entry.data.id);
       body.push(clipWhenBehindPanel(entry, panel, panelRect, balloonMarkup));
+      if (isDragHandleModeEnabled()) {
+        const handleMarkup = renderDragHandle(entry.kind, entry.data.id, entry.data, panelRect, pageLayout.page.unit);
+        if (handleMarkup) body.push(clipWhenBehindPanel(entry, panel, panelRect, handleMarkup));
+      }
     } else if (entry.kind === "caption") {
       const panel = panelMap.get(String(entry.data.panel));
       const pageLayout = panel ? pageLayouts.get(String(panel.page)) : null;
@@ -1157,6 +1199,10 @@ function render(scene) {
       if (!pageLayout || !panelRect) continue;
       const captionMarkup = renderCaption(entry.data, panelRect, pageLayout.page.unit, defaultTextDirection, entry.kind, entry.data.id);
       body.push(clipWhenBehindPanel(entry, panel, panelRect, captionMarkup));
+      if (isDragHandleModeEnabled()) {
+        const handleMarkup = renderDragHandle(entry.kind, entry.data.id, entry.data, panelRect, pageLayout.page.unit);
+        if (handleMarkup) body.push(clipWhenBehindPanel(entry, panel, panelRect, handleMarkup));
+      }
     } else if (entry.kind === "sfx") {
       const panel = panelMap.get(String(entry.data.panel));
       const pageLayout = panel ? pageLayouts.get(String(panel.page)) : null;
@@ -2127,6 +2173,10 @@ function setupObjectDrag() {
     if (!currentScene) return;
     const target = event.target.closest?.("[data-kind][data-id]");
     if (!target) return;
+    const handleMode = isDragHandleModeEnabled();
+    const isHandleTarget = target.dataset.dragHandle === "true";
+    if (handleMode && !isHandleTarget) return;
+    if (!handleMode && isHandleTarget) return;
     const kind = target.dataset.kind;
     const id = target.dataset.id;
     if (!DRAGGABLE_KINDS.has(kind) || !id) return;
@@ -2218,6 +2268,10 @@ function setupObjectDrag() {
 
   els.canvas.addEventListener("pointerup", finishDrag);
   els.canvas.addEventListener("pointercancel", finishDrag);
+}
+function setupDragHandleToggle() {
+  if (!els.dragHandleToggle) return;
+  els.dragHandleToggle.addEventListener("change", () => update());
 }
 function setupDownload() {
   els.downloadBtn.addEventListener("click", () => {
@@ -2473,6 +2527,7 @@ async function init() {
   setupResize();
   setupPanZoom();
   setupObjectDrag();
+  setupDragHandleToggle();
   setupDownload();
   setupRenumberIds();
   update();
