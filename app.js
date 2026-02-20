@@ -1,7 +1,7 @@
 const DEFAULT_DSL_PATH = "./example/readme.msd";
 const PAGE_SIZES = { B5: [1760, 2500], A4: [2480, 3508] };
 const ACTOR_TYPES = new Set(["stand", "run", "sit", "point", "think", "surprise"]);
-const EMOTIONS = new Set(["neutral", "angry", "sad", "panic", "smile"]);
+const EMOTIONS = new Set(["neutral", "angry", "sad", "panic", "smile", "none"]);
 const EYE_TYPES = new Set(["right", "left", "up", "down", "cry", "close", "wink"]);
 const FACING_TYPES = new Set(["left", "right", "back"]);
 const HEAD_SHAPES = new Set(["circle", "square", "none"]);
@@ -1438,12 +1438,11 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
   const attachments = resolveActorAttachments(actor, assetMap);
   const underlayAttachments = attachments.filter((attachment) => attachment.z < 0).map((attachment) => attachment.markup).join("");
   const overlayAttachments = attachments.filter((attachment) => attachment.z >= 0).map((attachment) => attachment.markup).join("");
-  const faceMarkup = actor.facing === "back"
+  const hideHeadAndFace = actor.emotion === "none";
+  const faceMarkup = actor.facing === "back" || hideHeadAndFace
     ? ""
     : `${eyePath(actor.eye, s)}${emotionPath(actor.emotion, s)}`;
-  const headShape = actor.emotion === "none" && actor["head.shape"] === "circle"
-    ? "none"
-    : actor["head.shape"];
+  const headShape = hideHeadAndFace ? "none" : actor["head.shape"];
   const headMarkup = headOutline(headShape, s);
   const nameLabel = showActorName && actor.name
     ? `<text x="0" y="${-s * 2.9}" font-size="${Math.max(10, s * 0.55)}" text-anchor="middle" dominant-baseline="auto" fill="black">${escapeXml(String(actor.name))}</text>`

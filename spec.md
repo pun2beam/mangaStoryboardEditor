@@ -264,7 +264,7 @@ panel:
 
 実装必須（v0.1）:
 
-* `neutral`, `angry`, `sad`, `panic`, `smile`
+* `neutral`, `angry`, `sad`, `panic`, `smile`, `none`
 
 例:
 
