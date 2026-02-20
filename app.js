@@ -104,8 +104,9 @@ function renderDragHandle(kind, id, item, panelRect, unit) {
   const theta = (num(item.rot, 0) - 90) * (Math.PI / 180);
   const knobX = center.x + Math.cos(theta) * guideRadius;
   const knobY = center.y + Math.sin(theta) * guideRadius;
-  const rotateHandle = `<g${attrs} data-drag-handle="rotate" class="drag-handle drag-handle-rotate"><line class="drag-handle-rotate-guide" x1="${center.x}" y1="${center.y}" x2="${knobX}" y2="${knobY}"/><circle class="drag-handle-rotate-center" cx="${center.x}" cy="${center.y}" r="3.5"/><circle class="drag-handle-rotate-knob" cx="${knobX}" cy="${knobY}" r="${knobRadius}"/></g>`;
-  return `${moveHandle}${rotateHandle}`;
+  const rotateCenterMarker = `<circle class="drag-handle-rotate-center" cx="${center.x}" cy="${center.y}" r="3.5"/>`;
+  const rotateHandle = `<g${attrs} data-drag-handle="rotate" class="drag-handle drag-handle-rotate"><line class="drag-handle-rotate-guide" x1="${center.x}" y1="${center.y}" x2="${knobX}" y2="${knobY}"/><circle class="drag-handle-rotate-knob" cx="${knobX}" cy="${knobY}" r="${knobRadius}"/></g>`;
+  return `${moveHandle}${rotateCenterMarker}${rotateHandle}`;
 }
 const ROTATABLE_KINDS = new Set(["actor", "object", "balloon", "caption", "boxarrow", "sfx"]);
 function draggableCenterPoint(kind, item, panelRect, unit) {
