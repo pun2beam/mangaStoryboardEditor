@@ -65,6 +65,8 @@ page:
       y: 25
       text: ドーン
       fontWeight: 900
+      stroke: white
+      strokeWidth: 2
 ```
 
 ## ローカルでの動作確認
