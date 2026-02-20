@@ -5,7 +5,9 @@ meta:
   text.direction: horizontal
   base.panel.direction: right.bottom
   base.panel.margin: 1.5
-  layout.page.mode:auto-extend
+  layout.page.mode: auto-extend
+  layout.percent.reference: page-inner
+  layout.page.persistGenerated: false
 
 panel:
   id: 1390
@@ -28,7 +30,6 @@ panel:
   w: 100
   h: 20
   radius: 20
-  
   actor:
     id: a1001
     x: 10
@@ -47,7 +48,6 @@ panel:
       - ref: as1501
       - ref: as1601
       - ref: as1901
-
   actor:
     id: a1002
     x: 20
@@ -66,7 +66,6 @@ panel:
       - ref: as1502
       - ref: as1602
       - ref: as1902
-
   actor:
     id: a1003
     x: 30
@@ -84,11 +83,10 @@ panel:
       - ref: as1401
       - ref: as1601
       - ref: as1903
-
   actor:
     id: a1004
-    x: 40
-    y: 90
+    x: 39.69
+    y: 90.55
     scale: 5
     pose: point
     emotion: neutral
@@ -102,7 +100,6 @@ panel:
       - ref: as1402
       - ref: as1602
       - ref: as1902
-
   actor:
     id: a1005
     x: 50
@@ -123,7 +120,6 @@ panel:
       - ref: as1503
       - ref: as1601
       - ref: as1902
-
   actor:
     id: a1006
     x: 60
@@ -136,15 +132,14 @@ panel:
     attachments:
       - ref: as1000
       - ref: as1102
-          dx: -5.5
-          dy: -58
+        dx: -5.5
+        dy: -58
       - ref: as1206
       - ref: as1306
       - ref: as1402
       - ref: as1502
       - ref: as1602
       - ref: as1902
-
   actor:
     id: a1007
     x: 70
@@ -157,15 +152,14 @@ panel:
     attachments:
       - ref: as1000
       - ref: as1102
-          dx: -8.5
-          dy: -55
+        dx: -8.5
+        dy: -55
       - ref: as1207
       - ref: as1307
       - ref: as1401
       - ref: as1501
       - ref: as1601
       - ref: as1902
-
   actor:
     id: a1008
     x: 80
@@ -178,18 +172,17 @@ panel:
     attachments:
       - ref: as1000
       - ref: as1101
-          dx: -10.5
-          dy: -55.5
+        dx: -10.5
+        dy: -55.5
       - ref: as1208
       - ref: as1209
       - ref: as1308
       - ref: as1401
       - ref: as1504
       - ref: as1602
-          dx: -11.5
-          dy: -55
+        dx: -11.5
+        dy: -55
       - ref: as1902
-
   actor:
     id: a1009
     x: 90
@@ -214,7 +207,6 @@ panel:
   w: 100
   h: 20
   radius: 20
-  
   actor:
     id: a1010
     x: 10
@@ -228,14 +220,13 @@ panel:
       - ref: as1000
       - ref: as1101
       - ref: as1201
-          s: 1.53
+        s: 1.53
       - ref: as1205
       - ref: as1310
       - ref: as1401
       - ref: as1502
       - ref: as1601
       - ref: as1902
-  
   actor:
     id: a1011
     x: 20
@@ -255,7 +246,6 @@ panel:
       - ref: as1503
       - ref: as1602
       - ref: as1902
-
   actor:
     id: a1012
     x: 30
@@ -269,8 +259,8 @@ panel:
       - ref: as1000
       - ref: as1106
       - ref: as1102
-          dx: -6 
-          dy: -56
+        dx: -6
+        dy: -56
       - ref: as1204
       - ref: as1312
       - ref: as1401
@@ -278,7 +268,6 @@ panel:
       - ref: as1601
       - ref: as1701
       - ref: as1902
-
   actor:
     id: a1013
     x: 40
@@ -298,7 +287,6 @@ panel:
       - ref: as1801
       - ref: as1802
       - ref: as1902
-
   actor:
     id: a1014
     x: 50
@@ -312,21 +300,20 @@ panel:
       - ref: as1000
       - ref: as1106
       - ref: as1102
-          dx: -7.5
-          dy: -58
+        dx: -7.5
+        dy: -58
       - ref: as1204
       - ref: as1306
-          dx: -7
-          dy: -43
-          s: 0.16
+        dx: -7
+        dy: -43
+        s: 0.16
       - ref: as1401
       - ref: as1503
       - ref: as1602
       - ref: as1701
-          dx: -12
-          dy: -88
+        dx: -12
+        dy: -88
       - ref: as1902
-
   actor:
     id: a1015
     x: 60
@@ -337,26 +324,24 @@ panel:
     facing: left
     name: Hoge君
     attachments:
-      - ref: as1000
-      - ref: as1106
-          dx: -9.5
-          dy: -55.5
-      - ref: as1105
-          dx: -9.6
-          dy: -55.8
+      - ref: as1101
+        dx: -9.6
+        dy: -55.8
+        s: 0.26
+      - ref: as1002
       - ref: as1210
       - ref: as1302
       - ref: as1501
-          dx: -9
-          dy: -62
-          s: 0.34
+        dx: -9
+        dy: -62
+        s: 0.34
       - ref: as1503
-          dx: -11
-          dy: -57.5
+        dx: -9.9
+        dy: -56.7
+        s:0.334
       - ref: as1602
-          dy: -53.7
+        dy: -53.7
       - ref: as1902
-
   actor:
     id: a1016
     x: 70
@@ -369,25 +354,24 @@ panel:
     attachments:
       - ref: as1000
       - ref: as1106
-          dx: -9.5
-          dy: -55.5
+        dx: -9.5
+        dy: -55.5
       - ref: as1105
-          dx: -9.6
-          dy: -55.8
+        dx: -9.6
+        dy: -55.8
       - ref: as1205
       - ref: as1210
       - ref: as1304
       - ref: as1502
-          dx: -9
-          dy: -62
-          s: 0.34
+        dx: -9
+        dy: -62
+        s: 0.34
       - ref: as1503
-          dx: -11
-          dy: -57.5
+        dx: -11
+        dy: -57.5
       - ref: as1602
-          dy: -53.7
+        dy: -53.7
       - ref: as1902
-
   actor:
     id: a1017
     x: 80
@@ -407,7 +391,6 @@ panel:
       - ref: as1503
       - ref: as1601
       - ref: as1902
-
   actor:
     id: a1018
     x: 90
@@ -437,7 +420,18 @@ asset:
   s: 0.6
   rot: 0
   z: 1
-  src: ./assets/facebase.svg
+  src: ./assets/facebase1.svg
+
+asset:
+  id: as1002
+  w: 55
+  h: 55
+  dx: -17.4
+  dy: -63.5
+  s: 0.6
+  rot: 0
+  z: 1
+  src: ./assets/facebase2.svg
 
 asset:
   id: as1101
@@ -499,7 +493,7 @@ asset:
   w: 55
   h: 55
   dx: -9.5
-  dy: -57.0
+  dy: -57
   s: 0.32
   rot: 0
   z: 3
@@ -565,7 +559,7 @@ asset:
   w: 55
   h: 55
   dx: -12.9
-  dy: -70.0
+  dy: -70
   s: 0.47
   rot: 0
   z: 2
@@ -885,7 +879,7 @@ asset:
   h: 55
   dx: -5
   dy: -46.5
-  s: 0.10
+  s: 0.1
   rot: 0
   z: 1
   src: ./assets/nose1.svg
@@ -907,7 +901,7 @@ asset:
   h: 55
   dx: -4
   dy: -45.5
-  s: 0.10
+  s: 0.1
   rot: 0
   z: 1
   src: ./assets/nose3.svg
