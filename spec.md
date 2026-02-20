@@ -370,6 +370,7 @@ balloon:
 * `scale`（既定1.0）
 * `rotate`（度、既定0）
 * `fontSize`（既定: 8）
+* `fontWeight`（任意、既定: 700）
 * `stroke`（文字縁取り色、任意）
 * `fill`（既定`black`）
 * `text.direction`（任意、`horizontal`/`vertical`。指定時はmetaより優先）

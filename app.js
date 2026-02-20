@@ -575,6 +575,7 @@ function validateAndBuild(blocks) {
     s.scale = num(s.scale, 1);
     s.rotate = num(s.rotate, 0);
     s.fontSize = num(s.fontSize, 8);
+    s.fontWeight = num(s.fontWeight ?? s["font.weight"] ?? s.fontweight, 700);
     s.fill = s.fill || "black";
     s.textDirection = normalizeTextDirection(s["text.direction"] ?? s.textDirection, scene.meta["text.direction"]);
   }
@@ -1734,7 +1735,7 @@ function renderSfx(sfx, panelRect, unit, defaultTextDirection, kind, id) {
   const fontSize = sizeInUnit(sfx.fontSize, panelRect, unit, "x");
   const direction = sfx.textDirection || defaultTextDirection;
   const textAttrs = direction === "vertical" ? ' writing-mode="vertical-rl" text-orientation="upright"' : '';
-  return `<text${attrs} x="${p.x}" y="${p.y}" font-size="${fontSize}" transform="rotate(${sfx.rotate} ${p.x} ${p.y}) scale(${sfx.scale})" fill="${sfx.fill}" stroke="${sfx.stroke || "none"}" font-weight="700"${textAttrs}>${escapeXml(sfx.text)}</text>`;
+  return `<text${attrs} x="${p.x}" y="${p.y}" font-size="${fontSize}" transform="rotate(${sfx.rotate} ${p.x} ${p.y}) scale(${sfx.scale})" fill="${sfx.fill}" stroke="${sfx.stroke || "none"}" font-weight="${sfx.fontWeight}"${textAttrs}>${escapeXml(sfx.text)}</text>`;
 }
 function renderObject(object, panelRect, unit, defaultTextDirection, kind, id) {
   const r = withinPanel({ ...object, w: object.w, h: object.h }, panelRect, unit);
