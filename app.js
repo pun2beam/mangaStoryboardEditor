@@ -86,6 +86,8 @@ function dragHandleRectFor(kind, item, panelRect, unit) {
   if (kind === "actor") {
     const point = pointInPanel(item.x, item.y, panelRect, unit);
     anchor = { x: point.x - 12, y: point.y - (20 * num(item.scale, 1)) * 2.8 };
+  } else if (kind === "sfx") {
+    anchor = pointInPanel(item.x, item.y, panelRect, unit);
   } else {
     const box = withinPanel({ ...item, w: item.w, h: item.h }, panelRect, unit);
     anchor = { x: box.x, y: box.y };
@@ -103,8 +105,9 @@ function renderDragHandle(kind, id, item, panelRect, unit) {
   const arm = Math.max(3, handleRect.w * 0.35);
   const radius = Math.max(2.5, handleRect.w * 0.18);
   const moveHandle = `<g${attrs} data-drag-handle="move" class="drag-handle drag-handle-move"><rect x="${handleRect.x}" y="${handleRect.y}" width="${handleRect.w}" height="${handleRect.h}" fill="white" stroke="black" stroke-width="1.2" rx="2" ry="2"/><line x1="${centerX - arm}" y1="${centerY}" x2="${centerX + arm}" y2="${centerY}" stroke="black" stroke-width="1.2"/><line x1="${centerX}" y1="${centerY - arm}" x2="${centerX}" y2="${centerY + arm}" stroke="black" stroke-width="1.2"/><circle cx="${centerX}" cy="${centerY}" r="${radius}" fill="white" stroke="black" stroke-width="1"/></g>`;
-  if (kind !== "actor") return moveHandle;
-  const center = pointInPanel(item.x, item.y, panelRect, unit);
+  if (!ROTATABLE_KINDS.has(kind)) return moveHandle;
+  const center = draggableCenterPoint(kind, item, panelRect, unit);
+  if (!center) return moveHandle;
   const knobRadius = Math.max(7, handleRect.w * 0.6);
   const guideRadius = Math.max(24, handleRect.w * 3.2);
   const theta = (num(item.rot, 0) - 90) * (Math.PI / 180);
@@ -112,6 +115,14 @@ function renderDragHandle(kind, id, item, panelRect, unit) {
   const knobY = center.y + Math.sin(theta) * guideRadius;
   const rotateHandle = `<g${attrs} data-drag-handle="rotate" class="drag-handle drag-handle-rotate"><line class="drag-handle-rotate-guide" x1="${center.x}" y1="${center.y}" x2="${knobX}" y2="${knobY}"/><circle class="drag-handle-rotate-center" cx="${center.x}" cy="${center.y}" r="3.5"/><circle class="drag-handle-rotate-knob" cx="${knobX}" cy="${knobY}" r="${knobRadius}"/></g>`;
   return `${moveHandle}${rotateHandle}`;
+}
+const ROTATABLE_KINDS = new Set(["actor", "object", "balloon", "caption", "boxarrow", "sfx"]);
+function draggableCenterPoint(kind, item, panelRect, unit) {
+  if (kind === "actor" || kind === "boxarrow" || kind === "sfx") {
+    return pointInPanel(item.x, item.y, panelRect, unit);
+  }
+  const box = withinPanel({ ...item, w: item.w, h: item.h }, panelRect, unit);
+  return { x: box.x + box.w / 2, y: box.y + box.h / 2 };
 }
 function parseDsl(text) {
   const lines = text.replace(/\r\n?/g, "\n").split("\n");
@@ -508,6 +519,7 @@ function validateAndBuild(blocks) {
     object.fontSize = parseSizedValue(object.fontsize ?? object.fontSize, 4, pUnit(object, dicts, "panel"));
     object.align = object.align || "center";
     object.padding = num(object.padding, 2);
+    object.rot = num(object.rot, 0);
     object.textDirection = normalizeTextDirection(object["text.direction"] ?? object.textDirection, scene.meta["text.direction"]);
   }
   for (const boxarrow of scene.boxarrows) {
@@ -534,6 +546,7 @@ function validateAndBuild(blocks) {
       pUnit(balloon, dicts, "panel"),
     );
     balloon.padding = num(balloon.padding, 2);
+    balloon.rot = num(balloon.rot, 0);
     balloon.textDirection = normalizeTextDirection(balloon["text.direction"] ?? balloon.textDirection, scene.meta["text.direction"]);
     const tail = balloon.tail === undefined || balloon.tail === null || balloon.tail === "" ? "none" : String(balloon.tail);
     const tailMatch = tail.match(/^(none|toActor\(([^()]+)\)|toPoint\(([^,]+),([^,]+)\))$/);
@@ -567,13 +580,14 @@ function validateAndBuild(blocks) {
       pUnit(caption, dicts, "panel"),
     );
     caption.padding = num(caption.padding, 2);
+    caption.rot = num(caption.rot, 0);
     caption.textDirection = normalizeTextDirection(caption["text.direction"] ?? caption.textDirection, scene.meta["text.direction"]);
   }
   for (const s of scene.sfx) {
     s._autoPosition = s.x === undefined || s.x === null || s.x === "" || s.y === undefined || s.y === null || s.y === "";
     requireFields(s, ["text"], "sfx");
     s.scale = num(s.scale, 1);
-    s.rotate = num(s.rotate, 0);
+    s.rot = num(s.rot ?? s.rotate, 0);
     s.fontSize = num(s.fontSize, 8);
     s.fontWeight = num(s.fontWeight ?? s["font.weight"] ?? s.fontweight, 700);
     s.strokeWidth = num(s.strokeWidth ?? s["stroke.width"] ?? s.strokewidth, 1);
@@ -1592,7 +1606,9 @@ function renderBalloon(balloon, panelRect, unit, actorMap, panelMap, panelRects,
       const actorPage = actorPanel ? pageLayouts.get(String(actorPanel.page)) : null;
       if (!pRect || !actorPage) {
         const text = renderText(balloon.text, r, balloon.fontSize, balloon.align, balloon.padding, unit, balloon.lineHeight, "center", balloon.textDirection || defaultTextDirection, true, balloon.emphasisFontSize);
-        return `<g${attrs}>${shape}${text}</g>`;
+        const centerX = r.x + r.w / 2;
+        const centerY = r.y + r.h / 2;
+        return `<g${attrs} transform="rotate(${balloon.rot} ${centerX} ${centerY})">${shape}${text}</g>`;
       }
       const actorUnit = actorPage.page.unit;
       const targetYOffset = actorUnit === "px" ? BALLOON_TAIL_TARGET_Y_OFFSET.px : BALLOON_TAIL_TARGET_Y_OFFSET.percent;
@@ -1631,7 +1647,9 @@ function renderBalloon(balloon, panelRect, unit, actorMap, panelMap, panelRects,
     }
   }
   const text = renderText(balloon.text, r, balloon.fontSize, balloon.align, balloon.padding, unit, balloon.lineHeight, "center", balloon.textDirection || defaultTextDirection, true, balloon.emphasisFontSize);
-  return `<g${attrs}>${tail}${shape}${text}</g>`;
+  const centerX = r.x + r.w / 2;
+  const centerY = r.y + r.h / 2;
+  return `<g${attrs} transform="rotate(${balloon.rot} ${centerX} ${centerY})">${tail}${shape}${text}</g>`;
 }
 function renderThoughtTailBubbles(balloonAnchor, targetAnchor, balloonRect) {
   const diameterBase = Math.max(6, Math.min(balloonRect.w, balloonRect.h) * 0.08);
@@ -1728,7 +1746,9 @@ function renderCaption(caption, panelRect, unit, defaultTextDirection, kind, id)
     true,
     caption.emphasisFontSize,
   );
-  return `<g${attrs}>${box}${text}</g>`;
+  const centerX = r.x + r.w / 2;
+  const centerY = r.y + r.h / 2;
+  return `<g${attrs} transform="rotate(${caption.rot} ${centerX} ${centerY})">${box}${text}</g>`;
 }
 function renderSfx(sfx, panelRect, unit, defaultTextDirection, kind, id) {
   const p = pointInPanel(sfx.x, sfx.y, panelRect, unit);
@@ -1736,7 +1756,7 @@ function renderSfx(sfx, panelRect, unit, defaultTextDirection, kind, id) {
   const fontSize = sizeInUnit(sfx.fontSize, panelRect, unit, "x");
   const direction = sfx.textDirection || defaultTextDirection;
   const textAttrs = direction === "vertical" ? ' writing-mode="vertical-rl" text-orientation="upright"' : '';
-  return `<text${attrs} x="${p.x}" y="${p.y}" font-size="${fontSize}" transform="rotate(${sfx.rotate} ${p.x} ${p.y}) scale(${sfx.scale})" fill="${sfx.fill}" stroke="${sfx.stroke || "none"}" stroke-width="${sfx.strokeWidth}" font-weight="${sfx.fontWeight}"${textAttrs}>${escapeXml(sfx.text)}</text>`;
+  return `<text${attrs} x="${p.x}" y="${p.y}" font-size="${fontSize}" transform="rotate(${sfx.rot} ${p.x} ${p.y}) scale(${sfx.scale})" fill="${sfx.fill}" stroke="${sfx.stroke || "none"}" stroke-width="${sfx.strokeWidth}" font-weight="${sfx.fontWeight}"${textAttrs}>${escapeXml(sfx.text)}</text>`;
 }
 function renderObject(object, panelRect, unit, defaultTextDirection, kind, id) {
   const r = withinPanel({ ...object, w: object.w, h: object.h }, panelRect, unit);
@@ -1753,7 +1773,9 @@ function renderObject(object, panelRect, unit, defaultTextDirection, kind, id) {
     shape = `<ellipse cx="${r.x + r.w / 2}" cy="${r.y + r.h / 2}" rx="${r.w / 2}" ry="${r.h / 2}" fill="none" stroke="black" stroke-width="${borderWidth}"/>`;
   }
   const text = renderText(object.text, r, object.fontSize, object.align, object.padding, unit, object.lineHeight, "center", object.textDirection || defaultTextDirection);
-  return `<g${attrs}>${shape}${text}</g>`;
+  const centerX = r.x + r.w / 2;
+  const centerY = r.y + r.h / 2;
+  return `<g${attrs} transform="rotate(${object.rot} ${centerX} ${centerY})">${shape}${text}</g>`;
 }
 function renderBoxArrow(boxarrow, panelRect, unit, kind, id) {
   const center = pointInPanel(boxarrow.x, boxarrow.y, panelRect, unit);
@@ -2241,7 +2263,7 @@ function setupObjectDrag() {
     if (handleType !== "move" && handleType !== "rotate") return;
     const kind = target.dataset.kind;
     const id = target.dataset.id;
-    if (handleType === "rotate" && kind !== "actor") return;
+    if (handleType === "rotate" && !ROTATABLE_KINDS.has(kind)) return;
     if (!DRAGGABLE_KINDS.has(kind) || !id) return;
     const item = currentScene[sceneCollectionKey(kind)]?.find((entry) => String(entry.id) === id);
     if (!item) return;
@@ -2255,18 +2277,16 @@ function setupObjectDrag() {
     const start = scenePointFromEvent(event);
     if (!start) return;
     const unit = pageLayout.page.unit;
-    const originalRect = (kind === "actor")
+    const originalRect = kind === "actor" || kind === "boxarrow" || kind === "sfx"
       ? null
       : withinPanel(item, panelRect, unit);
-    const originalPoint = kind === "actor"
-      ? pointInPanel(item.x, item.y, panelRect, unit)
-      : null;
+    const originalPoint = draggableCenterPoint(kind, item, panelRect, unit);
     const targets = dragTargetsFor(kind, id);
     if (targets.length === 0) return;
-    const actorTargets = handleType === "rotate"
+    const rotationTargets = handleType === "rotate"
       ? targets.filter((targetState) => !targetState.element.dataset.dragHandle)
       : [];
-    if (handleType === "rotate" && (!originalPoint || actorTargets.length === 0)) return;
+    if (handleType === "rotate" && (!originalPoint || rotationTargets.length === 0)) return;
     const startAngle = handleType === "rotate" && originalPoint
       ? angleFromPointClockwiseTop(start, originalPoint)
       : null;
@@ -2284,9 +2304,9 @@ function setupObjectDrag() {
       handleType,
       originalRect,
       originalPoint,
-      actorTargets,
+      rotationTargets,
       startAngle,
-      startRot: kind === "actor" ? num(item.rot, 0) : 0,
+      startRot: num(item.rot, 0),
     };
     event.preventDefault();
   });
@@ -2298,7 +2318,7 @@ function setupObjectDrag() {
     if (state.handleType === "rotate" && state.originalPoint && state.startAngle !== null) {
       const currentAngle = angleFromPointClockwiseTop(point, state.originalPoint);
       const angleDelta = signedAngleDelta(currentAngle, state.startAngle);
-      for (const targetState of state.actorTargets) {
+      for (const targetState of state.rotationTargets) {
         const rotatePreview = `rotate(${angleDelta} ${state.originalPoint.x} ${state.originalPoint.y})`;
         targetState.element.setAttribute("transform", `${rotatePreview} ${targetState.originalTransform}`.trim());
       }
@@ -2326,13 +2346,18 @@ function setupObjectDrag() {
           const currentAngle = angleFromPointClockwiseTop(point, state.originalPoint);
           const angleDelta = signedAngleDelta(currentAngle, state.startAngle);
           const nextRotation = normalizeDegrees(state.startRot + angleDelta);
-          block.props.rot = roundedRotation(nextRotation);
+          if (state.kind === "sfx") {
+            block.props.rot = roundedRotation(nextRotation);
+            delete block.props.rotate;
+          } else {
+            block.props.rot = roundedRotation(nextRotation);
+          }
           const updatedBlocks = blocks;
           els.input.value = stringifyBlocks(updatedBlocks);
           update();
         } else {
           let nextPosition = null;
-          if (state.kind === "actor" && state.originalPoint) {
+          if ((state.kind === "actor" || state.kind === "boxarrow" || state.kind === "sfx") && state.originalPoint) {
             const moved = { x: state.originalPoint.x + dx, y: state.originalPoint.y + dy };
             nextPosition = pointFromPanel(moved, state.panelRect, state.unit);
           } else if (state.originalRect) {
