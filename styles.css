@@ -97,6 +97,11 @@ html, body { margin: 0; height: 100%; color: var(--text); background: var(--bg);
 }
 #svgCanvas { min-height: 100%; padding: 16px; }
 #svgCanvas > svg { display: block; margin: 0 auto; background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,.12); }
+#svgCanvas.drag-handle-active,
+#svgCanvas.drag-handle-active * {
+  user-select: none;
+  -webkit-user-select: none;
+}
 
 
 .drag-handle-move { cursor: move; }
