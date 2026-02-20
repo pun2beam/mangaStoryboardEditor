@@ -82,18 +82,9 @@ function dragHandleRectFor(kind, item, panelRect, unit) {
   const target = rectTarget(panelRect);
   const offset = 10;
   const size = 14;
-  let anchor = null;
-  if (kind === "actor") {
-    const point = pointInPanel(item.x, item.y, panelRect, unit);
-    anchor = { x: point.x - 12, y: point.y - (20 * num(item.scale, 1)) * 2.8 };
-  } else if (kind === "sfx") {
-    anchor = pointInPanel(item.x, item.y, panelRect, unit);
-  } else {
-    const box = withinPanel({ ...item, w: item.w, h: item.h }, panelRect, unit);
-    anchor = { x: box.x, y: box.y };
-  }
-  if (!anchor) return null;
-  const rawRect = { x: anchor.x - offset, y: anchor.y - offset, w: size, h: size };
+  const center = draggableCenterPoint(kind, item, panelRect, unit);
+  if (!center) return null;
+  const rawRect = { x: center.x - offset, y: center.y - offset, w: size, h: size };
   return clampRectToRect(rawRect, target);
 }
 function renderDragHandle(kind, id, item, panelRect, unit) {
