@@ -2124,6 +2124,9 @@ function pageDimensions(page) {
 function escapeXml(str) {
   return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;");
 }
+function syncDragHandleModeClass() {
+  els.canvas.classList.toggle("drag-handle-active", isDragHandleModeEnabled());
+}
 function update() {
   try {
     const blocks = parseBlocks(els.input.value);
@@ -2142,6 +2145,8 @@ function update() {
     }
     els.errorBox.hidden = false;
     els.errorBox.textContent = String(err.message);
+  } finally {
+    syncDragHandleModeClass();
   }
 }
 function debouncedUpdate() {
@@ -2355,7 +2360,11 @@ function setupObjectDrag() {
 }
 function setupDragHandleToggle() {
   if (!els.dragHandleToggle) return;
-  els.dragHandleToggle.addEventListener("change", () => update());
+  els.dragHandleToggle.addEventListener("change", () => {
+    syncDragHandleModeClass();
+    update();
+  });
+  syncDragHandleModeClass();
 }
 function setupDownload() {
   els.downloadBtn.addEventListener("click", () => {
