@@ -246,6 +246,7 @@ panel:
 * `rot`（度。足元基準で回転。既定0）
 * `facing`（`left`/`right`/`back`、既定`right`）
 * `pose`（既定`stand`）
+* `pose.points`（任意、11点×`x,y` を1文字列で指定。指定時は `pose` より優先）
 * `emotion`（既定`neutral`）
 * `eye`（`right`/`left`/`up`/`down`/`cry`/`close`/`wink`、既定`right`）
 * `head.shape`（`circle`/`square`/`none`、既定`circle`）
@@ -259,6 +260,24 @@ panel:
 実装必須プリセット（v0.1）:
 
 * `stand`, `run`, `sit`, `point`, `think`, `surprise`
+
+#### pose.points（明示座標）
+
+`actor` ごとに関節点を直接指定するためのオプション。
+
+* 形式は **22個の数値（11点の `x,y`）をカンマ区切りで並べた1つの文字列**
+* 点の順序は次で固定:
+  `lh,rh,le,re,neck,waist,groin,lk,rk,lf,rf`
+  * `lh/rh`: 左手・右手
+  * `le/re`: 左肘・右肘
+  * `neck`: 首
+  * `waist`: 腰
+  * `groin`: 股
+  * `lk/rk`: 左膝・右膝
+  * `lf/rf`: 左足・右足
+* 優先順位は `pose.points` > `pose`。
+  * `pose.points` 指定時は、`pose` プリセット値が同時にあっても `pose.points` を採用する。
+  * `pose.points` 未指定時は既存どおり `pose` プリセットで描画する（既定 `stand`）。
 
 #### emotion（プリセット）
 
@@ -489,6 +508,9 @@ balloon:
 * `meta.layout.base.width` と `meta.layout.base.height` は同時指定（正数）
 * `tail:toActor(a1)` の参照先が存在する
 * `pose`/`emotion` が未対応値の場合、既定にフォールバック（か警告）
+* `actor.pose.points` 指定時、値は 22 個の数値（11点×`x,y`）であること
+* `actor.pose.points` と `actor.pose` が同時指定された場合、`pose.points` を優先する
+* `actor.pose.points` 未指定時は既存どおり `pose` プリセットで描画する
 
 ---
 
