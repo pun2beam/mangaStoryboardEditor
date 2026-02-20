@@ -390,9 +390,10 @@ function parsePosePoints(raw, line) {
   if (values.some((value) => !Number.isFinite(value))) {
     throw new Error(`Line ${line}: actor.pose.points に数値以外が含まれています`);
   }
-  const points = [];
-  for (let i = 0; i < values.length; i += 2) {
-    points.push({ x: values[i], y: values[i + 1] });
+  const pointNames = ["lh", "rh", "le", "re", "neck", "waist", "groin", "lk", "rk", "lf", "rf"];
+  const points = {};
+  for (let i = 0; i < pointNames.length; i += 1) {
+    points[pointNames[i]] = { x: values[i * 2], y: values[i * 2 + 1] };
   }
   return points;
 }
@@ -1476,7 +1477,9 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
   const s = 20 * actor.scale;
   const rot = num(actor.rot, 0);
   const mirror = actor.facing === "left" ? -1 : 1;
-  const pose = poseSegments(actor.pose, s);
+  const pose = hasPosePoints(actor._posePoints)
+    ? poseSegmentsFromPoints(actor._posePoints, s)
+    : poseSegments(actor.pose, s);
   const attachments = resolveActorAttachments(actor, assetMap);
   const underlayAttachments = attachments.filter((attachment) => attachment.z < 0).map((attachment) => attachment.markup).join("");
   const overlayAttachments = attachments.filter((attachment) => attachment.z >= 0).map((attachment) => attachment.markup).join("");
@@ -1502,6 +1505,10 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
     </g>
     ${nameLabel}
   </g>`;
+}
+function hasPosePoints(points) {
+  if (!points || typeof points !== "object") return false;
+  return Object.keys(points).length > 0;
 }
 function headOutline(shape, s) {
   const y = -s * 2.2;
@@ -1545,6 +1552,36 @@ function poseSegments(pose, s) {
     surprise: [[0, shoulderY, s * 0.9, -s * 1.7], [0, shoulderY, -s * 0.9, -s * 1.7], [0, hipY, -s * 0.6, 0], [0, hipY, s * 0.6, 0]],
   };
   return sets[pose].map(([x1, y1, x2, y2]) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="black" stroke-width="2"/>`).join("");
+}
+function poseSegmentsFromPoints(points, s) {
+  const point = (name) => {
+    const raw = points?.[name];
+    if (!raw) return null;
+    if (Array.isArray(raw) && raw.length >= 2) {
+      return { x: num(raw[0], 0) * s, y: num(raw[1], 0) * s };
+    }
+    if (typeof raw === "object") {
+      return { x: num(raw.x, 0) * s, y: num(raw.y, 0) * s };
+    }
+    return null;
+  };
+  const chainDefs = [
+    ["neck", "le", "lh"],
+    ["neck", "re", "rh"],
+    ["neck", "waist", "groin"],
+    ["groin", "lk", "lf"],
+    ["groin", "rk", "rf"],
+  ];
+  const segments = [];
+  for (const chain of chainDefs) {
+    for (let i = 0; i < chain.length - 1; i += 1) {
+      const a = point(chain[i]);
+      const b = point(chain[i + 1]);
+      if (!a || !b) continue;
+      segments.push(`<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="black" stroke-width="2"/>`);
+    }
+  }
+  return segments.join("");
 }
 function eyePath(eye, s) {
   const headY = -s * 2.2;
