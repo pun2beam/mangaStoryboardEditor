@@ -58,6 +58,13 @@ page:
       w: 40
       h: 20
       text: こんにちは！
+
+    sfx:
+      id: s1
+      x: 70
+      y: 25
+      text: ドーン
+      fontWeight: 900
 ```
 
 ## ローカルでの動作確認
