@@ -1,6 +1,9 @@
 meta:
   title: pose.points サンプル
   author: DEF
+  layout.page.mode: fixed
+  layout.percent.reference: page-inner
+  layout.page.persistGenerated: false
 
 page:
   id: p1
@@ -19,11 +22,12 @@ panel:
 actor:
   id: a1
   panel: 1
-  x: 50
-  y: 80
+  x: 27.07
+  y: 78.18
   scale: 5
   pose: run
-  pose.points: "-0.6,-0.6,1,-1,-0.5,-1,0.5,-1,0.1,-1.7,-0.1,-1,0,-0.8,-0.4,-0.5,0.4,-0.5,-0.5,0,0.5,0"
+  pose.points: -0.6,-0.6,1,-1,-0.5,-1,0.5,-1,0,-1.6,-0.1,-1,0,-0.8,-0.4,-0.5,0.4,-0.5,-0.5,0,0.5,0
   emotion: smile
   facing: right
   name: pose.points優先
+  rot: 0
