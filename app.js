@@ -379,6 +379,23 @@ function parseValue(value) {
   if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) return value.slice(1, -1);
   return value;
 }
+function parsePosePoints(raw, line) {
+  if (raw === undefined || raw === null || raw === "") return undefined;
+  const source = Array.isArray(raw) ? raw.join(" ") : String(raw);
+  const tokens = source.split(/[\s,]+/).filter(Boolean);
+  if (tokens.length !== 22) {
+    throw new Error(`Line ${line}: actor.pose.points は22個の数値が必要です`);
+  }
+  const values = tokens.map((token) => Number(token));
+  if (values.some((value) => !Number.isFinite(value))) {
+    throw new Error(`Line ${line}: actor.pose.points に数値以外が含まれています`);
+  }
+  const points = [];
+  for (let i = 0; i < values.length; i += 2) {
+    points.push({ x: values[i], y: values[i + 1] });
+  }
+  return points;
+}
 function validateAndBuild(blocks) {
   const scene = { meta: {}, pages: [], panels: [], actors: [], objects: [], boxarrows: [], balloons: [], captions: [], sfx: [], assets: [], styles: [] };
   for (const b of blocks) {
@@ -498,6 +515,7 @@ function validateAndBuild(blocks) {
     actor.x = num(actor.x, 0);
     actor.y = num(actor.y, 0);
     actor.attachments = normalizeAttachments(actor.attachments, actor._line);
+    actor._posePoints = parsePosePoints(actor["pose.points"], actor._line);
   }
   for (const object of scene.objects) {
     object._autoPosition = object.x === undefined || object.x === null || object.x === "" || object.y === undefined || object.y === null || object.y === "";
