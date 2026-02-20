@@ -1441,7 +1441,10 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
   const faceMarkup = actor.facing === "back"
     ? ""
     : `${eyePath(actor.eye, s)}${emotionPath(actor.emotion, s)}`;
-  const headMarkup = headOutline(actor["head.shape"], s);
+  const headShape = actor.emotion === "none" && actor["head.shape"] === "circle"
+    ? "none"
+    : actor["head.shape"];
+  const headMarkup = headOutline(headShape, s);
   const nameLabel = showActorName && actor.name
     ? `<text x="0" y="${-s * 2.9}" font-size="${Math.max(10, s * 0.55)}" text-anchor="middle" dominant-baseline="auto" fill="black">${escapeXml(String(actor.name))}</text>`
     : "";
