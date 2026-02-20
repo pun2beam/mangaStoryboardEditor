@@ -1189,7 +1189,11 @@ function render(scene) {
       const pageLayout = panel ? pageLayouts.get(String(panel.page)) : null;
       const panelRect = panelRects.get(String(entry.data.panel));
       if (!pageLayout || !panelRect) continue;
-      const boxarrowMarkup = renderBoxArrow(entry.data, panelRect, pageLayout.page.unit);
+      const boxarrowMarkup = renderBoxArrow(entry.data, panelRect, pageLayout.page.unit, entry.kind, entry.data.id);
+      if (isDragHandleModeEnabled()) {
+        const handleMarkup = renderDragHandle(entry.kind, entry.data.id, entry.data, panelRect, pageLayout.page.unit);
+        if (handleMarkup) dragHandles.push(clipWhenBehindPanel(entry, panel, panelRect, handleMarkup));
+      }
       body.push(clipWhenBehindPanel(entry, panel, panelRect, boxarrowMarkup));
     } else if (entry.kind === "balloon") {
       const panel = panelMap.get(String(entry.data.panel));
@@ -1218,7 +1222,11 @@ function render(scene) {
       const pageLayout = panel ? pageLayouts.get(String(panel.page)) : null;
       const panelRect = panelRects.get(String(entry.data.panel));
       if (!pageLayout || !panelRect) continue;
-      const sfxMarkup = renderSfx(entry.data, panelRect, pageLayout.page.unit, defaultTextDirection);
+      const sfxMarkup = renderSfx(entry.data, panelRect, pageLayout.page.unit, defaultTextDirection, entry.kind, entry.data.id);
+      if (isDragHandleModeEnabled()) {
+        const handleMarkup = renderDragHandle(entry.kind, entry.data.id, entry.data, panelRect, pageLayout.page.unit);
+        if (handleMarkup) dragHandles.push(clipWhenBehindPanel(entry, panel, panelRect, handleMarkup));
+      }
       body.push(clipWhenBehindPanel(entry, panel, panelRect, sfxMarkup));
     }
   }
@@ -1720,12 +1728,13 @@ function renderCaption(caption, panelRect, unit, defaultTextDirection, kind, id)
   );
   return `<g${attrs}>${box}${text}</g>`;
 }
-function renderSfx(sfx, panelRect, unit, defaultTextDirection) {
+function renderSfx(sfx, panelRect, unit, defaultTextDirection, kind, id) {
   const p = pointInPanel(sfx.x, sfx.y, panelRect, unit);
+  const attrs = renderDataAttrs(kind, id);
   const fontSize = sizeInUnit(sfx.fontSize, panelRect, unit, "x");
   const direction = sfx.textDirection || defaultTextDirection;
   const textAttrs = direction === "vertical" ? ' writing-mode="vertical-rl" text-orientation="upright"' : '';
-  return `<text x="${p.x}" y="${p.y}" font-size="${fontSize}" transform="rotate(${sfx.rotate} ${p.x} ${p.y}) scale(${sfx.scale})" fill="${sfx.fill}" stroke="${sfx.stroke || "none"}" font-weight="700"${textAttrs}>${escapeXml(sfx.text)}</text>`;
+  return `<text${attrs} x="${p.x}" y="${p.y}" font-size="${fontSize}" transform="rotate(${sfx.rotate} ${p.x} ${p.y}) scale(${sfx.scale})" fill="${sfx.fill}" stroke="${sfx.stroke || "none"}" font-weight="700"${textAttrs}>${escapeXml(sfx.text)}</text>`;
 }
 function renderObject(object, panelRect, unit, defaultTextDirection, kind, id) {
   const r = withinPanel({ ...object, w: object.w, h: object.h }, panelRect, unit);
@@ -1744,8 +1753,9 @@ function renderObject(object, panelRect, unit, defaultTextDirection, kind, id) {
   const text = renderText(object.text, r, object.fontSize, object.align, object.padding, unit, object.lineHeight, "center", object.textDirection || defaultTextDirection);
   return `<g${attrs}>${shape}${text}</g>`;
 }
-function renderBoxArrow(boxarrow, panelRect, unit) {
+function renderBoxArrow(boxarrow, panelRect, unit, kind, id) {
   const center = pointInPanel(boxarrow.x, boxarrow.y, panelRect, unit);
+  const attrs = renderDataAttrs(kind, id);
   const w = sizeInUnit(boxarrow.w, panelRect, unit, "x");
   const h = sizeInUnit(boxarrow.h, panelRect, unit, "y");
   const points = [
@@ -1758,7 +1768,7 @@ function renderBoxArrow(boxarrow, panelRect, unit) {
     [-w / 2, -boxarrow.py * h + h / 2],
   ];
   const pointsAttr = points.map(([x, y]) => `${x},${y}`).join(" ");
-  return `<g transform="translate(${center.x} ${center.y}) rotate(${boxarrow.rot}) scale(${boxarrow.scale})" opacity="${boxarrow.opacity}"><polygon points="${pointsAttr}" fill="${boxarrow.fill}" stroke="${boxarrow.stroke}" stroke-width="2"/></g>`;
+  return `<g${attrs} transform="translate(${center.x} ${center.y}) rotate(${boxarrow.rot}) scale(${boxarrow.scale})" opacity="${boxarrow.opacity}"><polygon points="${pointsAttr}" fill="${boxarrow.fill}" stroke="${boxarrow.stroke}" stroke-width="2"/></g>`;
 }
 function renderText(text, rect, fontSize, align, padding, unit, lineHeight = 1.2, verticalAlign = "top", textDirection = "horizontal", enableMath = false, emphasisFontSize = null) {
   const rawText = String(text);
@@ -2174,7 +2184,7 @@ function setupPanZoom() {
   });
 }
 function setupObjectDrag() {
-  const DRAGGABLE_KINDS = new Set(["actor", "object", "balloon", "caption"]);
+  const DRAGGABLE_KINDS = new Set(["actor", "object", "balloon", "caption", "boxarrow", "sfx"]);
   let state = null;
 
   function escapeCssValue(value) {
