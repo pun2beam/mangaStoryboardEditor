@@ -97,3 +97,22 @@ html, body { margin: 0; height: 100%; color: var(--text); background: var(--bg);
 }
 #svgCanvas { min-height: 100%; padding: 16px; }
 #svgCanvas > svg { display: block; margin: 0 auto; background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,.12); }
+
+
+.drag-handle-move { cursor: move; }
+.drag-handle-rotate { cursor: grab; }
+.drag-handle-rotate-guide {
+  stroke: #2563eb;
+  stroke-width: 1.4;
+  stroke-dasharray: 4 3;
+}
+.drag-handle-rotate-center {
+  fill: #ffffff;
+  stroke: #2563eb;
+  stroke-width: 1.2;
+}
+.drag-handle-rotate-knob {
+  fill: #2563eb;
+  stroke: #ffffff;
+  stroke-width: 1.6;
+}

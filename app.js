@@ -102,7 +102,16 @@ function renderDragHandle(kind, id, item, panelRect, unit) {
   const centerY = handleRect.y + handleRect.h / 2;
   const arm = Math.max(3, handleRect.w * 0.35);
   const radius = Math.max(2.5, handleRect.w * 0.18);
-  return `<g${attrs} data-drag-handle="true" class="drag-handle"><rect x="${handleRect.x}" y="${handleRect.y}" width="${handleRect.w}" height="${handleRect.h}" fill="white" stroke="black" stroke-width="1.2" rx="2" ry="2"/><line x1="${centerX - arm}" y1="${centerY}" x2="${centerX + arm}" y2="${centerY}" stroke="black" stroke-width="1.2"/><line x1="${centerX}" y1="${centerY - arm}" x2="${centerX}" y2="${centerY + arm}" stroke="black" stroke-width="1.2"/><circle cx="${centerX}" cy="${centerY}" r="${radius}" fill="white" stroke="black" stroke-width="1"/></g>`;
+  const moveHandle = `<g${attrs} data-drag-handle="move" class="drag-handle drag-handle-move"><rect x="${handleRect.x}" y="${handleRect.y}" width="${handleRect.w}" height="${handleRect.h}" fill="white" stroke="black" stroke-width="1.2" rx="2" ry="2"/><line x1="${centerX - arm}" y1="${centerY}" x2="${centerX + arm}" y2="${centerY}" stroke="black" stroke-width="1.2"/><line x1="${centerX}" y1="${centerY - arm}" x2="${centerX}" y2="${centerY + arm}" stroke="black" stroke-width="1.2"/><circle cx="${centerX}" cy="${centerY}" r="${radius}" fill="white" stroke="black" stroke-width="1"/></g>`;
+  if (kind !== "actor") return moveHandle;
+  const center = pointInPanel(item.x, item.y, panelRect, unit);
+  const knobRadius = Math.max(7, handleRect.w * 0.6);
+  const guideRadius = Math.max(24, handleRect.w * 3.2);
+  const theta = (num(item.rot, 0) - 90) * (Math.PI / 180);
+  const knobX = center.x + Math.cos(theta) * guideRadius;
+  const knobY = center.y + Math.sin(theta) * guideRadius;
+  const rotateHandle = `<g${attrs} data-drag-handle="rotate" class="drag-handle drag-handle-rotate"><line class="drag-handle-rotate-guide" x1="${center.x}" y1="${center.y}" x2="${knobX}" y2="${knobY}"/><circle class="drag-handle-rotate-center" cx="${center.x}" cy="${center.y}" r="3.5"/><circle class="drag-handle-rotate-knob" cx="${knobX}" cy="${knobY}" r="${knobRadius}"/></g>`;
+  return `${moveHandle}${rotateHandle}`;
 }
 function parseDsl(text) {
   const lines = text.replace(/\r\n?/g, "\n").split("\n");
@@ -2191,7 +2200,7 @@ function setupObjectDrag() {
     const target = event.target.closest?.("[data-kind][data-id]");
     if (!target) return;
     if (!isDragHandleModeEnabled()) return;
-    const isHandleTarget = target.dataset.dragHandle === "true";
+    const isHandleTarget = target.dataset.dragHandle === "move";
     if (!isHandleTarget) return;
     const kind = target.dataset.kind;
     const id = target.dataset.id;
