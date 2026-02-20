@@ -2239,9 +2239,9 @@ function setupObjectDrag() {
     if (!point) return;
     const dx = point.x - state.start.x;
     const dy = point.y - state.start.y;
-    const dragTransform = ` translate(${dx},${dy})`;
+    const dragTransform = `translate(${dx},${dy})`;
     for (const targetState of state.targets) {
-      targetState.element.setAttribute("transform", `${targetState.originalTransform}${dragTransform}`.trim());
+      targetState.element.setAttribute("transform", `${dragTransform} ${targetState.originalTransform}`.trim());
     }
     event.preventDefault();
   });
