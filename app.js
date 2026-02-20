@@ -2082,6 +2082,20 @@ function roundedCoord(value, unit) {
   if (unit === "px") return Math.round(value);
   return Math.round(value * 100) / 100;
 }
+function roundedRotation(value) {
+  const rounded = Math.round(value * 100) / 100;
+  return Number.isInteger(rounded) ? Math.round(rounded) : rounded;
+}
+function normalizeDegrees(value) {
+  return ((value % 360) + 360) % 360;
+}
+function angleFromPointClockwiseTop(point, center) {
+  const radians = Math.atan2(point.y - center.y, point.x - center.x);
+  return normalizeDegrees((radians * 180) / Math.PI + 90);
+}
+function signedAngleDelta(current, start) {
+  return ((current - start + 540) % 360) - 180;
+}
 function sizeInUnit(v, rect, unit, axis) {
   const basisRect = rectBasis(rect);
   const targetRect = rectTarget(rect);
@@ -2200,10 +2214,11 @@ function setupObjectDrag() {
     const target = event.target.closest?.("[data-kind][data-id]");
     if (!target) return;
     if (!isDragHandleModeEnabled()) return;
-    const isHandleTarget = target.dataset.dragHandle === "move";
-    if (!isHandleTarget) return;
+    const handleType = target.dataset.dragHandle;
+    if (handleType !== "move" && handleType !== "rotate") return;
     const kind = target.dataset.kind;
     const id = target.dataset.id;
+    if (handleType === "rotate" && kind !== "actor") return;
     if (!DRAGGABLE_KINDS.has(kind) || !id) return;
     const item = currentScene[`${kind}s`]?.find((entry) => String(entry.id) === id);
     if (!item) return;
@@ -2225,6 +2240,13 @@ function setupObjectDrag() {
       : null;
     const targets = dragTargetsFor(kind, id);
     if (targets.length === 0) return;
+    const actorTargets = handleType === "rotate"
+      ? targets.filter((targetState) => !targetState.element.dataset.dragHandle)
+      : [];
+    if (handleType === "rotate" && (!originalPoint || actorTargets.length === 0)) return;
+    const startAngle = handleType === "rotate" && originalPoint
+      ? angleFromPointClockwiseTop(start, originalPoint)
+      : null;
     target.setPointerCapture(event.pointerId);
     isObjectDragging = true;
     state = {
@@ -2236,8 +2258,12 @@ function setupObjectDrag() {
       start,
       panelRect,
       unit,
+      handleType,
       originalRect,
       originalPoint,
+      actorTargets,
+      startAngle,
+      startRot: kind === "actor" ? num(item.rot, 0) : 0,
     };
     event.preventDefault();
   });
@@ -2246,11 +2272,20 @@ function setupObjectDrag() {
     if (!state || event.pointerId !== state.pointerId) return;
     const point = scenePointFromEvent(event);
     if (!point) return;
-    const dx = point.x - state.start.x;
-    const dy = point.y - state.start.y;
-    const dragTransform = `translate(${dx},${dy})`;
-    for (const targetState of state.targets) {
-      targetState.element.setAttribute("transform", `${dragTransform} ${targetState.originalTransform}`.trim());
+    if (state.handleType === "rotate" && state.originalPoint && state.startAngle !== null) {
+      const currentAngle = angleFromPointClockwiseTop(point, state.originalPoint);
+      const angleDelta = signedAngleDelta(currentAngle, state.startAngle);
+      for (const targetState of state.actorTargets) {
+        const rotatePreview = `rotate(${angleDelta} ${state.originalPoint.x} ${state.originalPoint.y})`;
+        targetState.element.setAttribute("transform", `${rotatePreview} ${targetState.originalTransform}`.trim());
+      }
+    } else {
+      const dx = point.x - state.start.x;
+      const dy = point.y - state.start.y;
+      const dragTransform = `translate(${dx},${dy})`;
+      for (const targetState of state.targets) {
+        targetState.element.setAttribute("transform", `${dragTransform} ${targetState.originalTransform}`.trim());
+      }
     }
     event.preventDefault();
   });
@@ -2261,22 +2296,31 @@ function setupObjectDrag() {
     const dx = point.x - state.start.x;
     const dy = point.y - state.start.y;
     try {
-      let nextPosition = null;
-      if (state.kind === "actor" && state.originalPoint) {
-        const moved = { x: state.originalPoint.x + dx, y: state.originalPoint.y + dy };
-        nextPosition = pointFromPanel(moved, state.panelRect, state.unit);
-      } else if (state.originalRect) {
-        const moved = {
-          ...state.originalRect,
-          x: state.originalRect.x + dx,
-          y: state.originalRect.y + dy,
-        };
-        nextPosition = rectFromPanel(moved, state.panelRect, state.unit);
-      }
-      if (nextPosition) {
-        const blocks = parseBlocks(els.input.value);
-        const block = findBlock(blocks, state.kind, state.id);
-        if (block) {
+      const blocks = parseBlocks(els.input.value);
+      const block = findBlock(blocks, state.kind, state.id);
+      if (block) {
+        if (state.handleType === "rotate" && state.originalPoint && state.startAngle !== null) {
+          const currentAngle = angleFromPointClockwiseTop(point, state.originalPoint);
+          const angleDelta = signedAngleDelta(currentAngle, state.startAngle);
+          const nextRotation = normalizeDegrees(state.startRot + angleDelta);
+          block.props.rot = roundedRotation(nextRotation);
+          const updatedBlocks = blocks;
+          els.input.value = stringifyBlocks(updatedBlocks);
+          update();
+        } else {
+          let nextPosition = null;
+          if (state.kind === "actor" && state.originalPoint) {
+            const moved = { x: state.originalPoint.x + dx, y: state.originalPoint.y + dy };
+            nextPosition = pointFromPanel(moved, state.panelRect, state.unit);
+          } else if (state.originalRect) {
+            const moved = {
+              ...state.originalRect,
+              x: state.originalRect.x + dx,
+              y: state.originalRect.y + dy,
+            };
+            nextPosition = rectFromPanel(moved, state.panelRect, state.unit);
+          }
+          if (!nextPosition) return;
           block.props.x = roundedCoord(nextPosition.x, state.unit);
           block.props.y = roundedCoord(nextPosition.y, state.unit);
           const updatedBlocks = blocks;
