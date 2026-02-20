@@ -21,9 +21,9 @@ actor:
   panel: 1
   x: 50
   y: 80
-  scale: 1.2
+  scale: 5
   pose: run
-  pose.points: "-6,-36,6,-36,-4,-26,4,-26,0,-22,0,-8,0,4,-3,18,3,18,-3,32,3,32"
+  pose.points: "-0.6,-0.6,1,-1,-0.5,-1,0.5,-1,0.1,-1.7,-0.1,-1,0,-0.8,-0.4,-0.5,0.4,-0.5,-0.5,0,0.5,0"
   emotion: smile
   facing: right
   name: pose.points優先
