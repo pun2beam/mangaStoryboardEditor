@@ -1635,6 +1635,7 @@ function renderBalloon(balloon, panelRect, unit, actorMap, panelMap, panelRects,
   const r = withinPanel(balloon, panelRect, unit);
   const attrs = renderDataAttrs(kind, id);
   const balloonCenter = { x: r.x + r.w / 2, y: r.y + r.h / 2 };
+  const rotation = num(balloon.rot, 0);
   const isThoughtBalloon = balloon.shape === "thought";
   let shape = "";
   if (balloon.shape === "box") {
@@ -1663,6 +1664,7 @@ function renderBalloon(balloon, panelRect, unit, actorMap, panelMap, panelRects,
       const actorFeet = pointInPanel(actor.x, actor.y - targetYOffset, pRect, actorUnit);
       const actorScale = num(actor.scale, 1);
       const actorSize = 20 * actorScale;
+      const actorRot = num(actor.rot, 0);
       const faceWidth = actorSize * 0.95;
       const actorRect = {
         x: actorFeet.x - faceWidth / 2,
@@ -1670,12 +1672,13 @@ function renderBalloon(balloon, panelRect, unit, actorMap, panelMap, panelRects,
         w: faceWidth,
         h: actorSize * 2.7,
       };
-      const mouthTarget = {
-        x: actorFeet.x,
-        y: actorFeet.y - actorSize * 1.9,
-      };
-      const directionToMouth = resolveOctantDirection(balloonCenter, mouthTarget);
-      const start = anchorPointOnRect(r, directionToMouth);
+      const mouthLocal = { x: 0, y: -actorSize * 1.9 };
+      const mouthTarget = rotatePointAround(
+        { x: actorFeet.x + mouthLocal.x, y: actorFeet.y + mouthLocal.y },
+        actorFeet,
+        actorRot,
+      );
+      const start = resolveBalloonTailStart(r, balloonCenter, mouthTarget, rotation);
       const end = anchorPointOnRectTowardPoint(actorRect, mouthTarget, start);
       tail = isThoughtBalloon
         ? renderThoughtTailBubbles(start, end, r)
@@ -1687,8 +1690,7 @@ function renderBalloon(balloon, panelRect, unit, actorMap, panelMap, panelRects,
     const y = Number(match?.[2]?.trim());
     if (Number.isFinite(x) && Number.isFinite(y)) {
       const target = pointInPanel(x, y, panelRect, unit);
-      const directionToTarget = resolveOctantDirection(balloonCenter, target);
-      const start = anchorPointOnRect(r, directionToTarget);
+      const start = resolveBalloonTailStart(r, balloonCenter, target, rotation);
       tail = isThoughtBalloon
         ? renderThoughtTailBubbles(start, target, r)
         : `<line x1="${start.x}" y1="${start.y}" x2="${target.x}" y2="${target.y}" stroke="black"/>`;
@@ -1697,7 +1699,24 @@ function renderBalloon(balloon, panelRect, unit, actorMap, panelMap, panelRects,
   const text = renderText(balloon.text, r, balloon.fontSize, balloon.align, balloon.padding, unit, balloon.lineHeight, "center", balloon.textDirection || defaultTextDirection, true, balloon.emphasisFontSize);
   const centerX = r.x + r.w / 2;
   const centerY = r.y + r.h / 2;
-  return `<g${attrs} transform="rotate(${balloon.rot} ${centerX} ${centerY})">${tail}${shape}${text}</g>`;
+  return `${tail}<g${attrs} transform="rotate(${rotation} ${centerX} ${centerY})">${shape}${text}</g>`;
+}
+function resolveBalloonTailStart(balloonRect, balloonCenter, target, rotationDeg) {
+  const targetInBalloonFrame = rotatePointAround(target, balloonCenter, -rotationDeg);
+  const directionToTarget = resolveOctantDirection(balloonCenter, targetInBalloonFrame);
+  const startInBalloonFrame = anchorPointOnRect(balloonRect, directionToTarget);
+  return rotatePointAround(startInBalloonFrame, balloonCenter, rotationDeg);
+}
+function rotatePointAround(point, center, rotationDeg) {
+  const rad = (rotationDeg * Math.PI) / 180;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+  const dx = point.x - center.x;
+  const dy = point.y - center.y;
+  return {
+    x: center.x + dx * cos - dy * sin,
+    y: center.y + dx * sin + dy * cos,
+  };
 }
 function renderThoughtTailBubbles(balloonAnchor, targetAnchor, balloonRect) {
   const diameterBase = Math.max(6, Math.min(balloonRect.w, balloonRect.h) * 0.08);
