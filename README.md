@@ -51,6 +51,13 @@ page:
       x: 50
       y: 80
       pose: stand
+
+    actor:
+      id: a2
+      x: 70
+      y: 82
+      pose: run
+      pose.points: "-6,-16,6,-14,-3,-8,4,-7,0,-10,0,0,0,8,-2,16,3,17,-3,24,5,24"
     balloon:
       id: b1
       x: 10
@@ -68,6 +75,10 @@ page:
       stroke: white
       strokeWidth: 2
 ```
+
+補足:
+- `pose.points` は指定した `actor` に対してのみ `pose` プリセットを上書きします。未指定の `actor` は既存の `pose` プリセットをそのまま利用します。
+- 将来の単位指定拡張や GUI でのポーズ編集は、DSLコアとは分離した別機能として段階的に導入する方針です。
 
 ## ローカルでの動作確認
 
