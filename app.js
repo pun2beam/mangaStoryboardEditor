@@ -2194,6 +2194,12 @@ function setupObjectDrag() {
   const DRAGGABLE_KINDS = new Set(["actor", "object", "balloon", "caption", "boxarrow", "sfx"]);
   let state = null;
 
+  function sceneCollectionKey(kind) {
+    if (kind === "sfx") return "sfx";
+    if (kind === "boxarrow") return "boxarrows";
+    return `${kind}s`;
+  }
+
   function escapeCssValue(value) {
     if (typeof CSS !== "undefined" && typeof CSS.escape === "function") return CSS.escape(value);
     return String(value).replace(/\\/g, "\\\\").replace(/"/g, '\\"');
@@ -2237,7 +2243,7 @@ function setupObjectDrag() {
     const id = target.dataset.id;
     if (handleType === "rotate" && kind !== "actor") return;
     if (!DRAGGABLE_KINDS.has(kind) || !id) return;
-    const item = currentScene[`${kind}s`]?.find((entry) => String(entry.id) === id);
+    const item = currentScene[sceneCollectionKey(kind)]?.find((entry) => String(entry.id) === id);
     if (!item) return;
     const panel = currentScene.panels.find((entry) => String(entry.id) === String(item.panel));
     if (!panel) return;
