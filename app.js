@@ -1480,6 +1480,7 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
   const pose = hasPosePoints(actor._posePoints)
     ? poseSegmentsFromPoints(actor._posePoints, s)
     : poseSegments(actor.pose, s);
+  const neckPoint = resolvePosePoint(actor._posePoints, "neck", s) || { x: 0, y: -s * 0.8 };
   const attachments = resolveActorAttachments(actor, assetMap);
   const underlayAttachments = attachments.filter((attachment) => attachment.z < 0).map((attachment) => attachment.markup).join("");
   const overlayAttachments = attachments.filter((attachment) => attachment.z >= 0).map((attachment) => attachment.markup).join("");
@@ -1498,13 +1499,24 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
     <g transform="scale(${mirror},1)">
       ${underlayAttachments}
       ${headMarkup}
-      <line x1="0" y1="${-s * 1.7}" x2="0" y2="${-s * 0.8}" stroke="black" stroke-width="2"/>
+      <line x1="0" y1="${-s * 1.7}" x2="${neckPoint.x}" y2="${neckPoint.y}" stroke="black" stroke-width="2"/>
       ${pose}
       ${faceMarkup}
       ${overlayAttachments}
     </g>
     ${nameLabel}
   </g>`;
+}
+function resolvePosePoint(points, name, scale) {
+  const raw = points?.[name];
+  if (!raw) return null;
+  if (Array.isArray(raw) && raw.length >= 2) {
+    return { x: num(raw[0], 0) * scale, y: num(raw[1], 0) * scale };
+  }
+  if (typeof raw === "object") {
+    return { x: num(raw.x, 0) * scale, y: num(raw.y, 0) * scale };
+  }
+  return null;
 }
 function hasPosePoints(points) {
   if (!points || typeof points !== "object") return false;
@@ -1554,17 +1566,7 @@ function poseSegments(pose, s) {
   return sets[pose].map(([x1, y1, x2, y2]) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="black" stroke-width="2"/>`).join("");
 }
 function poseSegmentsFromPoints(points, s) {
-  const point = (name) => {
-    const raw = points?.[name];
-    if (!raw) return null;
-    if (Array.isArray(raw) && raw.length >= 2) {
-      return { x: num(raw[0], 0) * s, y: num(raw[1], 0) * s };
-    }
-    if (typeof raw === "object") {
-      return { x: num(raw.x, 0) * s, y: num(raw.y, 0) * s };
-    }
-    return null;
-  };
+  const point = (name) => resolvePosePoint(points, name, s);
   const chainDefs = [
     ["neck", "le", "lh"],
     ["neck", "re", "rh"],
