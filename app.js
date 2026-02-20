@@ -2154,6 +2154,21 @@ function setupObjectDrag() {
   const DRAGGABLE_KINDS = new Set(["actor", "object", "balloon", "caption"]);
   let state = null;
 
+  function escapeCssValue(value) {
+    if (typeof CSS !== "undefined" && typeof CSS.escape === "function") return CSS.escape(value);
+    return String(value).replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  }
+
+  function dragTargetsFor(kind, id) {
+    const kindSelector = escapeCssValue(String(kind));
+    const idSelector = escapeCssValue(String(id));
+    const selector = `[data-kind="${kindSelector}"][data-id="${idSelector}"]`;
+    return Array.from(els.canvas.querySelectorAll(selector)).map((element) => ({
+      element,
+      originalTransform: element.getAttribute("transform") || "",
+    }));
+  }
+
   function scenePointFromEvent(event) {
     const group = els.canvas.querySelector("svg > g");
     if (!group || typeof group.getScreenCTM !== "function") return null;
@@ -2199,12 +2214,14 @@ function setupObjectDrag() {
     const originalPoint = kind === "actor"
       ? pointInPanel(item.x, item.y, panelRect, unit)
       : null;
-    const originalTransform = target.getAttribute("transform") || "";
+    const targets = dragTargetsFor(kind, id);
+    if (targets.length === 0) return;
     target.setPointerCapture(event.pointerId);
     isObjectDragging = true;
     state = {
       pointerId: event.pointerId,
-      target,
+      captureTarget: target,
+      targets,
       kind,
       id,
       start,
@@ -2212,7 +2229,6 @@ function setupObjectDrag() {
       unit,
       originalRect,
       originalPoint,
-      originalTransform,
     };
     event.preventDefault();
   });
@@ -2224,7 +2240,9 @@ function setupObjectDrag() {
     const dx = point.x - state.start.x;
     const dy = point.y - state.start.y;
     const dragTransform = ` translate(${dx},${dy})`;
-    state.target.setAttribute("transform", `${state.originalTransform}${dragTransform}`.trim());
+    for (const targetState of state.targets) {
+      targetState.element.setAttribute("transform", `${targetState.originalTransform}${dragTransform}`.trim());
+    }
     event.preventDefault();
   });
 
@@ -2258,8 +2276,10 @@ function setupObjectDrag() {
         }
       }
     } finally {
-      state.target.setAttribute("transform", state.originalTransform);
-      state.target.releasePointerCapture(state.pointerId);
+      for (const targetState of state.targets) {
+        targetState.element.setAttribute("transform", targetState.originalTransform);
+      }
+      state.captureTarget.releasePointerCapture(state.pointerId);
       state = null;
       isObjectDragging = false;
     }
