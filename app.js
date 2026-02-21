@@ -491,7 +491,7 @@ function validateAndBuild(blocks) {
   for (const actor of scene.actors) {
     requireFields(actor, ["id"], "actor");
   }
-  resolveActorInheritance(scene.actors);
+  resolveActorInheritance(scene.actors, scene.meta);
   const inPanelItems = ["objects", "boxarrows", "balloons", "captions", "sfx"];
   for (const type of inPanelItems) {
     for (const item of scene[type]) {
@@ -654,10 +654,11 @@ function normalizeAttachments(value, line) {
     return { ...attachment };
   });
 }
-function resolveActorInheritance(actors) {
+function resolveActorInheritance(actors, meta = {}) {
   const actorMap = new Map(actors.map((actor) => [String(actor.id), actor]));
   const state = new Map();
   const resolvingStack = [];
+  const inheritPanel = isOn(meta?.["actor.inheritPanel"] ?? meta?.actorInheritPanel);
   const mergeAttachmentsByRef = (baseAttachments, ownAttachments) => {
     const merged = [];
     const indexByRef = new Map();
@@ -700,6 +701,9 @@ function resolveActorInheritance(actors) {
       const resolvedBase = mergeActor(baseActor);
       const ownProps = { ...actor };
       const inherited = { ...resolvedBase };
+      if (!inheritPanel) {
+        delete inherited.panel;
+      }
       delete inherited._line;
       delete inherited._order;
       delete inherited.extends;
