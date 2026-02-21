@@ -10,6 +10,8 @@ const HORIZONTAL_ALIGNS = new Set(["left", "center", "right"]);
 const VERTICAL_ALIGNS = new Set(["top", "center", "bottom"]);
 const PANEL_NEXT_DIRECTIONS = new Set(["left", "right", "bottom"]);
 const PANEL_BASE_DIRECTIONS = new Set(["right.bottom", "left.bottom"]);
+const POSE_POINT_NAMES = ["head", "lh", "rh", "le", "re", "neck", "waist", "groin", "lk", "rk", "lf", "rf"];
+const POSE_POINT_NAME_SET = new Set(POSE_POINT_NAMES);
 const BALLOON_TAIL_TARGET_Y_OFFSET = { px: 12, percent: 0 };
 const TEXT_METRICS_CONTEXT = document.createElement("canvas").getContext("2d");
 const MATH_EX_TO_PX = 8;
@@ -390,10 +392,9 @@ function parsePosePoints(raw, line) {
   if (values.some((value) => !Number.isFinite(value))) {
     throw new Error(`Line ${line}: actor.pose.points に数値以外が含まれています`);
   }
-  const pointNames = ["head", "lh", "rh", "le", "re", "neck", "waist", "groin", "lk", "rk", "lf", "rf"];
   const points = {};
-  for (let i = 0; i < pointNames.length; i += 1) {
-    points[pointNames[i]] = { x: values[i * 2], y: values[i * 2 + 1] };
+  for (let i = 0; i < POSE_POINT_NAMES.length; i += 1) {
+    points[POSE_POINT_NAMES[i]] = { x: values[i * 2], y: values[i * 2 + 1] };
   }
   return points;
 }
@@ -617,6 +618,7 @@ function validateAndBuild(blocks) {
     a.s = num(a.s, 1);
     a.rot = num(a.rot, 0);
     a.z = num(a.z, 0);
+    a.anchor = normalizeAssetAnchorPoint(a.anchor, a._line);
   }
   const assetsById = byId(scene.assets, "asset");
   for (const actor of scene.actors) {
@@ -1537,6 +1539,7 @@ function headOutline(shape, s, headPoint = { x: 0, y: -s * 2.2 }) {
 }
 function resolveActorAttachments(actor, assetMap) {
   if (!Array.isArray(actor.attachments) || actor.attachments.length === 0) return [];
+  const poseScale = 20 * actor.scale;
   return actor.attachments.flatMap((attachment) => {
     const asset = assetMap.get(String(attachment.ref));
     if (!asset) return [];
@@ -1547,13 +1550,62 @@ function resolveActorAttachments(actor, assetMap) {
     const height = asset.h * scale;
     const rot = attachment.rot ?? asset.rot ?? 0;
     const z = attachment.z ?? asset.z ?? 0;
-    const x = dx * actor.scale;
-    const y = dy * actor.scale;
+    const anchorPoint = resolveAttachmentAnchorPoint(actor, asset.anchor, poseScale);
+    const x = anchorPoint.x + dx * actor.scale;
+    const y = anchorPoint.y + dy * actor.scale;
     const cx = x + width / 2;
     const cy = y + height / 2;
     const transform = rot ? ` transform="rotate(${rot} ${cx} ${cy})"` : "";
     return [{ z, markup: `<image x="${x}" y="${y}" width="${width}" height="${height}" href="${escapeXml(asset.src)}" opacity="${asset.opacity}"${transform}/>` }];
   });
+}
+function normalizeAssetAnchorPoint(rawValue, line) {
+  if (rawValue === undefined || rawValue === null || rawValue === "") return "lf";
+  const value = String(rawValue).trim().toLowerCase();
+  if (POSE_POINT_NAME_SET.has(value)) return value;
+  throw new Error(`Line ${line}: asset.anchor は ${POSE_POINT_NAMES.join(",")} のいずれかで指定してください`);
+}
+function resolveAttachmentAnchorPoint(actor, anchorName, poseScale) {
+  const resolved = resolvePosePoint(actor._posePoints, anchorName, poseScale);
+  if (resolved) return resolved;
+  const presetPoints = posePresetPoints(actor.pose, poseScale);
+  return presetPoints[anchorName] || presetPoints.lf;
+}
+function posePresetPoints(pose, s) {
+  const shoulderY = -s * 1.5;
+  const groin = { x: 0, y: -s * 0.8 };
+  const armTargets = {
+    stand: { lh: { x: -s * 0.55, y: -s * 1 }, rh: { x: s * 0.55, y: -s * 1 } },
+    run: { lh: { x: s * 0.7, y: -s * 1.1 }, rh: { x: -s * 0.3, y: -s * 0.6 } },
+    sit: { lh: { x: s * 0.4, y: -s * 1.1 }, rh: { x: -s * 0.45, y: -s * 1 } },
+    point: { lh: { x: s * 0.9, y: -s * 1.5 }, rh: { x: -s * 0.45, y: -s * 1 } },
+    think: { lh: { x: s * 0.2, y: -s * 1.7 }, rh: { x: -s * 0.5, y: -s } },
+    surprise: { lh: { x: s * 0.9, y: -s * 1.7 }, rh: { x: -s * 0.9, y: -s * 1.7 } },
+  };
+  const legTargets = {
+    stand: { lk: { x: -s * 0.225, y: -s * 0.4 }, lf: { x: -s * 0.45, y: 0 }, rk: { x: s * 0.225, y: -s * 0.4 }, rf: { x: s * 0.45, y: 0 } },
+    run: { lk: { x: -s * 0.45, y: -s * 0.5 }, lf: { x: -s * 0.9, y: -s * 0.2 }, rk: { x: s * 0.4, y: -s * 0.4 }, rf: { x: s * 0.8, y: 0 } },
+    sit: { lk: { x: s * 0.6, y: -s * 0.5 }, lf: { x: s, y: -s * 0.5 }, rk: { x: s * 0.3, y: -s * 0.25 }, rf: { x: s * 0.6, y: -s * 0.5 } },
+    point: { lk: { x: -s * 0.225, y: -s * 0.4 }, lf: { x: -s * 0.45, y: 0 }, rk: { x: s * 0.225, y: -s * 0.4 }, rf: { x: s * 0.45, y: 0 } },
+    think: { lk: { x: -s * 0.175, y: -s * 0.4 }, lf: { x: -s * 0.35, y: 0 }, rk: { x: s * 0.175, y: -s * 0.4 }, rf: { x: s * 0.35, y: 0 } },
+    surprise: { lk: { x: -s * 0.3, y: -s * 0.4 }, lf: { x: -s * 0.6, y: 0 }, rk: { x: s * 0.3, y: -s * 0.4 }, rf: { x: s * 0.6, y: 0 } },
+  };
+  const arm = armTargets[pose] || armTargets.stand;
+  const leg = legTargets[pose] || legTargets.stand;
+  return {
+    head: { x: 0, y: -s * 2.2 },
+    neck: { x: 0, y: shoulderY },
+    waist: { x: 0, y: (shoulderY + groin.y) / 2 },
+    groin,
+    le: { x: arm.lh.x / 2, y: (shoulderY + arm.lh.y) / 2 },
+    lh: arm.lh,
+    re: { x: arm.rh.x / 2, y: (shoulderY + arm.rh.y) / 2 },
+    rh: arm.rh,
+    lk: leg.lk,
+    lf: leg.lf,
+    rk: leg.rk,
+    rf: leg.rf,
+  };
 }
 function poseSegments(pose, s) {
   const shoulderY = -s * 1.5;
