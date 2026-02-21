@@ -251,6 +251,7 @@ panel:
 * `facing`（`left`/`right`/`back`、既定`right`）
 * `pose`（既定`stand`）
 * `pose.points`（任意、12点×`x,y` を1文字列で指定。指定時は `pose` より優先）
+* `pose.points.z`（任意、12値を `head,lh,rh,le,re,neck,waist,groin,lk,rk,lf,rf` 順で指定。`pose.points` の各部位線分のz順に使用）
 * `emotion`（既定`neutral`）
 * `eye`（`right`/`left`/`up`/`down`/`cry`/`close`/`wink`、既定`right`）
 * `head.shape`（`circle`/`square`/`none`、既定`circle`）
@@ -286,6 +287,9 @@ panel:
   * `lk/rk`: 左膝・右膝
   * `lf/rf`: 左足・右足
 * 優先順位は `pose.points` > `pose`。
+* `pose.points.z` を指定した場合、`pose.points` 由来の各部位線分（腕・胴・脚）を `pose.points.z` の値で前後ソートして描画する。
+* `neck-head` 線分は `pose.points.z` の `head` 値で前後関係を指定する。
+* `actor.attachments[].z` は `pose.points.z` と同一の actor 内 z ソートに統合される。
   * `pose.points` 指定時は、`pose` プリセット値が同時にあっても `pose.points` を採用する。
   * `pose.points` 未指定時は既存どおり `pose` プリセットで描画する（既定 `stand`）。
 
@@ -487,7 +491,7 @@ balloon:
 * `anchor`（任意。`dx,dy` の基準点。`head,lh,rh,le,re,neck,waist,groin,lk,rk,lf,rf` から指定。既定 `head`）
 * `s`（actor.scaleに掛ける追加倍率、既定1）
 * `rot`（回転角、既定0）
-* `z`（actor内相対レイヤ。負で背面、0以上で前面）
+* `z`（actor内相対レイヤ。`pose.points.z` の線分と同じ z 軸で前後ソート）
 * `flipX`（左右反転フラグ、既定false）
 * `opacity`（既定1.0）
 * `clipToPanel`（既定true、単体表示時のみ有効）
@@ -535,6 +539,7 @@ balloon:
 * `pose`/`emotion` が未対応値の場合、既定にフォールバック（か警告）
 * `actor.pose.points` 指定時、値は 24 個の数値（12点×`x,y`）であること
 * `actor.pose.points` と `actor.pose` が同時指定された場合、`pose.points` を優先する
+* `actor.pose.points.z` 指定時、値は 12 個の数値（`head,lh,rh,le,re,neck,waist,groin,lk,rk,lf,rf`）であること
 * `actor.pose.points` 未指定時は既存どおり `pose` プリセットで描画する
 
 ---
