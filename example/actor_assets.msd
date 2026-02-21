@@ -273,9 +273,10 @@ panel:
     y: 90
     attachments:
       - ref: as1101
-        dx: -9.6
-        dy: -10.8
+        dx: -9.32
+        dy: -10.54
         s: 0.26
+        z: -1
       - ref: as1002
       - ref: as1210
       - ref: as1302
@@ -284,8 +285,8 @@ panel:
         dy: -15
         s: 0.34
       - ref: as1503
-        dx: -9.9
-        dy: -11.7
+        dx: -10.18
+        dy: -11.41
         s: 0.334
       - ref: as1602
       - ref: as1902
@@ -566,7 +567,7 @@ asset:
   dy: -11.5
   s: 0.3
   rot: 0
-  z: 3
+  z: 2
   src: ./assets/eyes1.svg
 
 asset:
@@ -577,7 +578,7 @@ asset:
   dy: -11.5
   s: 0.3
   rot: 0
-  z: 3
+  z: 2
   src: ./assets/eyes2.svg
 
 asset:
@@ -588,7 +589,7 @@ asset:
   dy: -11.5
   s: 0.3
   rot: 0
-  z: 3
+  z: 2
   src: ./assets/eyes3.svg
 
 asset:
@@ -599,7 +600,7 @@ asset:
   dy: -11.5
   s: 0.3
   rot: 0
-  z: 3
+  z: 2
   src: ./assets/eyes4.svg
 
 asset:
@@ -610,7 +611,7 @@ asset:
   dy: -11.5
   s: 0.32
   rot: 0
-  z: 3
+  z: 2
   src: ./assets/eyes5.svg
 
 asset:
@@ -621,7 +622,7 @@ asset:
   dy: -11
   s: 0.32
   rot: 0
-  z: 3
+  z: 2
   src: ./assets/eyes6.svg
 
 asset:
