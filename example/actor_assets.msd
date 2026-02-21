@@ -27,11 +27,11 @@ panel:
 
 actor:
   id: a0000
-  extends:a2001
-  panel: 1411
+  extends: a2001
   scale: 5
+  emotion:none
   facing: right
-  name:ポーズ用
+  name: ポーズ用
 
 panel:
   id: 1400
@@ -40,7 +40,7 @@ panel:
   radius: 20
   actor:
     id: a1001
-    extends:a0000
+    extends: a0000
     x: 10
     y: 90
     attachments:
@@ -54,7 +54,7 @@ panel:
       - ref: as1901
   actor:
     id: a1002
-    extends:a0000
+    extends: a0000
     x: 20
     y: 90
     attachments:
@@ -68,7 +68,7 @@ panel:
       - ref: as1902
   actor:
     id: a1003
-    extends:a0000
+    extends: a0000
     x: 30
     y: 90
     attachments:
@@ -81,7 +81,7 @@ panel:
       - ref: as1903
   actor:
     id: a1004
-    extends:a0000
+    extends: a0000
     x: 40
     y: 90
     attachments:
@@ -94,7 +94,7 @@ panel:
       - ref: as1902
   actor:
     id: a1005
-    extends:a0000
+    extends: a0000
     x: 50
     y: 90
     attachments:
@@ -110,7 +110,7 @@ panel:
       - ref: as1902
   actor:
     id: a1006
-    extends:a0000
+    extends: a0000
     x: 60
     y: 90
     attachments:
@@ -126,7 +126,7 @@ panel:
       - ref: as1902
   actor:
     id: a1007
-    extends:a0000
+    extends: a0000
     x: 70
     y: 90
     attachments:
@@ -142,7 +142,7 @@ panel:
       - ref: as1902
   actor:
     id: a1008
-    extends:a0000
+    extends: a0000
     x: 80
     y: 90
     attachments:
@@ -161,7 +161,7 @@ panel:
       - ref: as1902
   actor:
     id: a1009
-    extends:a0000
+    extends: a0000
     x: 90
     y: 90
     attachments:
@@ -181,7 +181,7 @@ panel:
   radius: 20
   actor:
     id: a1010
-    extends:a0000
+    extends: a0000
     x: 10
     y: 90
     attachments:
@@ -196,7 +196,7 @@ panel:
       - ref: as1902
   actor:
     id: a1011
-    extends:a0000
+    extends: a0000
     x: 20
     y: 90
     attachments:
@@ -211,7 +211,7 @@ panel:
       - ref: as1902
   actor:
     id: a1012
-    extends:a0000
+    extends: a0000
     x: 30
     y: 90
     attachments:
@@ -229,7 +229,7 @@ panel:
       - ref: as1902
   actor:
     id: a1013
-    extends:a0000
+    extends: a0000
     x: 40
     y: 90
     attachments:
@@ -244,7 +244,7 @@ panel:
       - ref: as1902
   actor:
     id: a1014
-    extends:a0000
+    extends: a0000
     x: 50
     y: 90
     attachments:
@@ -267,7 +267,7 @@ panel:
       - ref: as1902
   actor:
     id: a1015
-    extends:a0000
+    extends: a0000
     x: 60
     y: 90
     attachments:
@@ -290,7 +290,7 @@ panel:
       - ref: as1902
   actor:
     id: a1016
-    extends:a0000
+    extends: a0000
     x: 70
     y: 90
     attachments:
@@ -316,7 +316,7 @@ panel:
       - ref: as1902
   actor:
     id: a1017
-    extends:a0000
+    extends: a0000
     x: 80
     y: 90
     attachments:
@@ -331,7 +331,7 @@ panel:
       - ref: as1902
   actor:
     id: a1018
-    extends:a0000
+    extends: a0000
     x: 90
     y: 90
     attachments:
@@ -383,6 +383,23 @@ panel:
     facing: right
     name: Hoge君
     pose.points: 0.2 -1.7,-0.6 -0.4,1 -0.4,-0.5 -0.6,0.5 -0.6,0 -1.2,-0.1 -0.3,0 -0.0,-0.4 -0.5,0.4 -0.5,-0.5 0,0.5 0
+    rot: 0
+  actor:
+    id: a2003
+    x: 27.68
+    y: 89.95
+    scale: 5
+    pose.points: 0.4,-2.33,-0.42,-1.3,0.68,-2.38,0.07,-1.42,0.82,-1.84,0.43,-1.69,0.2,-1.17,0.16,-0.94,-0.32,-0.55,0.09,-0.43,-0.27,-0.04,-0.2,-0.33
+    rot: 66.06
+  actor:
+    id: a2004
+    x: 48.21
+    y: 90.12
+    scale: 5
+    pose: point
+    emotion: neutral
+    name: Hoge君
+    pose.points: 0.21,-2.2,0.38,-1.6,0.65,-1.7,0.19,-1.14,0.42,-1.21,0.03,-1.64,-0.14,-1.24,-0.03,-0.83,0.05,-0.49,0.25,-0.47,-0.21,-0.06,0.19,0.01
     rot: 0
 
 asset:
