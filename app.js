@@ -2458,6 +2458,11 @@ function setupObjectDrag() {
     return { x: unrotatedX * mirror, y: unrotatedY };
   }
 
+  function resolveAttachmentDragBasis(asset) {
+    if (asset?.dragBasis === "center") return "center";
+    return "top-left";
+  }
+
   function actorWithPanel(actorId) {
     const actor = currentScene?.actors?.find((entry) => String(entry.id) === String(actorId));
     if (!actor) return null;
@@ -2476,11 +2481,26 @@ function setupObjectDrag() {
   }
 
   function attachmentDeltaFromScenePoint(scenePoint, actorState) {
-    if (!actorState?.actor || !actorState.anchorPoint || !actorState.actor.scale) return null;
+    if (!actorState?.actor || !actorState?.asset || !actorState.panelRect) return null;
     const localPoint = actorLocalPointFromScene(scenePoint, actorState.actor, actorState.panelRect, actorState.unit);
+    const actorScale = num(actorState.actor.scale, 0);
+    const safeActorScale = Math.max(Math.abs(actorScale), 1e-6);
+    const poseScale = 20 * safeActorScale;
+    const anchorPoint = resolveAttachmentAnchorPoint(actorState.actor, actorState.asset.anchor, poseScale);
+    const attachmentScale = safeActorScale * (actorState.attachment?.s ?? actorState.asset.s ?? 1);
+    const width = num(actorState.asset.w, 0) * attachmentScale;
+    const height = num(actorState.asset.h, 0) * attachmentScale;
+    const dragBasis = resolveAttachmentDragBasis(actorState.asset);
+    const basisOffsetX = dragBasis === "center" ? width / 2 : 0;
+    const basisOffsetY = dragBasis === "center" ? height / 2 : 0;
+    const rawDx = (localPoint.x - anchorPoint.x - basisOffsetX) / safeActorScale;
+    const rawDy = (localPoint.y - anchorPoint.y - basisOffsetY) / safeActorScale;
+    if (!Number.isFinite(rawDx) || !Number.isFinite(rawDy)) return null;
     return {
-      dx: (localPoint.x - actorState.anchorPoint.x) / actorState.actor.scale,
-      dy: (localPoint.y - actorState.anchorPoint.y) / actorState.actor.scale,
+      dx: rawDx,
+      dy: rawDy,
+      roundedDx: roundedPoseCoord(rawDx),
+      roundedDy: roundedPoseCoord(rawDy),
       localPoint,
     };
   }
@@ -2510,9 +2530,7 @@ function setupObjectDrag() {
       const actorAttachment = actorInfo.actor.attachments?.[parsedAttachmentIndex];
       if (!actorAttachment || String(actorAttachment.ref) !== String(attachmentRef)) return;
       const asset = currentScene?.assets?.find((entry) => String(entry.id) === String(actorAttachment.ref));
-      const anchorName = asset?.anchor;
-      const poseScale = 20 * actorInfo.actor.scale;
-      const anchorPoint = resolveAttachmentAnchorPoint(actorInfo.actor, anchorName || "head", poseScale);
+      if (!asset) return;
       const start = scenePointFromEvent(event);
       if (!start) return;
       const attachmentPointTargets = Array.from(els.canvas.querySelectorAll(
@@ -2520,9 +2538,10 @@ function setupObjectDrag() {
       ));
       const startDelta = attachmentDeltaFromScenePoint(start, {
         actor: actorInfo.actor,
+        attachment: actorAttachment,
+        asset,
         panelRect: actorInfo.panelRect,
         unit: actorInfo.unit,
-        anchorPoint,
       });
       if (!startDelta) return;
       target.setPointerCapture(event.pointerId);
@@ -2537,11 +2556,11 @@ function setupObjectDrag() {
         actor: actorInfo.actor,
         attachmentIndex: parsedAttachmentIndex,
         attachmentRef: String(attachmentRef),
-        anchorName,
+        attachment: actorAttachment,
+        asset,
         start,
         panelRect: actorInfo.panelRect,
         unit: actorInfo.unit,
-        anchorPoint,
         startDx: startDelta.dx,
         startDy: startDelta.dy,
         attachmentPointTargets,
@@ -2698,8 +2717,8 @@ function setupObjectDrag() {
           if (String(attachment.ref) !== state.attachmentRef) return;
           const delta = attachmentDeltaFromScenePoint(point, state);
           if (!delta) return;
-          attachment.dx = roundedPoseCoord(delta.dx);
-          attachment.dy = roundedPoseCoord(delta.dy);
+          attachment.dx = delta.roundedDx;
+          attachment.dy = delta.roundedDy;
           const updatedBlocks = blocks;
           els.input.value = stringifyBlocks(updatedBlocks);
           update();

@@ -84,6 +84,7 @@ page:
 - `pose.points` は24値（12点）で指定し、先頭の `head(x,y)` を頭の位置と首への接続起点として使います。
 - 右ペインの `Pose編集` を ON にして actor を選択するとジョイントハンドルが表示され、ドラッグで `pose.points`（24値文字列）が自動生成・更新されます。
 - `asset` に `anchor` を指定すると、`dx`,`dy` の基準点を `head,lh,rh,le,re,neck,waist,groin,lk,rk,lf,rf` のいずれかに変更できます（既定: `head`）。
+- `Pose編集` で attachment ハンドルをドラッグすると `actor.attachments[].dx`,`dy` が更新されます。既定のドラッグ基準点は画像左上（描画式: `x = anchorX + dx * actor.scale`, `y = anchorY + dy * actor.scale`）で、`asset.dragBasis: center` の場合は画像中心基準（`width/2`,`height/2` を差し引いて逆算）になります。
 - `asset.flipX`（既定: `false`）で左右反転できます。`actor.attachments[].flipX` を指定した場合はそちらが優先されます。
 - 将来の単位指定拡張や GUI でのポーズ編集は、DSLコアとは分離した別機能として段階的に導入する方針です。
 
