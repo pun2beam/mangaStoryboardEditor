@@ -1513,6 +1513,15 @@ function renderPosePointHandles(actor, kind, id, scale) {
     return `<circle class="pose-point-handle" data-kind="actor" data-id="${escapeXml(String(id))}" data-pose-point="${escapeXml(name)}" cx="${point.x}" cy="${point.y}" r="4" fill="#fff" stroke="#2563eb" stroke-width="1.2"/>`;
   }).join("");
 }
+function renderAttachmentPointHandles(attachments, kind, id) {
+  if (!isPoseEditModeEnabled()) return "";
+  if (kind !== "actor" || !id || String(id) !== String(selectedActorId)) return "";
+  return attachments.map((attachment) => {
+    const handlePoint = attachment.anchorPoint || attachment.centerPoint;
+    if (!handlePoint) return "";
+    return `<circle class="attachment-point-handle" data-kind="actor" data-id="${escapeXml(String(id))}" data-attachment-index="${attachment.attachmentIndex}" data-attachment-ref="${escapeXml(String(attachment.ref))}" cx="${handlePoint.x}" cy="${handlePoint.y}" r="4"/>`;
+  }).join("");
+}
 function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) {
   const p = pointInPanel(actor.x, actor.y, panelRect, unit);
   const s = 20 * actor.scale;
@@ -1536,6 +1545,7 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
     ? `<text x="0" y="${-s * 2.9}" font-size="${Math.max(10, s * 0.55)}" text-anchor="middle" dominant-baseline="auto" fill="black">${escapeXml(String(actor.name))}</text>`
     : "";
   const poseHandles = renderPosePointHandles(actor, kind, id, s);
+  const attachmentHandles = renderAttachmentPointHandles(attachments, kind, id);
   const groupTransform = rot ? `translate(${p.x},${p.y}) rotate(${rot})` : `translate(${p.x},${p.y})`;
   const attrs = renderDataAttrs(kind, id);
   return `<g transform="${groupTransform}"${attrs}>
@@ -1546,6 +1556,7 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
       ${headMarkup}
       ${faceMarkup}
       ${overlayAttachments}
+      ${attachmentHandles}
     </g>
     ${nameLabel}
     ${poseHandles}
@@ -1581,7 +1592,7 @@ function headOutline(shape, s, strokeWidth, headPoint = { x: 0, y: -s * 2.2 }) {
 function resolveActorAttachments(actor, assetMap) {
   if (!Array.isArray(actor.attachments) || actor.attachments.length === 0) return [];
   const poseScale = 20 * actor.scale;
-  return actor.attachments.flatMap((attachment) => {
+  return actor.attachments.flatMap((attachment, attachmentIndex) => {
     const asset = assetMap.get(String(attachment.ref));
     if (!asset) return [];
     const dx = attachment.dx ?? asset.dx ?? 0;
@@ -1604,7 +1615,14 @@ function resolveActorAttachments(actor, assetMap) {
     if (rot) transforms.push(`rotate(${rot} ${cx} ${cy})`);
     if (flipX) transforms.push(`translate(${cx} ${cy}) scale(-1,1) translate(${-cx} ${-cy})`);
     const transform = transforms.length > 0 ? ` transform="${transforms.join(" ")}"` : "";
-    return [{ z, markup: `<image x="${x}" y="${y}" width="${width}" height="${height}" href="${escapeXml(asset.src)}" opacity="${asset.opacity}"${transform}/>` }];
+    return [{
+      ref: attachment.ref,
+      attachmentIndex,
+      z,
+      anchorPoint,
+      centerPoint: { x: cx, y: cy },
+      markup: `<image x="${x}" y="${y}" width="${width}" height="${height}" href="${escapeXml(asset.src)}" opacity="${asset.opacity}"${transform}/>`
+    }];
   });
 }
 function normalizeAssetAnchorPoint(rawValue, line) {
@@ -2469,6 +2487,15 @@ function setupObjectDrag() {
       if (selectionChanged && isPoseEditModeEnabled() && !target.dataset.posePoint) {
         update();
       }
+    }
+    const attachmentIndex = target.dataset.attachmentIndex;
+    const attachmentRef = target.dataset.attachmentRef;
+    if (attachmentIndex !== undefined) {
+      if (!isPoseEditModeEnabled() || kind !== "actor" || !id) return;
+      if (attachmentRef === undefined) return;
+      // attachment edit handles are identified here for future drag/edit flow.
+      event.preventDefault();
+      return;
     }
     const posePointName = target.dataset.posePoint;
     if (posePointName) {
