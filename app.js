@@ -69,6 +69,7 @@ const els = {
   resizer: document.getElementById("resizer"),
   downloadBtn: document.getElementById("downloadSvgBtn"),
   dragHandleToggle: document.getElementById("showDragHandles"),
+  poseEditorToggle: document.getElementById("showPoseEditor"),
   renumberBtn: document.getElementById("renumberIdsBtn"),
   split: document.querySelector(".split-root"),
 };
@@ -77,8 +78,12 @@ let debounceId = null;
 let viewState = { scale: 1, panX: 0, panY: 0 };
 let currentScene = null;
 let isObjectDragging = false;
+let selectedActorId = null;
 function isDragHandleModeEnabled() {
   return Boolean(els.dragHandleToggle?.checked);
+}
+function isPoseEditModeEnabled() {
+  return Boolean(els.poseEditorToggle?.checked);
 }
 function dragHandleRectFor(kind, item, panelRect, unit) {
   const target = rectTarget(panelRect);
@@ -1474,6 +1479,23 @@ function projectRect(rect, fromRect, toRect) {
 function renderDataAttrs(kind, id) {
   return ` data-kind="${escapeXml(String(kind))}" data-id="${escapeXml(String(id))}"`;
 }
+function resolvedPosePointsForActor(actor, scale) {
+  const preset = posePresetPoints(actor.pose, scale);
+  const points = {};
+  for (const name of POSE_POINT_NAMES) {
+    points[name] = resolvePosePoint(actor._posePoints, name, scale) || preset[name] || { x: 0, y: 0 };
+  }
+  return points;
+}
+function renderPosePointHandles(actor, kind, id, scale) {
+  if (!isPoseEditModeEnabled()) return "";
+  if (!id || String(id) !== String(selectedActorId)) return "";
+  const points = resolvedPosePointsForActor(actor, scale);
+  return POSE_POINT_NAMES.map((name) => {
+    const point = points[name];
+    return `<circle class="pose-point-handle" data-kind="actor" data-id="${escapeXml(String(id))}" data-pose-point="${escapeXml(name)}" cx="${point.x}" cy="${point.y}" r="4" fill="#fff" stroke="#2563eb" stroke-width="1.2"/>`;
+  }).join("");
+}
 function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) {
   const p = pointInPanel(actor.x, actor.y, panelRect, unit);
   const s = 20 * actor.scale;
@@ -1496,6 +1518,7 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
   const nameLabel = showActorName && actor.name
     ? `<text x="0" y="${-s * 2.9}" font-size="${Math.max(10, s * 0.55)}" text-anchor="middle" dominant-baseline="auto" fill="black">${escapeXml(String(actor.name))}</text>`
     : "";
+  const poseHandles = renderPosePointHandles(actor, kind, id, s);
   const groupTransform = rot ? `translate(${p.x},${p.y}) rotate(${rot})` : `translate(${p.x},${p.y})`;
   const attrs = renderDataAttrs(kind, id);
   return `<g transform="${groupTransform}"${attrs}>
@@ -1508,6 +1531,7 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
       ${overlayAttachments}
     </g>
     ${nameLabel}
+    ${poseHandles}
   </g>`;
 }
 function resolvePosePoint(points, name, scale) {
@@ -2238,6 +2262,19 @@ function roundedCoord(value, unit) {
   if (unit === "px") return Math.round(value);
   return Math.round(value * 100) / 100;
 }
+function roundedPoseCoord(value) {
+  return roundedCoord(value, "percent");
+}
+function posePointsToDslString(pointsByName, scale) {
+  const safeScale = scale || 1;
+  const values = [];
+  for (const name of POSE_POINT_NAMES) {
+    const point = pointsByName[name] || { x: 0, y: 0 };
+    values.push(String(roundedPoseCoord(point.x / safeScale)));
+    values.push(String(roundedPoseCoord(point.y / safeScale)));
+  }
+  return values.join(",");
+}
 function roundedRotation(value) {
   const rounded = Math.round(value * 100) / 100;
   return Number.isInteger(rounded) ? Math.round(rounded) : rounded;
@@ -2269,7 +2306,7 @@ function escapeXml(str) {
   return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;");
 }
 function syncDragHandleModeClass() {
-  els.canvas.classList.toggle("drag-handle-active", isDragHandleModeEnabled());
+  els.canvas.classList.toggle("drag-handle-active", isDragHandleModeEnabled() || isPoseEditModeEnabled());
 }
 function update() {
   try {
@@ -2372,6 +2409,32 @@ function setupObjectDrag() {
     return pt.matrixTransform(matrix.inverse());
   }
 
+  function actorLocalPointFromScene(scenePoint, actor, panelRect, unit) {
+    const center = pointInPanel(actor.x, actor.y, panelRect, unit);
+    const dx = scenePoint.x - center.x;
+    const dy = scenePoint.y - center.y;
+    const radians = (num(actor.rot, 0) * Math.PI) / 180;
+    const cos = Math.cos(radians);
+    const sin = Math.sin(radians);
+    const unrotatedX = dx * cos + dy * sin;
+    const unrotatedY = -dx * sin + dy * cos;
+    const mirror = actor.facing === "left" ? -1 : 1;
+    return { x: unrotatedX * mirror, y: unrotatedY };
+  }
+
+  function actorWithPanel(actorId) {
+    const actor = currentScene?.actors?.find((entry) => String(entry.id) === String(actorId));
+    if (!actor) return null;
+    const panel = currentScene.panels.find((entry) => String(entry.id) === String(actor.panel));
+    if (!panel) return null;
+    const pageLayouts = buildPageLayouts(currentScene);
+    const panelRects = buildPanelRects(currentScene, pageLayouts);
+    const panelRect = panelRects.get(String(panel.id));
+    const pageLayout = pageLayouts.get(String(panel.page));
+    if (!panelRect || !pageLayout) return null;
+    return { actor, panelRect, unit: pageLayout.page.unit };
+  }
+
   function findBlock(blocks, kind, id) {
     return blocks.find((block) => block.type === kind && String(block.props.id) === id);
   }
@@ -2380,11 +2443,51 @@ function setupObjectDrag() {
     if (!currentScene) return;
     const target = event.target.closest?.("[data-kind][data-id]");
     if (!target) return;
+    const kind = target.dataset.kind;
+    const id = target.dataset.id;
+    if (kind === "actor" && id) {
+      const selectionChanged = String(selectedActorId) !== String(id);
+      selectedActorId = id;
+      if (selectionChanged && isPoseEditModeEnabled() && !target.dataset.posePoint) {
+        update();
+      }
+    }
+    const posePointName = target.dataset.posePoint;
+    if (posePointName) {
+      if (!isPoseEditModeEnabled() || kind !== "actor" || !id) return;
+      const actorInfo = actorWithPanel(id);
+      if (!actorInfo) return;
+      const start = scenePointFromEvent(event);
+      if (!start) return;
+      const actorScale = 20 * actorInfo.actor.scale;
+      const posePreviewPoints = resolvedPosePointsForActor(actorInfo.actor, actorScale);
+      const kindSelector = escapeCssValue("actor");
+      const idSelector = escapeCssValue(String(id));
+      const poseTargets = Array.from(els.canvas.querySelectorAll(`[data-kind="${kindSelector}"][data-id="${idSelector}"][data-pose-point]`));
+      target.setPointerCapture(event.pointerId);
+      isObjectDragging = true;
+      state = {
+        pointerId: event.pointerId,
+        captureTarget: target,
+        targets: [],
+        kind: "actor",
+        id,
+        start,
+        panelRect: actorInfo.panelRect,
+        unit: actorInfo.unit,
+        handleType: "pose-point",
+        actor: actorInfo.actor,
+        posePointName,
+        posePointTargets: poseTargets,
+        posePreviewPoints,
+        actorScale,
+      };
+      event.preventDefault();
+      return;
+    }
     if (!isDragHandleModeEnabled()) return;
     const handleType = target.dataset.dragHandle;
     if (handleType !== "move" && handleType !== "rotate") return;
-    const kind = target.dataset.kind;
-    const id = target.dataset.id;
     if (handleType === "rotate" && !ROTATABLE_KINDS.has(kind)) return;
     if (!DRAGGABLE_KINDS.has(kind) || !id) return;
     const item = currentScene[sceneCollectionKey(kind)]?.find((entry) => String(entry.id) === id);
@@ -2437,7 +2540,17 @@ function setupObjectDrag() {
     if (!state || event.pointerId !== state.pointerId) return;
     const point = scenePointFromEvent(event);
     if (!point) return;
-    if (state.handleType === "rotate" && state.originalPoint && state.startAngle !== null) {
+    if (state.handleType === "pose-point") {
+      const localPoint = actorLocalPointFromScene(point, state.actor, state.panelRect, state.unit);
+      state.posePreviewPoints[state.posePointName] = localPoint;
+      for (const handle of state.posePointTargets) {
+        const name = handle.dataset.posePoint;
+        const posePoint = state.posePreviewPoints[name];
+        if (!posePoint) continue;
+        handle.setAttribute("cx", String(posePoint.x));
+        handle.setAttribute("cy", String(posePoint.y));
+      }
+    } else if (state.handleType === "rotate" && state.originalPoint && state.startAngle !== null) {
       const currentAngle = angleFromPointClockwiseTop(point, state.originalPoint);
       const angleDelta = signedAngleDelta(currentAngle, state.startAngle);
       for (const targetState of state.rotationTargets) {
@@ -2464,7 +2577,14 @@ function setupObjectDrag() {
       const blocks = parseBlocks(els.input.value);
       const block = findBlock(blocks, state.kind, state.id);
       if (block) {
-        if (state.handleType === "rotate" && state.originalPoint && state.startAngle !== null) {
+        if (state.handleType === "pose-point") {
+          const localPoint = actorLocalPointFromScene(point, state.actor, state.panelRect, state.unit);
+          state.posePreviewPoints[state.posePointName] = localPoint;
+          block.props["pose.points"] = posePointsToDslString(state.posePreviewPoints, state.actorScale);
+          const updatedBlocks = blocks;
+          els.input.value = stringifyBlocks(updatedBlocks);
+          update();
+        } else if (state.handleType === "rotate" && state.originalPoint && state.startAngle !== null) {
           const currentAngle = angleFromPointClockwiseTop(point, state.originalPoint);
           const angleDelta = signedAngleDelta(currentAngle, state.startAngle);
           const nextRotation = normalizeDegrees(state.startRot + angleDelta);
@@ -2502,7 +2622,9 @@ function setupObjectDrag() {
       for (const targetState of state.targets) {
         targetState.element.setAttribute("transform", targetState.originalTransform);
       }
-      state.captureTarget.releasePointerCapture(state.pointerId);
+      if (state.captureTarget?.hasPointerCapture?.(state.pointerId)) {
+        state.captureTarget.releasePointerCapture(state.pointerId);
+      }
       state = null;
       isObjectDragging = false;
     }
@@ -2512,11 +2634,18 @@ function setupObjectDrag() {
   els.canvas.addEventListener("pointercancel", finishDrag);
 }
 function setupDragHandleToggle() {
-  if (!els.dragHandleToggle) return;
-  els.dragHandleToggle.addEventListener("change", () => {
-    syncDragHandleModeClass();
-    update();
-  });
+  if (els.dragHandleToggle) {
+    els.dragHandleToggle.addEventListener("change", () => {
+      syncDragHandleModeClass();
+      update();
+    });
+  }
+  if (els.poseEditorToggle) {
+    els.poseEditorToggle.addEventListener("change", () => {
+      syncDragHandleModeClass();
+      update();
+    });
+  }
   syncDragHandleModeClass();
 }
 function setupDownload() {

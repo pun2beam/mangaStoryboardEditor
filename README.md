@@ -79,6 +79,7 @@ page:
 補足:
 - `pose.points` は指定した `actor` に対してのみ `pose` プリセットを上書きします。未指定の `actor` は既存の `pose` プリセットをそのまま利用します。
 - `pose.points` は24値（12点）で指定し、先頭の `head(x,y)` を頭の位置と首への接続起点として使います。
+- 右ペインの `Pose編集` を ON にして actor を選択するとジョイントハンドルが表示され、ドラッグで `pose.points`（24値文字列）が自動生成・更新されます。
 - `asset` に `anchor` を指定すると、`dx`,`dy` の基準点を `head,lh,rh,le,re,neck,waist,groin,lk,rk,lf,rf` のいずれかに変更できます（既定: `head`）。
 - 将来の単位指定拡張や GUI でのポーズ編集は、DSLコアとは分離した別機能として段階的に導入する方針です。
 
