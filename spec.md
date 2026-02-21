@@ -289,6 +289,7 @@ panel:
 * 優先順位は `pose.points` > `pose`。
 * `pose.points.z` を指定した場合、`pose.points` 由来の各部位線分（腕・胴・脚）を `pose.points.z` の値で前後ソートして描画する。
 * `neck-head` 線分は `pose.points.z` の `head` 値で前後関係を指定する。
+* `actor.attachments[].z` は `pose.points.z` と同一の actor 内 z ソートに統合される。
   * `pose.points` 指定時は、`pose` プリセット値が同時にあっても `pose.points` を採用する。
   * `pose.points` 未指定時は既存どおり `pose` プリセットで描画する（既定 `stand`）。
 
@@ -490,7 +491,7 @@ balloon:
 * `anchor`（任意。`dx,dy` の基準点。`head,lh,rh,le,re,neck,waist,groin,lk,rk,lf,rf` から指定。既定 `head`）
 * `s`（actor.scaleに掛ける追加倍率、既定1）
 * `rot`（回転角、既定0）
-* `z`（actor内相対レイヤ。負で背面、0以上で前面）
+* `z`（actor内相対レイヤ。`pose.points.z` の線分と同じ z 軸で前後ソート）
 * `flipX`（左右反転フラグ、既定false）
 * `opacity`（既定1.0）
 * `clipToPanel`（既定true、単体表示時のみ有効）

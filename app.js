@@ -1551,8 +1551,6 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
   const headPoint = resolveHeadPoint(actor._posePoints, s);
   const neckPoint = resolvePosePoint(actor._posePoints, "neck", s) || { x: 0, y: -s * 0.8 };
   const attachments = resolveActorAttachments(actor, assetMap);
-  const underlayAttachments = attachments.filter((attachment) => attachment.z < 0).map((attachment) => attachment.markup).join("");
-  const overlayAttachments = attachments.filter((attachment) => attachment.z >= 0).map((attachment) => attachment.markup).join("");
   const hideHeadAndFace = actor.emotion === "none";
   const faceMarkup = actor.facing === "back" || hideHeadAndFace
     ? ""
@@ -1568,6 +1566,7 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
   const attrs = renderDataAttrs(kind, id);
   const neckHeadLine = `<line x1="${headPoint.x}" y1="${headPoint.y}" x2="${neckPoint.x}" y2="${neckPoint.y}" stroke="black" stroke-width="${actor.strokeWidth}" stroke-linecap="round"/>`;
   const actorLayers = [
+    ...attachments.map((attachment, index) => ({ z: num(attachment.z, 0), order: 100 + index, markup: attachment.markup })),
     { z: num(actor._posePointZ?.head, 0), order: 0, markup: neckHeadLine },
     ...pose,
     { z: 0, order: 10, markup: headMarkup },
@@ -1575,9 +1574,7 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
   ].sort((a, b) => (a.z - b.z) || (a.order - b.order)).map((layer) => layer.markup).join("");
   return `<g transform="${groupTransform}"${attrs}>
     <g transform="scale(${mirror},1)">
-      ${underlayAttachments}
       ${actorLayers}
-      ${overlayAttachments}
       ${attachmentHandles}
     </g>
     ${nameLabel}
