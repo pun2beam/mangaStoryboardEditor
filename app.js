@@ -1533,7 +1533,7 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
   return `<g transform="${groupTransform}"${attrs}>
     <g transform="scale(${mirror},1)">
       ${underlayAttachments}
-      <line x1="${headPoint.x}" y1="${headPoint.y}" x2="${neckPoint.x}" y2="${neckPoint.y}" stroke="black" stroke-width="${actor.strokeWidth}"/>
+      <line x1="${headPoint.x}" y1="${headPoint.y}" x2="${neckPoint.x}" y2="${neckPoint.y}" stroke="black" stroke-width="${actor.strokeWidth}" stroke-linecap="round"/>
       ${pose}
       ${headMarkup}
       ${faceMarkup}
@@ -1641,20 +1641,16 @@ function posePresetPoints(pose, s) {
   };
 }
 function poseSegments(pose, s, strokeWidth) {
-  const shoulderY = -s * 1.5;
-  const hipY = -s * 0.8;
-  const sets = {
-    stand: [[0, shoulderY, -s * 0.55, -s * 1], [0, shoulderY, s * 0.55, -s * 1], [0, hipY, -s * 0.45, 0], [0, hipY, s * 0.45, 0]],
-    run: [[0, shoulderY, s * 0.7, -s * 1.1], [0, shoulderY, -s * 0.3, -s * 0.6], [0, hipY, -s * 0.9, -s * 0.2], [0, hipY, s * 0.8, 0]],
-    sit: [[0, shoulderY, s * 0.4, -s * 1.1], [0, shoulderY, -s * 0.45, -s * 1], [0, hipY, s * 0.6, -s * 0.5], [s * 0.6, -s * 0.5, s * 1, -s * 0.5]],
-    point: [[0, shoulderY, s * 0.9, -s * 1.5], [0, shoulderY, -s * 0.45, -s * 1], [0, hipY, -s * 0.45, 0], [0, hipY, s * 0.45, 0]],
-    think: [[0, shoulderY, s * 0.2, -s * 1.7], [0, shoulderY, -s * 0.5, -s], [0, hipY, -s * 0.35, 0], [0, hipY, s * 0.35, 0]],
-    surprise: [[0, shoulderY, s * 0.9, -s * 1.7], [0, shoulderY, -s * 0.9, -s * 1.7], [0, hipY, -s * 0.6, 0], [0, hipY, s * 0.6, 0]],
-  };
-  return sets[pose].map(([x1, y1, x2, y2]) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="black" stroke-width="${strokeWidth}"/>`).join("");
+  const presetPoints = posePresetPoints(pose, s);
+  const point = (name) => presetPoints[name] || null;
+  return posePolylinesFromChains(point, strokeWidth);
 }
 function poseSegmentsFromPoints(points, s, strokeWidth) {
-  const point = (name) => resolvePosePoint(points, name, s);
+  const presetPoints = posePresetPoints("stand", s);
+  const point = (name) => resolvePosePoint(points, name, s) || presetPoints[name] || null;
+  return posePolylinesFromChains(point, strokeWidth);
+}
+function posePolylinesFromChains(pointResolver, strokeWidth) {
   const chainDefs = [
     ["neck", "le", "lh"],
     ["neck", "re", "rh"],
@@ -1664,12 +1660,10 @@ function poseSegmentsFromPoints(points, s, strokeWidth) {
   ];
   const segments = [];
   for (const chain of chainDefs) {
-    for (let i = 0; i < chain.length - 1; i += 1) {
-      const a = point(chain[i]);
-      const b = point(chain[i + 1]);
-      if (!a || !b) continue;
-      segments.push(`<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="black" stroke-width="${strokeWidth}"/>`);
-    }
+    const points = chain.map((name) => pointResolver(name)).filter(Boolean);
+    if (points.length < 2) continue;
+    const polylinePoints = points.map((p) => `${p.x},${p.y}`).join(" ");
+    segments.push(`<polyline points="${polylinePoints}" fill="none" stroke="black" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round"/>`);
   }
   return segments.join("");
 }
