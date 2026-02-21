@@ -31,7 +31,7 @@ actor:
   extends: a2006
   scale: 5
   emotion: none
-  facing: right
+  facing: left
   name: ポーズ用
 
 panel:
@@ -149,7 +149,7 @@ panel:
     attachments:
       - ref: as1000
       - ref: as1101
-        dx: -10.5
+        dx: -8.2
         dy: -10.5
       - ref: as1208
       - ref: as1209
@@ -256,14 +256,14 @@ panel:
         dy: -12
       - ref: as1204
       - ref: as1306
-        dx: -7
+        dx: -5
         dy: 2
         s: 0.16
       - ref: as1401
       - ref: as1503
       - ref: as1602
       - ref: as1701
-        dx: -12
+        dx: -17
         dy: -45
       - ref: as1902
   actor:
@@ -527,6 +527,7 @@ asset:
   s: 0.6
   rot: 0
   z: 1
+  flipX: true
   src: ./assets/facebase1.svg
 
 asset:
@@ -611,8 +612,8 @@ asset:
   id: as1201
   w: 55
   h: 55
-  dx: -39.8
-  dy: -50.5
+  dx: -40.8
+  dy: -51.5
   s: 1.5
   rot: 0
   z: 2
@@ -721,11 +722,12 @@ asset:
   id: as1301
   w: 55
   h: 55
-  dx: -4.5
+  dx: -2.5
   dy: 3
   s: 0.1
   rot: 0
   z: 2
+  flipX: true
   src: ./assets/mouse1.svg
 
 asset:
@@ -743,22 +745,24 @@ asset:
   id: as1303
   w: 55
   h: 55
-  dx: -4.5
+  dx: -3.5
   dy: 3.5
   s: 0.1
   rot: 0
   z: 2
+  flipX: true
   src: ./assets/mouse3.svg
 
 asset:
   id: as1304
   w: 55
   h: 55
-  dx: -4.5
+  dx: -3.5
   dy: 3.5
   s: 0.1
   rot: 0
   z: 2
+  flipX: true
   src: ./assets/mouse4.svg
 
 asset:
@@ -770,13 +774,14 @@ asset:
   s: 0.1
   rot: 0
   z: 2
+  flipX: true
   src: ./assets/mouse5.svg
 
 asset:
   id: as1306
   w: 55
   h: 55
-  dx: -4.5
+  dx: -2.5
   dy: 3.5
   s: 0.1
   rot: 0
@@ -792,61 +797,67 @@ asset:
   s: 0.15
   rot: 0
   z: 2
+  flipX: true
   src: ./assets/mouse7.svg
 
 asset:
   id: as1308
   w: 55
   h: 55
-  dx: -4.5
+  dx: -3.5
   dy: 3.5
   s: 0.1
   rot: 0
   z: 2
+  flipX: true
   src: ./assets/mouse8.svg
 
 asset:
   id: as1309
   w: 55
   h: 55
-  dx: -4.5
+  dx: -2.5
   dy: 4.5
   s: 0.1
   rot: 0
   z: 2
+  flipX: true
   src: ./assets/mouse9.svg
 
 asset:
   id: as1310
   w: 55
   h: 55
-  dx: -4.5
+  dx: -3.5
   dy: 4.5
   s: 0.1
   rot: 0
   z: 2
+  flipX: true
   src: ./assets/mouse10.svg
 
 asset:
   id: as1311
   w: 55
   h: 55
-  dx: -4.5
+  dx: -3.5
   dy: 4.5
   s: 0.1
   rot: 0
   z: 2
+  flipX: true
   src: ./assets/mouse11.svg
 
 asset:
   id: as1312
   w: 55
   h: 55
-  dx: -7.5
+  dx: -6.5
   dy: 2.5
   s: 0.2
   rot: 0
   z: 2
+  flipX: true
   src: ./assets/mouse12.svg
 
 asset:
@@ -858,13 +869,14 @@ asset:
   s: 0.13
   rot: 0
   z: 2
+  flipX: true
   src: ./assets/mouse13.svg
 
 asset:
   id: as1401
   w: 55
   h: 55
-  dx: -8.5
+  dx: -9.5
   dy: -17.5
   s: 0.35
   rot: 0
@@ -952,10 +964,10 @@ asset:
   id: as1701
   w: 55
   h: 55
-  dx: -12.5
+  dx: -16.5
   dy: -30.5
   s: 0.5
-  rot: 10
+  rot: -10
   z: 1
   src: ./assets/hat1.svg
 
@@ -963,7 +975,7 @@ asset:
   id: as1801
   w: 55
   h: 55
-  dx: -9.5
+  dx: 2.5
   dy: -1.5
   s: 0.11
   rot: 0
@@ -974,7 +986,7 @@ asset:
   id: as1802
   w: 55
   h: 55
-  dx: 4.5
+  dx: -10.5
   dy: -10.5
   s: 0.11
   rot: 0
@@ -985,29 +997,31 @@ asset:
   id: as1901
   w: 55
   h: 55
-  dx: -5
+  dx: -3
   dy: -1.5
   s: 0.1
   rot: 0
   z: 1
+  flipX: true
   src: ./assets/nose1.svg
 
 asset:
   id: as1902
   w: 55
   h: 55
-  dx: -4.5
+  dx: -2.5
   dy: -1.5
   s: 0.09
   rot: 0
   z: 1
+  flipX: true
   src: ./assets/nose2.svg
 
 asset:
   id: as1903
   w: 55
   h: 55
-  dx: -4
+  dx: -3
   dy: -0.5
   s: 0.1
   rot: 0
