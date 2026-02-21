@@ -538,6 +538,7 @@ asset:
   s: 0.6
   rot: 0
   z: 1
+  flipX: true
   src: ./assets/facebase2.svg
 
 asset:
