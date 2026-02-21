@@ -133,7 +133,7 @@ panel:
       - ref: as1000
       - ref: as1102
         dx: -5.5
-        dy: -58
+        dy: -11
       - ref: as1206
       - ref: as1306
       - ref: as1402
@@ -153,7 +153,7 @@ panel:
       - ref: as1000
       - ref: as1102
         dx: -8.5
-        dy: -55
+        dy: -11
       - ref: as1207
       - ref: as1307
       - ref: as1401
@@ -173,7 +173,7 @@ panel:
       - ref: as1000
       - ref: as1101
         dx: -10.5
-        dy: -55.5
+        dy: -10.5
       - ref: as1208
       - ref: as1209
       - ref: as1308
@@ -181,7 +181,7 @@ panel:
       - ref: as1504
       - ref: as1602
         dx: -11.5
-        dy: -55
+        dy: -9
       - ref: as1902
   actor:
     id: a1009
@@ -220,7 +220,6 @@ panel:
       - ref: as1000
       - ref: as1101
       - ref: as1201
-        s: 1.53
       - ref: as1205
       - ref: as1310
       - ref: as1401
@@ -260,7 +259,7 @@ panel:
       - ref: as1106
       - ref: as1102
         dx: -6
-        dy: -56
+        dy: -10
       - ref: as1204
       - ref: as1312
       - ref: as1401
@@ -301,18 +300,18 @@ panel:
       - ref: as1106
       - ref: as1102
         dx: -7.5
-        dy: -58
+        dy: -12
       - ref: as1204
       - ref: as1306
         dx: -7
-        dy: -43
+        dy: 2
         s: 0.16
       - ref: as1401
       - ref: as1503
       - ref: as1602
       - ref: as1701
         dx: -12
-        dy: -88
+        dy: -45
       - ref: as1902
   actor:
     id: a1015
@@ -320,27 +319,26 @@ panel:
     y: 90
     scale: 5
     pose: point
-    emotion: neutral
+    emotion: none
     facing: left
     name: Hoge君
     attachments:
       - ref: as1101
         dx: -9.6
-        dy: -55.8
+        dy: -10.8
         s: 0.26
       - ref: as1002
       - ref: as1210
       - ref: as1302
       - ref: as1501
         dx: -9
-        dy: -62
+        dy: -15
         s: 0.34
       - ref: as1503
         dx: -9.9
-        dy: -56.7
+        dy: -11.7
         s:0.334
       - ref: as1602
-        dy: -53.7
       - ref: as1902
   actor:
     id: a1016
@@ -358,19 +356,19 @@ panel:
         dy: -55.5
       - ref: as1105
         dx: -9.6
-        dy: -55.8
+        dy: -10.1
       - ref: as1205
       - ref: as1210
       - ref: as1304
       - ref: as1502
         dx: -9
-        dy: -62
+        dy: -15
         s: 0.34
       - ref: as1503
         dx: -11
-        dy: -57.5
+        dy: -11.7
       - ref: as1602
-        dy: -53.7
+        dy: -7.7
       - ref: as1902
   actor:
     id: a1017
@@ -416,7 +414,7 @@ asset:
   w: 55
   h: 55
   dx: -17.4
-  dy: -63.5
+  dy: -18.5
   s: 0.6
   rot: 0
   z: 1
@@ -427,7 +425,7 @@ asset:
   w: 55
   h: 55
   dx: -17.4
-  dy: -63.5
+  dy: -18.5
   s: 0.6
   rot: 0
   z: 1
@@ -438,7 +436,7 @@ asset:
   w: 55
   h: 55
   dx: -9.3
-  dy: -57.5
+  dy: -11.5
   s: 0.3
   rot: 0
   z: 3
@@ -449,7 +447,7 @@ asset:
   w: 55
   h: 55
   dx: -8.5
-  dy: -57.5
+  dy: -11.5
   s: 0.3
   rot: 0
   z: 3
@@ -460,7 +458,7 @@ asset:
   w: 55
   h: 55
   dx: -8.5
-  dy: -57.5
+  dy: -11.5
   s: 0.3
   rot: 0
   z: 3
@@ -471,7 +469,7 @@ asset:
   w: 55
   h: 55
   dx: -8.5
-  dy: -57.5
+  dy: -11.5
   s: 0.3
   rot: 0
   z: 3
@@ -482,7 +480,7 @@ asset:
   w: 55
   h: 55
   dx: -9.5
-  dy: -57.5
+  dy: -11.5
   s: 0.32
   rot: 0
   z: 3
@@ -493,7 +491,7 @@ asset:
   w: 55
   h: 55
   dx: -9.5
-  dy: -57
+  dy: -11
   s: 0.32
   rot: 0
   z: 3
@@ -504,7 +502,7 @@ asset:
   w: 55
   h: 55
   dx: -39.8
-  dy: -98.5
+  dy: -50.5
   s: 1.5
   rot: 0
   z: 2
@@ -515,7 +513,7 @@ asset:
   w: 55
   h: 55
   dx: -15.5
-  dy: -71.5
+  dy: -24.5
   s: 0.53
   rot: 0
   z: 2
@@ -526,7 +524,7 @@ asset:
   w: 55
   h: 55
   dx: -14.5
-  dy: -76.5
+  dy: -27.5
   s: 0.5
   rot: 0
   z: 2
@@ -537,7 +535,7 @@ asset:
   w: 55
   h: 55
   dx: -4.5
-  dy: -69.3
+  dy: -24
   s: 0.15
   rot: 0
   z: 2
@@ -547,8 +545,8 @@ asset:
   id: as1205
   w: 55
   h: 55
-  dx: -18.9
-  dy: -64.5
+  dx: -19.9
+  dy: -19.5
   s: 0.65
   rot: 0
   z: -1
@@ -559,7 +557,7 @@ asset:
   w: 55
   h: 55
   dx: -12.9
-  dy: -70
+  dy: -25
   s: 0.47
   rot: 0
   z: 2
@@ -570,7 +568,7 @@ asset:
   w: 55
   h: 55
   dx: -13.3
-  dy: -70.5
+  dy: -23.5
   s: 0.48
   rot: 0
   z: 2
@@ -580,8 +578,8 @@ asset:
   id: as1208
   w: 55
   h: 55
-  dx: -17.4
-  dy: -64.5
+  dx: -17.7
+  dy: -19.5
   s: 0.6
   rot: 0
   z: -1
@@ -592,7 +590,7 @@ asset:
   w: 55
   h: 55
   dx: -12.5
-  dy: -72.5
+  dy: -26.8
   s: 0.5
   rot: 0
   z: 2
@@ -603,7 +601,7 @@ asset:
   w: 55
   h: 55
   dx: -15.4
-  dy: -65.4
+  dy: -20.4
   s: 0.55
   rot: 0
   z: 2
@@ -614,7 +612,7 @@ asset:
   w: 55
   h: 55
   dx: -4.5
-  dy: -41.5
+  dy: 3
   s: 0.1
   rot: 0
   z: 2
@@ -625,7 +623,7 @@ asset:
   w: 55
   h: 55
   dx: -5.5
-  dy: -42.5
+  dy: 2.5
   s: 0.15
   rot: 0
   z: 2
@@ -636,7 +634,7 @@ asset:
   w: 55
   h: 55
   dx: -4.5
-  dy: -41.5
+  dy: 3.5
   s: 0.1
   rot: 0
   z: 2
@@ -647,7 +645,7 @@ asset:
   w: 55
   h: 55
   dx: -4.5
-  dy: -41.5
+  dy:  3.5
   s: 0.1
   rot: 0
   z: 2
@@ -658,7 +656,7 @@ asset:
   w: 55
   h: 55
   dx: -4.5
-  dy: -41.5
+  dy: 3.5
   s: 0.1
   rot: 0
   z: 2
@@ -669,7 +667,7 @@ asset:
   w: 55
   h: 55
   dx: -4.5
-  dy: -41.5
+  dy: 3.5
   s: 0.1
   rot: 0
   z: 2
@@ -680,7 +678,7 @@ asset:
   w: 55
   h: 55
   dx: -4.5
-  dy: -42.5
+  dy: 2.5
   s: 0.15
   rot: 0
   z: 2
@@ -691,7 +689,7 @@ asset:
   w: 55
   h: 55
   dx: -4.5
-  dy: -41.5
+  dy: 3.5
   s: 0.1
   rot: 0
   z: 2
@@ -702,7 +700,7 @@ asset:
   w: 55
   h: 55
   dx: -4.5
-  dy: -41.5
+  dy: 4.5
   s: 0.1
   rot: 0
   z: 2
@@ -713,7 +711,7 @@ asset:
   w: 55
   h: 55
   dx: -4.5
-  dy: -41.5
+  dy: 4.5
   s: 0.1
   rot: 0
   z: 2
@@ -724,7 +722,7 @@ asset:
   w: 55
   h: 55
   dx: -4.5
-  dy: -41.5
+  dy: 4.5
   s: 0.1
   rot: 0
   z: 2
@@ -735,7 +733,7 @@ asset:
   w: 55
   h: 55
   dx: -7.5
-  dy: -43.5
+  dy: 2.5
   s: 0.2
   rot: 0
   z: 2
@@ -746,7 +744,7 @@ asset:
   w: 55
   h: 55
   dx: -4.5
-  dy: -41.5
+  dy: 4.5
   s: 0.13
   rot: 0
   z: 2
@@ -757,7 +755,7 @@ asset:
   w: 55
   h: 55
   dx: -8.5
-  dy: -63.5
+  dy: -17.5
   s: 0.35
   rot: 0
   z: 2
@@ -768,7 +766,7 @@ asset:
   w: 55
   h: 55
   dx: -8.5
-  dy: -63.5
+  dy: -17.5
   s: 0.35
   rot: 0
   z: 2
@@ -779,7 +777,7 @@ asset:
   w: 55
   h: 55
   dx: -8.5
-  dy: -59.5
+  dy: -13.5
   s: 0.3
   rot: 0
   z: 2
@@ -790,7 +788,7 @@ asset:
   w: 55
   h: 55
   dx: -8.9
-  dy: -61.1
+  dy: -14.6
   s: 0.35
   rot: 0
   z: 2
@@ -801,7 +799,7 @@ asset:
   w: 55
   h: 55
   dx: -10.9
-  dy: -59.5
+  dy: -13.5
   s: 0.37
   rot: 0
   z: 2
@@ -812,7 +810,7 @@ asset:
   w: 55
   h: 55
   dx: -10.9
-  dy: -62.7
+  dy: -17
   s: 0.37
   rot: 180
   z: 2
@@ -823,7 +821,7 @@ asset:
   w: 55
   h: 55
   dx: -8.5
-  dy: -51.5
+  dy: -6.5
   s: 0.3
   rot: 0
   z: 2
@@ -834,7 +832,7 @@ asset:
   w: 55
   h: 55
   dx: -11.5
-  dy: -56.5
+  dy: -9.5
   s: 0.4
   rot: 0
   z: 1
@@ -845,7 +843,7 @@ asset:
   w: 55
   h: 55
   dx: -12.5
-  dy: -76.5
+  dy: -30.5
   s: 0.5
   rot: 10
   z: 1
@@ -856,7 +854,7 @@ asset:
   w: 55
   h: 55
   dx: -9.5
-  dy: -47.5
+  dy: -1.5
   s: 0.11
   rot: 0
   z: 1
@@ -867,7 +865,7 @@ asset:
   w: 55
   h: 55
   dx: 4.5
-  dy: -57.5
+  dy: -10.5
   s: 0.11
   rot: 0
   z: 1
@@ -878,7 +876,7 @@ asset:
   w: 55
   h: 55
   dx: -5
-  dy: -46.5
+  dy: -1.5
   s: 0.1
   rot: 0
   z: 1
@@ -889,7 +887,7 @@ asset:
   w: 55
   h: 55
   dx: -4.5
-  dy: -45.5
+  dy: -1.5
   s: 0.09
   rot: 0
   z: 1
