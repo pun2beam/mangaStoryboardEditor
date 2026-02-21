@@ -28,6 +28,7 @@ panel:
 actor:
   id: a0000
   extends:a2001
+  panel: 1411
   scale: 5
   facing: right
   name:ポーズ用

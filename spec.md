@@ -241,6 +241,8 @@ panel:
 任意:
 * `panel`（参照。指定時はコマ内へ表示。未指定時はテンプレートとして単体表示しない）
 * `extends`（任意、継承元 `actor` の `id`）
+  * 既定では `panel` は継承しない（子で明示指定した場合のみ設定される）
+  * 互換モードとして `meta.actor.inheritPanel:on` で `panel` 継承を有効化可能（既定 `off`）
 * `x,y`（足元の基準点を推奨）
 * `scale`（既定1.0）
 * `rot`（度。足元基準で回転。既定0）
@@ -514,6 +516,7 @@ balloon:
 * `asset` は `panel` を持つ場合のみ参照先 `panel` が存在する
 * `actor.attachments[].ref` の参照先 `asset` が存在する
 * `actor.extends` の参照先 `actor` が存在し、循環継承しない
+* `actor` 継承時、既定では `panel` は継承しない（`meta.actor.inheritPanel:on` 時のみ継承）
 * `w,h` は数値で、`w,h > 0`
 * `panel` の `x,y` は任意。`x,y` の両方が指定される場合はその値を優先し、いずれか欠ける場合は自動配置対象として扱う
 * 自動配置アルゴリズムの衝突回避対象は、**同一 `page` にすでに存在する `panel`** のみとする（他ページのpanelは対象外）
