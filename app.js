@@ -383,14 +383,14 @@ function parsePosePoints(raw, line) {
   if (raw === undefined || raw === null || raw === "") return undefined;
   const source = Array.isArray(raw) ? raw.join(" ") : String(raw);
   const tokens = source.split(/[\s,]+/).filter(Boolean);
-  if (tokens.length !== 22) {
-    throw new Error(`Line ${line}: actor.pose.points は22個の数値が必要です`);
+  if (tokens.length !== 24) {
+    throw new Error(`Line ${line}: actor.pose.points は24個の数値が必要です`);
   }
   const values = tokens.map((token) => Number(token));
   if (values.some((value) => !Number.isFinite(value))) {
     throw new Error(`Line ${line}: actor.pose.points に数値以外が含まれています`);
   }
-  const pointNames = ["lh", "rh", "le", "re", "neck", "waist", "groin", "lk", "rk", "lf", "rf"];
+  const pointNames = ["head", "lh", "rh", "le", "re", "neck", "waist", "groin", "lk", "rk", "lf", "rf"];
   const points = {};
   for (let i = 0; i < pointNames.length; i += 1) {
     points[pointNames[i]] = { x: values[i * 2], y: values[i * 2 + 1] };
@@ -1480,6 +1480,7 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
   const pose = hasPosePoints(actor._posePoints)
     ? poseSegmentsFromPoints(actor._posePoints, s)
     : poseSegments(actor.pose, s);
+  const headPoint = resolveHeadPoint(actor._posePoints, s);
   const neckPoint = resolvePosePoint(actor._posePoints, "neck", s) || { x: 0, y: -s * 0.8 };
   const attachments = resolveActorAttachments(actor, assetMap);
   const underlayAttachments = attachments.filter((attachment) => attachment.z < 0).map((attachment) => attachment.markup).join("");
@@ -1487,9 +1488,9 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
   const hideHeadAndFace = actor.emotion === "none";
   const faceMarkup = actor.facing === "back" || hideHeadAndFace
     ? ""
-    : `${eyePath(actor.eye, s)}${emotionPath(actor.emotion, s)}`;
+    : `${eyePath(actor.eye, s, headPoint)}${emotionPath(actor.emotion, s, headPoint)}`;
   const headShape = hideHeadAndFace ? "none" : actor["head.shape"];
-  const headMarkup = headOutline(headShape, s);
+  const headMarkup = headOutline(headShape, s, headPoint);
   const nameLabel = showActorName && actor.name
     ? `<text x="0" y="${-s * 2.9}" font-size="${Math.max(10, s * 0.55)}" text-anchor="middle" dominant-baseline="auto" fill="black">${escapeXml(String(actor.name))}</text>`
     : "";
@@ -1498,9 +1499,9 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
   return `<g transform="${groupTransform}"${attrs}>
     <g transform="scale(${mirror},1)">
       ${underlayAttachments}
-      ${headMarkup}
-      <line x1="0" y1="${-s * 1.7}" x2="${neckPoint.x}" y2="${neckPoint.y}" stroke="black" stroke-width="2"/>
+      <line x1="${headPoint.x}" y1="${headPoint.y}" x2="${neckPoint.x}" y2="${neckPoint.y}" stroke="black" stroke-width="2"/>
       ${pose}
+      ${headMarkup}
       ${faceMarkup}
       ${overlayAttachments}
     </g>
@@ -1522,15 +1523,17 @@ function hasPosePoints(points) {
   if (!points || typeof points !== "object") return false;
   return Object.keys(points).length > 0;
 }
-function headOutline(shape, s) {
-  const y = -s * 2.2;
+function resolveHeadPoint(points, scale) {
+  return resolvePosePoint(points, "head", scale) || { x: 0, y: -scale * 2.2 };
+}
+function headOutline(shape, s, headPoint = { x: 0, y: -s * 2.2 }) {
   const radius = s * 0.45;
   if (shape === "square") {
     const side = radius * 2;
-    return `<rect x="${-radius}" y="${y - radius}" width="${side}" height="${side}" fill="white" stroke="black" stroke-width="2"/>`;
+    return `<rect x="${headPoint.x - radius}" y="${headPoint.y - radius}" width="${side}" height="${side}" fill="white" stroke="black" stroke-width="2"/>`;
   }
   if (shape === "none") return "";
-  return `<circle cx="0" cy="${y}" r="${radius}" fill="white" stroke="black" stroke-width="2"/>`;
+  return `<circle cx="${headPoint.x}" cy="${headPoint.y}" r="${radius}" fill="white" stroke="black" stroke-width="2"/>`;
 }
 function resolveActorAttachments(actor, assetMap) {
   if (!Array.isArray(actor.attachments) || actor.attachments.length === 0) return [];
@@ -1585,11 +1588,11 @@ function poseSegmentsFromPoints(points, s) {
   }
   return segments.join("");
 }
-function eyePath(eye, s) {
-  const headY = -s * 2.2;
+function eyePath(eye, s, headPoint = { x: 0, y: -s * 2.2 }) {
+  const headY = headPoint.y;
   const eyeY = headY - s * 0.04;
-  const leftX = -s * 0.14;
-  const rightX = s * 0.14;
+  const leftX = headPoint.x - s * 0.14;
+  const rightX = headPoint.x + s * 0.14;
   const eyeRadius = s * 0.05;
   const openEyes = (leftDx = 0, leftDy = 0, rightDx = 0, rightDy = 0) => [
     `<circle cx="${leftX}" cy="${eyeY}" r="${eyeRadius}" fill="white" stroke="black" stroke-width="1"/>`,
@@ -1622,14 +1625,14 @@ function eyePath(eye, s) {
   }
   return openEyes(s * 0.018, 0, s * 0.018, 0);
 }
-function emotionPath(emotion, s) {
-  const y = -s * 2.2;
+function emotionPath(emotion, s, headPoint = { x: 0, y: -s * 2.2 }) {
+  const y = headPoint.y;
   const mouthY = y + s * 0.3;
-  if (emotion === "smile") return `<path d="M ${-s * 0.15} ${mouthY} Q 0 ${mouthY + s * 0.15} ${s * 0.15} ${mouthY}" stroke="black" fill="none" stroke-width="1.5"/>`;
-  if (emotion === "sad") return `<path d="M ${-s * 0.15} ${mouthY + s * 0.1} Q 0 ${mouthY - s * 0.1} ${s * 0.15} ${mouthY + s * 0.1}" stroke="black" fill="none" stroke-width="1.5"/>`;
-  if (emotion === "angry") return `<line x1="${-s * 0.2}" y1="${mouthY}" x2="${s * 0.2}" y2="${mouthY}" stroke="black" stroke-width="2"/>`;
-  if (emotion === "panic") return `<circle cx="0" cy="${mouthY}" r="${s * 0.1}" fill="none" stroke="black" stroke-width="1.5"/>`;
-  return `<line x1="${-s * 0.15}" y1="${mouthY}" x2="${s * 0.15}" y2="${mouthY}" stroke="black" stroke-width="1.5"/>`;
+  if (emotion === "smile") return `<path d="M ${headPoint.x - s * 0.15} ${mouthY} Q ${headPoint.x} ${mouthY + s * 0.15} ${headPoint.x + s * 0.15} ${mouthY}" stroke="black" fill="none" stroke-width="1.5"/>`;
+  if (emotion === "sad") return `<path d="M ${headPoint.x - s * 0.15} ${mouthY + s * 0.1} Q ${headPoint.x} ${mouthY - s * 0.1} ${headPoint.x + s * 0.15} ${mouthY + s * 0.1}" stroke="black" fill="none" stroke-width="1.5"/>`;
+  if (emotion === "angry") return `<line x1="${headPoint.x - s * 0.2}" y1="${mouthY}" x2="${headPoint.x + s * 0.2}" y2="${mouthY}" stroke="black" stroke-width="2"/>`;
+  if (emotion === "panic") return `<circle cx="${headPoint.x}" cy="${mouthY}" r="${s * 0.1}" fill="none" stroke="black" stroke-width="1.5"/>`;
+  return `<line x1="${headPoint.x - s * 0.15}" y1="${mouthY}" x2="${headPoint.x + s * 0.15}" y2="${mouthY}" stroke="black" stroke-width="1.5"/>`;
 }
 function renderBalloon(balloon, panelRect, unit, actorMap, panelMap, panelRects, pageLayouts, defaultTextDirection, kind, id) {
   const r = withinPanel(balloon, panelRect, unit);
