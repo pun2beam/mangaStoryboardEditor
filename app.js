@@ -1560,7 +1560,7 @@ function resolveActorAttachments(actor, assetMap) {
   });
 }
 function normalizeAssetAnchorPoint(rawValue, line) {
-  if (rawValue === undefined || rawValue === null || rawValue === "") return "lf";
+  if (rawValue === undefined || rawValue === null || rawValue === "") return "head";
   const value = String(rawValue).trim().toLowerCase();
   if (POSE_POINT_NAME_SET.has(value)) return value;
   throw new Error(`Line ${line}: asset.anchor は ${POSE_POINT_NAMES.join(",")} のいずれかで指定してください`);
