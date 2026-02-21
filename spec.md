@@ -116,6 +116,7 @@ SVG描画順は原則：
 * `author`（任意）
 * `version`（任意）
 * `actor.name.visible`（任意、`on`/`off`。`on` の場合、`actor.name` をキャラクターの上部に表示）
+* `actor.strokeWidth`（任意、数値。棒人間の線の太さの既定値。既定: `2`）
 * `text.direction`（任意、`horizontal`/`vertical`。既定: `horizontal`。全体の文字方向）
 * `base.panel.direction`（任意、`right.bottom`/`left.bottom`。panel自動配置の既定方向。既定: `right.bottom`）
 * `base.panel.margin`（任意、数値。panel自動配置時のコマ間余白。既定: `0`）
@@ -245,6 +246,7 @@ panel:
   * 互換モードとして `meta.actor.inheritPanel:on` で `panel` 継承を有効化可能（既定 `off`）
 * `x,y`（足元の基準点を推奨）
 * `scale`（既定1.0）
+* `strokeWidth`（任意、数値。棒人間の線の太さ。未指定時は `meta.actor.strokeWidth`、さらに未指定なら `2`）
 * `rot`（度。足元基準で回転。既定0）
 * `facing`（`left`/`right`/`back`、既定`right`）
 * `pose`（既定`stand`）
@@ -406,6 +408,7 @@ balloon:
 * `text`
   任意:
 * `scale`（既定1.0）
+* `strokeWidth`（任意、数値。棒人間の線の太さ。未指定時は `meta.actor.strokeWidth`、さらに未指定なら `2`）
 * `rotate`（度、既定0）
 * `fontSize`（既定: 8）
 * `fontWeight`（任意、既定: 700）
