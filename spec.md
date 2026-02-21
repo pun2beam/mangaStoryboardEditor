@@ -256,7 +256,7 @@ panel:
 * `head.shape`（`circle`/`square`/`none`、既定`circle`）
 * `name`（任意、デバッグ用）
 * `lookAt`（`actor:<id>` または `point(x,y)`、任意）
-* `attachments`（任意、配列。`asset`の`id`を`ref`で参照し、`dx`,`dy`,`s`,`rot`,`z`で相対配置）
+* `attachments`（任意、配列。`asset`の`id`を`ref`で参照し、`dx`,`dy`,`s`,`rot`,`z`,`flipX`で相対配置。`asset`側の同名設定がある場合は `attachments` 側を優先）
 * `style`（後述 styleRef）
 
 #### pose（プリセット）
@@ -488,6 +488,7 @@ balloon:
 * `s`（actor.scaleに掛ける追加倍率、既定1）
 * `rot`（回転角、既定0）
 * `z`（actor内相対レイヤ。負で背面、0以上で前面）
+* `flipX`（左右反転フラグ、既定false）
 * `opacity`（既定1.0）
 * `clipToPanel`（既定true、単体表示時のみ有効）
 
