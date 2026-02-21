@@ -28,10 +28,10 @@ panel:
 
 actor:
   id: a0000
-  extends: a2006
+  extends: a2001
   scale: 5
   emotion: none
-  facing: left
+  facing: right
   name: ポーズ用
 
 panel:
