@@ -403,6 +403,23 @@ function parsePosePoints(raw, line) {
   }
   return points;
 }
+function parsePosePointZ(raw, line) {
+  if (raw === undefined || raw === null || raw === "") return {};
+  const source = Array.isArray(raw) ? raw.join(" ") : String(raw);
+  const tokens = source.split(/[\s,]+/).filter(Boolean);
+  if (tokens.length !== POSE_POINT_NAMES.length) {
+    throw new Error(`Line ${line}: actor.pose.points.z は${POSE_POINT_NAMES.length}個の数値が必要です`);
+  }
+  const values = tokens.map((token) => Number(token));
+  if (values.some((value) => !Number.isFinite(value))) {
+    throw new Error(`Line ${line}: actor.pose.points.z に数値以外が含まれています`);
+  }
+  const zMap = {};
+  for (let i = 0; i < POSE_POINT_NAMES.length; i += 1) {
+    zMap[POSE_POINT_NAMES[i]] = values[i];
+  }
+  return zMap;
+}
 function validateAndBuild(blocks) {
   const scene = { meta: {}, pages: [], panels: [], actors: [], objects: [], boxarrows: [], balloons: [], captions: [], sfx: [], assets: [], styles: [] };
   for (const b of blocks) {
@@ -524,6 +541,7 @@ function validateAndBuild(blocks) {
     actor.strokeWidth = positiveNum(actor.strokeWidth, positiveNum(scene.meta?.["actor.strokeWidth"], 2));
     actor.attachments = normalizeAttachments(actor.attachments, actor._line);
     actor._posePoints = parsePosePoints(actor["pose.points"], actor._line);
+    actor._posePointZ = parsePosePointZ(actor["pose.points.z"], actor._line);
   }
   for (const object of scene.objects) {
     object._autoPosition = object.x === undefined || object.x === null || object.x === "" || object.y === undefined || object.y === null || object.y === "";
@@ -1528,8 +1546,8 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
   const rot = num(actor.rot, 0);
   const mirror = actor.facing === "left" ? -1 : 1;
   const pose = hasPosePoints(actor._posePoints)
-    ? poseSegmentsFromPoints(actor._posePoints, s, actor.strokeWidth)
-    : poseSegments(actor.pose, s, actor.strokeWidth);
+    ? poseSegmentsFromPoints(actor._posePoints, actor._posePointZ, s, actor.strokeWidth)
+    : poseSegments(actor.pose, actor._posePointZ, s, actor.strokeWidth);
   const headPoint = resolveHeadPoint(actor._posePoints, s);
   const neckPoint = resolvePosePoint(actor._posePoints, "neck", s) || { x: 0, y: -s * 0.8 };
   const attachments = resolveActorAttachments(actor, assetMap);
@@ -1548,13 +1566,17 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
   const attachmentHandles = renderAttachmentPointHandles(attachments, kind, id);
   const groupTransform = rot ? `translate(${p.x},${p.y}) rotate(${rot})` : `translate(${p.x},${p.y})`;
   const attrs = renderDataAttrs(kind, id);
+  const neckHeadLine = `<line x1="${headPoint.x}" y1="${headPoint.y}" x2="${neckPoint.x}" y2="${neckPoint.y}" stroke="black" stroke-width="${actor.strokeWidth}" stroke-linecap="round"/>`;
+  const actorLayers = [
+    { z: num(actor._posePointZ?.head, 0), order: 0, markup: neckHeadLine },
+    ...pose,
+    { z: 0, order: 10, markup: headMarkup },
+    { z: 0, order: 11, markup: faceMarkup },
+  ].sort((a, b) => (a.z - b.z) || (a.order - b.order)).map((layer) => layer.markup).join("");
   return `<g transform="${groupTransform}"${attrs}>
     <g transform="scale(${mirror},1)">
       ${underlayAttachments}
-      <line x1="${headPoint.x}" y1="${headPoint.y}" x2="${neckPoint.x}" y2="${neckPoint.y}" stroke="black" stroke-width="${actor.strokeWidth}" stroke-linecap="round"/>
-      ${pose}
-      ${headMarkup}
-      ${faceMarkup}
+      ${actorLayers}
       ${overlayAttachments}
       ${attachmentHandles}
     </g>
@@ -1678,32 +1700,42 @@ function posePresetPoints(pose, s) {
     rf: leg.rf,
   };
 }
-function poseSegments(pose, s, strokeWidth) {
+function poseSegments(pose, pointZ, s, strokeWidth) {
   const presetPoints = posePresetPoints(pose, s);
   const point = (name) => presetPoints[name] || null;
-  return posePolylinesFromChains(point, strokeWidth);
+  return poseLinesWithZ(point, pointZ, strokeWidth);
 }
-function poseSegmentsFromPoints(points, s, strokeWidth) {
+function poseSegmentsFromPoints(points, pointZ, s, strokeWidth) {
   const presetPoints = posePresetPoints("stand", s);
   const point = (name) => resolvePosePoint(points, name, s) || presetPoints[name] || null;
-  return posePolylinesFromChains(point, strokeWidth);
+  return poseLinesWithZ(point, pointZ, strokeWidth);
 }
-function posePolylinesFromChains(pointResolver, strokeWidth) {
-  const chainDefs = [
-    ["neck", "le", "lh"],
-    ["neck", "re", "rh"],
-    ["neck", "waist", "groin"],
-    ["groin", "lk", "lf"],
-    ["groin", "rk", "rf"],
+function poseLinesWithZ(pointResolver, pointZ, strokeWidth) {
+  const lineDefs = [
+    ["neck", "le", "le"],
+    ["le", "lh", "lh"],
+    ["neck", "re", "re"],
+    ["re", "rh", "rh"],
+    ["neck", "waist", "waist"],
+    ["waist", "groin", "groin"],
+    ["groin", "lk", "lk"],
+    ["lk", "lf", "lf"],
+    ["groin", "rk", "rk"],
+    ["rk", "rf", "rf"],
   ];
   const segments = [];
-  for (const chain of chainDefs) {
-    const points = chain.map((name) => pointResolver(name)).filter(Boolean);
-    if (points.length < 2) continue;
-    const polylinePoints = points.map((p) => `${p.x},${p.y}`).join(" ");
-    segments.push(`<polyline points="${polylinePoints}" fill="none" stroke="black" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round"/>`);
+  for (let i = 0; i < lineDefs.length; i += 1) {
+    const [from, to, zKey] = lineDefs[i];
+    const start = pointResolver(from);
+    const end = pointResolver(to);
+    if (!start || !end) continue;
+    segments.push({
+      z: num(pointZ?.[zKey], 0),
+      order: i,
+      markup: `<line x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="black" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round"/>`,
+    });
   }
-  return segments.join("");
+  return segments;
 }
 function eyePath(eye, s, headPoint = { x: 0, y: -s * 2.2 }) {
   const headY = headPoint.y;
