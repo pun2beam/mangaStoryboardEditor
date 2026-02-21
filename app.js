@@ -638,7 +638,13 @@ function validateAndBuild(blocks) {
       attachment.s = typeof attachment.s === "number" ? attachment.s : null;
       attachment.rot = typeof attachment.rot === "number" ? attachment.rot : null;
       attachment.z = typeof attachment.z === "number" ? attachment.z : null;
-      attachment.flipX = attachment.flipX === true;
+      if (attachment.flipX === true) {
+        attachment.flipX = true;
+      } else if (attachment.flipX === false) {
+        attachment.flipX = false;
+      } else {
+        attachment.flipX = null;
+      }
     }
   }
   autoPlacePanelItems(scene, dicts);
