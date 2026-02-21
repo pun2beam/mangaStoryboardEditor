@@ -2306,6 +2306,10 @@ function roundedCoord(value, unit) {
 function roundedPoseCoord(value) {
   return roundedCoord(value, "percent");
 }
+function resolveAttachmentDragBasis(asset) {
+  if (asset?.dragBasis === "center") return "center";
+  return "top-left";
+}
 function posePointsToDslString(pointsByName, scale) {
   const safeScale = scale || 1;
   const values = [];
@@ -2461,11 +2465,6 @@ function setupObjectDrag() {
     const unrotatedY = -dx * sin + dy * cos;
     const mirror = actor.facing === "left" ? -1 : 1;
     return { x: unrotatedX * mirror, y: unrotatedY };
-  }
-
-  function resolveAttachmentDragBasis(asset) {
-    if (asset?.dragBasis === "center") return "center";
-    return "top-left";
   }
 
   function actorWithPanel(actorId) {
