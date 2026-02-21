@@ -5,6 +5,9 @@ meta:
   text.direction: horizontal
   base.panel.direction: right.bottom
   base.panel.margin: 1.5
+  layout.page.mode: fixed
+  layout.percent.reference: page-inner
+  layout.page.persistGenerated: false
 
 page:
   id: p1000
@@ -990,8 +993,8 @@ page:
         - ref: as1030
     actor:
       id: a1050
-      x: 98
-      y: 180
+      x: 93.04
+      y: 219.71
       z: -1
       scale: 20
       pose: think
@@ -1030,8 +1033,8 @@ page:
         ですか?
     balloon:
       id: b1090
-      x: 60
-      y: 70
+      x: 59.38
+      y: 69.03
       w: 20
       h: 20
       shape: thought
@@ -1320,7 +1323,7 @@ asset:
   w: 55
   h: 55
   dx: -26.5
-  dy: -73.5
+  dy: -30.5
   s: 1
   rot: -10
   z: 1
@@ -1331,7 +1334,7 @@ asset:
   w: 55
   h: 55
   dx: -31.5
-  dy: -80.5
+  dy: -36.5
   s: 1.2
   rot: 0
   z: 1
@@ -1342,7 +1345,7 @@ asset:
   w: 55
   h: 55
   dx: -31.5
-  dy: -80.5
+  dy: -36.5
   s: 1.2
   rot: 0
   z: -1
@@ -1352,8 +1355,8 @@ asset:
   id: as1030
   w: 85
   h: 55
-  dx: -20
-  dy: -58.5
+  dx: -18
+  dy: -14.5
   s: 0.4
   rot: 0
   z: 1
@@ -1974,7 +1977,7 @@ page:
       z: 1
       shape: oval^
       fontsize: 25px
-      text:  人は難しそうな文章を避ける。
+      text: 人は難しそうな文章を避ける。
   panel:
     id: 1410
     w: 30
@@ -2000,4 +2003,4 @@ page:
       z: 1
       shape: oval^
       fontsize: 25px
-      text:  それだけで読者が増える。
+      text: それだけで読者が増える。
