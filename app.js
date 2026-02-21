@@ -1517,7 +1517,7 @@ function renderAttachmentPointHandles(attachments, kind, id) {
   if (!isPoseEditModeEnabled()) return "";
   if (kind !== "actor" || !id || String(id) !== String(selectedActorId)) return "";
   return attachments.map((attachment) => {
-    const handlePoint = attachment.anchorPoint || attachment.centerPoint;
+    const handlePoint = attachment.handlePoint || attachment.centerPoint || attachment.anchorPoint;
     if (!handlePoint) return "";
     return `<circle class="attachment-point-handle" data-kind="actor" data-id="${escapeXml(String(id))}" data-attachment-index="${attachment.attachmentIndex}" data-attachment-ref="${escapeXml(String(attachment.ref))}" cx="${handlePoint.x}" cy="${handlePoint.y}" r="4"/>`;
   }).join("");
@@ -1606,6 +1606,10 @@ function resolveActorAttachments(actor, assetMap) {
     const anchorPoint = resolveAttachmentAnchorPoint(actor, asset.anchor, poseScale);
     const x = anchorPoint.x + dx * actor.scale;
     const y = anchorPoint.y + dy * actor.scale;
+    const dragBasis = resolveAttachmentDragBasis(asset);
+    const basisOffsetX = dragBasis === "center" ? width / 2 : 0;
+    const basisOffsetY = dragBasis === "center" ? height / 2 : 0;
+    const handlePoint = { x: x + basisOffsetX, y: y + basisOffsetY };
     const cx = x + width / 2;
     const cy = y + height / 2;
     // actor.facing === "left" applies scale(-1,1) to the parent <g>.
@@ -1620,6 +1624,7 @@ function resolveActorAttachments(actor, assetMap) {
       attachmentIndex,
       z,
       anchorPoint,
+      handlePoint,
       centerPoint: { x: cx, y: cy },
       markup: `<image x="${x}" y="${y}" width="${width}" height="${height}" href="${escapeXml(asset.src)}" opacity="${asset.opacity}"${transform}/>`
     }];
@@ -2301,6 +2306,10 @@ function roundedCoord(value, unit) {
 function roundedPoseCoord(value) {
   return roundedCoord(value, "percent");
 }
+function resolveAttachmentDragBasis(asset) {
+  if (asset?.dragBasis === "center") return "center";
+  return "top-left";
+}
 function posePointsToDslString(pointsByName, scale) {
   const safeScale = scale || 1;
   const values = [];
@@ -2456,11 +2465,6 @@ function setupObjectDrag() {
     const unrotatedY = -dx * sin + dy * cos;
     const mirror = actor.facing === "left" ? -1 : 1;
     return { x: unrotatedX * mirror, y: unrotatedY };
-  }
-
-  function resolveAttachmentDragBasis(asset) {
-    if (asset?.dragBasis === "center") return "center";
-    return "top-left";
   }
 
   function actorWithPanel(actorId) {
