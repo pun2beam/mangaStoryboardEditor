@@ -1611,7 +1611,7 @@ function resolveAttachmentAnchorPoint(actor, anchorName, poseScale) {
   const resolved = resolvePosePoint(actor._posePoints, anchorName, poseScale);
   if (resolved) return resolved;
   const presetPoints = posePresetPoints(actor.pose, poseScale);
-  return presetPoints[anchorName] || presetPoints.lf;
+  return presetPoints[anchorName] || presetPoints.head;
 }
 function posePresetPoints(pose, s) {
   const shoulderY = -s * 1.5;

@@ -484,7 +484,7 @@ balloon:
   任意:
 * `panel,x,y`（指定時は従来どおりコマ内へ単体表示。`panel`なしは単体表示しない）
 * `dx,dy`（actor基準の相対座標。attachments側で未指定の場合の既定値）
-* `anchor`（任意。`dx,dy` の基準点。`head,lh,rh,le,re,neck,waist,groin,lk,rk,lf,rf` から指定。既定 `lf`）
+* `anchor`（任意。`dx,dy` の基準点。`head,lh,rh,le,re,neck,waist,groin,lk,rk,lf,rf` から指定。既定 `head`）
 * `s`（actor.scaleに掛ける追加倍率、既定1）
 * `rot`（回転角、既定0）
 * `z`（actor内相対レイヤ。負で背面、0以上で前面）
