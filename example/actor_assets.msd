@@ -37,8 +37,9 @@ panel:
     scale: 5
     pose: point
     emotion: neutral
-    facing: right
+    facing: left
     name: Hoge君
+    pose.points: 0.5,-2.2,-0.6,-0.6,1,-1,-0.5,-1,0.5,-1,0,-1.6,-0.1,-1,0,-0.8,-0.4,-0.5,0.4,-0.5,-0.5,0,0.5,0
     attachments:
       - ref: as1000
       - ref: as1101
@@ -85,8 +86,8 @@ panel:
       - ref: as1903
   actor:
     id: a1004
-    x: 39.69
-    y: 90.55
+    x: 40
+    y: 90
     scale: 5
     pose: point
     emotion: neutral
@@ -337,7 +338,7 @@ panel:
       - ref: as1503
         dx: -9.9
         dy: -11.7
-        s:0.334
+        s: 0.334
       - ref: as1602
       - ref: as1902
   actor:
@@ -353,7 +354,7 @@ panel:
       - ref: as1000
       - ref: as1106
         dx: -9.5
-        dy: -55.5
+        dy: -9.5
       - ref: as1105
         dx: -9.6
         dy: -10.1
@@ -645,7 +646,7 @@ asset:
   w: 55
   h: 55
   dx: -4.5
-  dy:  3.5
+  dy: 3.5
   s: 0.1
   rot: 0
   z: 2
