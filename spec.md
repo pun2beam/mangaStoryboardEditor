@@ -257,6 +257,11 @@ panel:
 
 #### pose（プリセット）
 
+実装UI補足:
+
+* エディタ右ペインの `Pose編集` UI を ON にして actor を選択すると、12点のジョイントハンドル（`head,lh,rh,le,re,neck,waist,groin,lk,rk,lf,rf`）が表示される。
+* ハンドルをドラッグして確定（pointerup）すると、その actor の `pose.points` が `24` 値文字列として自動生成・更新され、DSL に書き戻される。
+
 実装必須プリセット（v0.1）:
 
 * `stand`, `run`, `sit`, `point`, `think`, `surprise`
