@@ -122,3 +122,11 @@ html, body { margin: 0; height: 100%; color: var(--text); background: var(--bg);
   stroke: #ffffff;
   stroke-width: 1.6;
 }
+
+
+.attachment-point-handle {
+  fill: #ffffff;
+  stroke: #f97316;
+  stroke-width: 1.4;
+  cursor: pointer;
+}
