@@ -2475,6 +2475,16 @@ function setupObjectDrag() {
     return blocks.find((block) => block.type === kind && String(block.props.id) === id);
   }
 
+  function attachmentDeltaFromScenePoint(scenePoint, actorState) {
+    if (!actorState?.actor || !actorState.anchorPoint || !actorState.actor.scale) return null;
+    const localPoint = actorLocalPointFromScene(scenePoint, actorState.actor, actorState.panelRect, actorState.unit);
+    return {
+      dx: (localPoint.x - actorState.anchorPoint.x) / actorState.actor.scale,
+      dy: (localPoint.y - actorState.anchorPoint.y) / actorState.actor.scale,
+      localPoint,
+    };
+  }
+
   els.canvas.addEventListener("pointerdown", (event) => {
     if (!currentScene) return;
     const target = event.target.closest?.("[data-kind][data-id]");
@@ -2493,7 +2503,49 @@ function setupObjectDrag() {
     if (attachmentIndex !== undefined) {
       if (!isPoseEditModeEnabled() || kind !== "actor" || !id) return;
       if (attachmentRef === undefined) return;
-      // attachment edit handles are identified here for future drag/edit flow.
+      const actorInfo = actorWithPanel(id);
+      if (!actorInfo) return;
+      const parsedAttachmentIndex = Number.parseInt(attachmentIndex, 10);
+      if (!Number.isInteger(parsedAttachmentIndex) || parsedAttachmentIndex < 0) return;
+      const actorAttachment = actorInfo.actor.attachments?.[parsedAttachmentIndex];
+      if (!actorAttachment || String(actorAttachment.ref) !== String(attachmentRef)) return;
+      const asset = currentScene?.assets?.find((entry) => String(entry.id) === String(actorAttachment.ref));
+      const anchorName = asset?.anchor;
+      const poseScale = 20 * actorInfo.actor.scale;
+      const anchorPoint = resolveAttachmentAnchorPoint(actorInfo.actor, anchorName || "head", poseScale);
+      const start = scenePointFromEvent(event);
+      if (!start) return;
+      const attachmentPointTargets = Array.from(els.canvas.querySelectorAll(
+        `[data-kind="actor"][data-id="${escapeCssValue(String(id))}"][data-attachment-index="${escapeCssValue(String(parsedAttachmentIndex))}"][data-attachment-ref="${escapeCssValue(String(attachmentRef))}"]`
+      ));
+      const startDelta = attachmentDeltaFromScenePoint(start, {
+        actor: actorInfo.actor,
+        panelRect: actorInfo.panelRect,
+        unit: actorInfo.unit,
+        anchorPoint,
+      });
+      if (!startDelta) return;
+      target.setPointerCapture(event.pointerId);
+      isObjectDragging = true;
+      state = {
+        pointerId: event.pointerId,
+        captureTarget: target,
+        targets: [],
+        kind: "actor",
+        id,
+        handleType: "attachment-point",
+        actor: actorInfo.actor,
+        attachmentIndex: parsedAttachmentIndex,
+        attachmentRef: String(attachmentRef),
+        anchorName,
+        start,
+        panelRect: actorInfo.panelRect,
+        unit: actorInfo.unit,
+        anchorPoint,
+        startDx: startDelta.dx,
+        startDy: startDelta.dy,
+        attachmentPointTargets,
+      };
       event.preventDefault();
       return;
     }
@@ -2595,6 +2647,15 @@ function setupObjectDrag() {
         handle.setAttribute("cx", String(posePoint.x));
         handle.setAttribute("cy", String(posePoint.y));
       }
+    } else if (state.handleType === "attachment-point") {
+      const delta = attachmentDeltaFromScenePoint(point, state);
+      if (!delta) return;
+      state.previewDx = delta.dx;
+      state.previewDy = delta.dy;
+      for (const handle of state.attachmentPointTargets) {
+        handle.setAttribute("cx", String(delta.localPoint.x));
+        handle.setAttribute("cy", String(delta.localPoint.y));
+      }
     } else if (state.handleType === "rotate" && state.originalPoint && state.startAngle !== null) {
       const currentAngle = angleFromPointClockwiseTop(point, state.originalPoint);
       const angleDelta = signedAngleDelta(currentAngle, state.startAngle);
@@ -2626,6 +2687,19 @@ function setupObjectDrag() {
           const localPoint = actorLocalPointFromScene(point, state.actor, state.panelRect, state.unit);
           state.posePreviewPoints[state.posePointName] = localPoint;
           block.props["pose.points"] = posePointsToDslString(state.posePreviewPoints, state.actorScale);
+          const updatedBlocks = blocks;
+          els.input.value = stringifyBlocks(updatedBlocks);
+          update();
+        } else if (state.handleType === "attachment-point") {
+          const attachments = block.props.attachments;
+          if (!Array.isArray(attachments)) return;
+          const attachment = attachments[state.attachmentIndex];
+          if (!attachment || typeof attachment !== "object") return;
+          if (String(attachment.ref) !== state.attachmentRef) return;
+          const delta = attachmentDeltaFromScenePoint(point, state);
+          if (!delta) return;
+          attachment.dx = roundedPoseCoord(delta.dx);
+          attachment.dy = roundedPoseCoord(delta.dy);
           const updatedBlocks = blocks;
           els.input.value = stringifyBlocks(updatedBlocks);
           update();
