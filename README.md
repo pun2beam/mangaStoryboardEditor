@@ -38,6 +38,7 @@ https://pun2beam.github.io//mangaStoryboardEditor/
 ```msd
 meta:
   title: サンプル
+  actor.strokeWidth: 3
 
 page:
   id: p1
@@ -57,6 +58,7 @@ page:
       x: 70
       y: 82
       pose: run
+      strokeWidth: 5
       pose.points: "0,-18,-6,-16,6,-14,-3,-8,4,-7,0,-10,0,0,0,8,-2,16,3,17,-3,24,5,24"
     balloon:
       id: b1
@@ -78,6 +80,7 @@ page:
 
 補足:
 - `pose.points` は指定した `actor` に対してのみ `pose` プリセットを上書きします。未指定の `actor` は既存の `pose` プリセットをそのまま利用します。
+- 棒人間の線の太さは `meta.actor.strokeWidth`（全体既定）と `actor.strokeWidth`（個別上書き）で指定できます。
 - `pose.points` は24値（12点）で指定し、先頭の `head(x,y)` を頭の位置と首への接続起点として使います。
 - 右ペインの `Pose編集` を ON にして actor を選択するとジョイントハンドルが表示され、ドラッグで `pose.points`（24値文字列）が自動生成・更新されます。
 - `asset` に `anchor` を指定すると、`dx`,`dy` の基準点を `head,lh,rh,le,re,neck,waist,groin,lk,rk,lf,rf` のいずれかに変更できます（既定: `head`）。

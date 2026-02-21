@@ -521,6 +521,7 @@ function validateAndBuild(blocks) {
     actor["head.shape"] = HEAD_SHAPES.has(actor["head.shape"]) ? actor["head.shape"] : "circle";
     actor.x = num(actor.x, 0);
     actor.y = num(actor.y, 0);
+    actor.strokeWidth = positiveNum(actor.strokeWidth, positiveNum(scene.meta?.["actor.strokeWidth"], 2));
     actor.attachments = normalizeAttachments(actor.attachments, actor._line);
     actor._posePoints = parsePosePoints(actor["pose.points"], actor._line);
   }
@@ -736,6 +737,10 @@ function requireFields(obj, fields, type) {
 }
 function num(value, fallback) {
   return typeof value === "number" ? value : fallback;
+}
+function positiveNum(value, fallback) {
+  const parsed = num(value, fallback);
+  return parsed > 0 ? parsed : fallback;
 }
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
@@ -1506,8 +1511,8 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
   const rot = num(actor.rot, 0);
   const mirror = actor.facing === "left" ? -1 : 1;
   const pose = hasPosePoints(actor._posePoints)
-    ? poseSegmentsFromPoints(actor._posePoints, s)
-    : poseSegments(actor.pose, s);
+    ? poseSegmentsFromPoints(actor._posePoints, s, actor.strokeWidth)
+    : poseSegments(actor.pose, s, actor.strokeWidth);
   const headPoint = resolveHeadPoint(actor._posePoints, s);
   const neckPoint = resolvePosePoint(actor._posePoints, "neck", s) || { x: 0, y: -s * 0.8 };
   const attachments = resolveActorAttachments(actor, assetMap);
@@ -1518,7 +1523,7 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
     ? ""
     : `${eyePath(actor.eye, s, headPoint)}${emotionPath(actor.emotion, s, headPoint)}`;
   const headShape = hideHeadAndFace ? "none" : actor["head.shape"];
-  const headMarkup = headOutline(headShape, s, headPoint);
+  const headMarkup = headOutline(headShape, s, actor.strokeWidth, headPoint);
   const nameLabel = showActorName && actor.name
     ? `<text x="0" y="${-s * 2.9}" font-size="${Math.max(10, s * 0.55)}" text-anchor="middle" dominant-baseline="auto" fill="black">${escapeXml(String(actor.name))}</text>`
     : "";
@@ -1528,7 +1533,7 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
   return `<g transform="${groupTransform}"${attrs}>
     <g transform="scale(${mirror},1)">
       ${underlayAttachments}
-      <line x1="${headPoint.x}" y1="${headPoint.y}" x2="${neckPoint.x}" y2="${neckPoint.y}" stroke="black" stroke-width="2"/>
+      <line x1="${headPoint.x}" y1="${headPoint.y}" x2="${neckPoint.x}" y2="${neckPoint.y}" stroke="black" stroke-width="${actor.strokeWidth}"/>
       ${pose}
       ${headMarkup}
       ${faceMarkup}
@@ -1556,14 +1561,14 @@ function hasPosePoints(points) {
 function resolveHeadPoint(points, scale) {
   return resolvePosePoint(points, "head", scale) || { x: 0, y: -scale * 2.2 };
 }
-function headOutline(shape, s, headPoint = { x: 0, y: -s * 2.2 }) {
+function headOutline(shape, s, strokeWidth, headPoint = { x: 0, y: -s * 2.2 }) {
   const radius = s * 0.45;
   if (shape === "square") {
     const side = radius * 2;
-    return `<rect x="${headPoint.x - radius}" y="${headPoint.y - radius}" width="${side}" height="${side}" fill="white" stroke="black" stroke-width="2"/>`;
+    return `<rect x="${headPoint.x - radius}" y="${headPoint.y - radius}" width="${side}" height="${side}" fill="white" stroke="black" stroke-width="${strokeWidth}"/>`;
   }
   if (shape === "none") return "";
-  return `<circle cx="${headPoint.x}" cy="${headPoint.y}" r="${radius}" fill="white" stroke="black" stroke-width="2"/>`;
+  return `<circle cx="${headPoint.x}" cy="${headPoint.y}" r="${radius}" fill="white" stroke="black" stroke-width="${strokeWidth}"/>`;
 }
 function resolveActorAttachments(actor, assetMap) {
   if (!Array.isArray(actor.attachments) || actor.attachments.length === 0) return [];
@@ -1635,7 +1640,7 @@ function posePresetPoints(pose, s) {
     rf: leg.rf,
   };
 }
-function poseSegments(pose, s) {
+function poseSegments(pose, s, strokeWidth) {
   const shoulderY = -s * 1.5;
   const hipY = -s * 0.8;
   const sets = {
@@ -1646,9 +1651,9 @@ function poseSegments(pose, s) {
     think: [[0, shoulderY, s * 0.2, -s * 1.7], [0, shoulderY, -s * 0.5, -s], [0, hipY, -s * 0.35, 0], [0, hipY, s * 0.35, 0]],
     surprise: [[0, shoulderY, s * 0.9, -s * 1.7], [0, shoulderY, -s * 0.9, -s * 1.7], [0, hipY, -s * 0.6, 0], [0, hipY, s * 0.6, 0]],
   };
-  return sets[pose].map(([x1, y1, x2, y2]) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="black" stroke-width="2"/>`).join("");
+  return sets[pose].map(([x1, y1, x2, y2]) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="black" stroke-width="${strokeWidth}"/>`).join("");
 }
-function poseSegmentsFromPoints(points, s) {
+function poseSegmentsFromPoints(points, s, strokeWidth) {
   const point = (name) => resolvePosePoint(points, name, s);
   const chainDefs = [
     ["neck", "le", "lh"],
@@ -1663,7 +1668,7 @@ function poseSegmentsFromPoints(points, s) {
       const a = point(chain[i]);
       const b = point(chain[i + 1]);
       if (!a || !b) continue;
-      segments.push(`<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="black" stroke-width="2"/>`);
+      segments.push(`<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="black" stroke-width="${strokeWidth}"/>`);
     }
   }
   return segments.join("");
