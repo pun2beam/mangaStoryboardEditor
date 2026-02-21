@@ -624,6 +624,7 @@ function validateAndBuild(blocks) {
     a.s = num(a.s, 1);
     a.rot = num(a.rot, 0);
     a.z = num(a.z, 0);
+    a.flipX = a.flipX === true;
     a.anchor = normalizeAssetAnchorPoint(a.anchor, a._line);
   }
   const assetsById = byId(scene.assets, "asset");
@@ -637,6 +638,7 @@ function validateAndBuild(blocks) {
       attachment.s = typeof attachment.s === "number" ? attachment.s : null;
       attachment.rot = typeof attachment.rot === "number" ? attachment.rot : null;
       attachment.z = typeof attachment.z === "number" ? attachment.z : null;
+      attachment.flipX = attachment.flipX === true;
     }
   }
   autoPlacePanelItems(scene, dicts);
@@ -1582,13 +1584,20 @@ function resolveActorAttachments(actor, assetMap) {
     const width = asset.w * scale;
     const height = asset.h * scale;
     const rot = attachment.rot ?? asset.rot ?? 0;
+    const flipX = attachment.flipX ?? asset.flipX ?? false;
     const z = attachment.z ?? asset.z ?? 0;
     const anchorPoint = resolveAttachmentAnchorPoint(actor, asset.anchor, poseScale);
     const x = anchorPoint.x + dx * actor.scale;
     const y = anchorPoint.y + dy * actor.scale;
     const cx = x + width / 2;
     const cy = y + height / 2;
-    const transform = rot ? ` transform="rotate(${rot} ${cx} ${cy})"` : "";
+    // actor.facing === "left" applies scale(-1,1) to the parent <g>.
+    // Attachment flipX adds another scale(-1,1) around the attachment center,
+    // so a double inversion cancels out and the image is rendered in normal orientation.
+    const transforms = [];
+    if (rot) transforms.push(`rotate(${rot} ${cx} ${cy})`);
+    if (flipX) transforms.push(`translate(${cx} ${cy}) scale(-1,1) translate(${-cx} ${-cy})`);
+    const transform = transforms.length > 0 ? ` transform="${transforms.join(" ")}"` : "";
     return [{ z, markup: `<image x="${x}" y="${y}" width="${width}" height="${height}" href="${escapeXml(asset.src)}" opacity="${asset.opacity}"${transform}/>` }];
   });
 }
