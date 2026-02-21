@@ -25,6 +25,13 @@ panel:
     stroke: #000000
     fill: #a0f0a0
 
+actor:
+  id: a0000
+  extends:a2001
+  scale: 5
+  facing: right
+  name:ポーズ用
+
 panel:
   id: 1400
   w: 100
@@ -32,14 +39,9 @@ panel:
   radius: 20
   actor:
     id: a1001
+    extends:a0000
     x: 10
     y: 90
-    scale: 5
-    pose: point
-    emotion: neutral
-    facing: left
-    name: Hoge君
-    pose.points: 0.5,-2.2,-0.6,-0.6,1,-1,-0.5,-1,0.5,-1,0,-1.6,-0.1,-1,0,-0.8,-0.4,-0.5,0.4,-0.5,-0.5,0,0.5,0
     attachments:
       - ref: as1000
       - ref: as1101
@@ -51,13 +53,9 @@ panel:
       - ref: as1901
   actor:
     id: a1002
+    extends:a0000
     x: 20
     y: 90
-    scale: 5
-    pose: point
-    emotion: neutral
-    facing: right
-    name: Hoge君
     attachments:
       - ref: as1000
       - ref: as1102
@@ -69,13 +67,9 @@ panel:
       - ref: as1902
   actor:
     id: a1003
+    extends:a0000
     x: 30
     y: 90
-    scale: 5
-    pose: point
-    emotion: neutral
-    facing: right
-    name: Hoge君
     attachments:
       - ref: as1000
       - ref: as1103
@@ -86,13 +80,9 @@ panel:
       - ref: as1903
   actor:
     id: a1004
+    extends:a0000
     x: 40
     y: 90
-    scale: 5
-    pose: point
-    emotion: neutral
-    facing: right
-    name: Hoge君
     attachments:
       - ref: as1000
       - ref: as1104
@@ -103,13 +93,9 @@ panel:
       - ref: as1902
   actor:
     id: a1005
+    extends:a0000
     x: 50
     y: 90
-    scale: 5
-    pose: point
-    emotion: neutral
-    facing: right
-    name: Hoge君
     attachments:
       - ref: as1000
       - ref: as1106
@@ -123,13 +109,9 @@ panel:
       - ref: as1902
   actor:
     id: a1006
+    extends:a0000
     x: 60
     y: 90
-    scale: 5
-    pose: point
-    emotion: neutral
-    facing: right
-    name: Hoge君
     attachments:
       - ref: as1000
       - ref: as1102
@@ -143,13 +125,9 @@ panel:
       - ref: as1902
   actor:
     id: a1007
+    extends:a0000
     x: 70
     y: 90
-    scale: 5
-    pose: point
-    emotion: neutral
-    facing: right
-    name: Hoge君
     attachments:
       - ref: as1000
       - ref: as1102
@@ -163,13 +141,9 @@ panel:
       - ref: as1902
   actor:
     id: a1008
+    extends:a0000
     x: 80
     y: 90
-    scale: 5
-    pose: point
-    emotion: neutral
-    facing: right
-    name: Hoge君
     attachments:
       - ref: as1000
       - ref: as1101
@@ -186,13 +160,9 @@ panel:
       - ref: as1902
   actor:
     id: a1009
+    extends:a0000
     x: 90
     y: 90
-    scale: 5
-    pose: point
-    emotion: neutral
-    facing: right
-    name: Hoge君
     attachments:
       - ref: as1000
       - ref: as1105
@@ -210,13 +180,9 @@ panel:
   radius: 20
   actor:
     id: a1010
+    extends:a0000
     x: 10
     y: 90
-    scale: 5
-    pose: point
-    emotion: neutral
-    facing: left
-    name: Hoge君
     attachments:
       - ref: as1000
       - ref: as1101
@@ -229,13 +195,9 @@ panel:
       - ref: as1902
   actor:
     id: a1011
+    extends:a0000
     x: 20
     y: 90
-    scale: 5
-    pose: point
-    emotion: neutral
-    facing: left
-    name: Hoge君
     attachments:
       - ref: as1000
       - ref: as1106
@@ -248,13 +210,9 @@ panel:
       - ref: as1902
   actor:
     id: a1012
+    extends:a0000
     x: 30
     y: 90
-    scale: 5
-    pose: point
-    emotion: neutral
-    facing: left
-    name: Hoge君
     attachments:
       - ref: as1000
       - ref: as1106
@@ -270,13 +228,9 @@ panel:
       - ref: as1902
   actor:
     id: a1013
+    extends:a0000
     x: 40
     y: 90
-    scale: 5
-    pose: point
-    emotion: neutral
-    facing: left
-    name: Hoge君
     attachments:
       - ref: as1000
       - ref: as1106
@@ -289,13 +243,9 @@ panel:
       - ref: as1902
   actor:
     id: a1014
+    extends:a0000
     x: 50
     y: 90
-    scale: 5
-    pose: point
-    emotion: neutral
-    facing: left
-    name: Hoge君
     attachments:
       - ref: as1000
       - ref: as1106
@@ -316,13 +266,9 @@ panel:
       - ref: as1902
   actor:
     id: a1015
+    extends:a0000
     x: 60
     y: 90
-    scale: 5
-    pose: point
-    emotion: none
-    facing: left
-    name: Hoge君
     attachments:
       - ref: as1101
         dx: -9.6
@@ -343,13 +289,9 @@ panel:
       - ref: as1902
   actor:
     id: a1016
+    extends:a0000
     x: 70
     y: 90
-    scale: 5
-    pose: point
-    emotion: neutral
-    facing: left
-    name: Hoge君
     attachments:
       - ref: as1000
       - ref: as1106
@@ -373,13 +315,9 @@ panel:
       - ref: as1902
   actor:
     id: a1017
+    extends:a0000
     x: 80
     y: 90
-    scale: 5
-    pose: point
-    emotion: neutral
-    facing: left
-    name: Hoge君
     attachments:
       - ref: as1000
       - ref: as1106
@@ -392,13 +330,9 @@ panel:
       - ref: as1902
   actor:
     id: a1018
+    extends:a0000
     x: 90
     y: 90
-    scale: 5
-    pose: point
-    emotion: neutral
-    facing: left
-    name: Hoge君
     attachments:
       - ref: as1000
       - ref: as1102
@@ -409,6 +343,46 @@ panel:
       - ref: as1501
       - ref: as1602
       - ref: as1902
+
+panel:
+  id: 1410
+  w: 100
+  h: 1
+  strokeWidth: 0
+  sfx:
+    id: s1060
+    x: 0
+    y: 140
+    text: ポーズアセット
+    scale: 1
+    fontSize: 4
+    rotate: 0
+    stroke: #000000
+    fill: #a0f0a0
+
+panel:
+  id: 1411
+  w: 100
+  h: 20
+  radius: 20
+  actor:
+    id: a2001
+    x: 10
+    y: 90
+    scale: 5
+    facing: right
+    pose.points: 0.3,-2.2,-0.6,-0.6,1,-1,-0.5,-1,0.5,-1,0,-1.6,-0.1,-1,0,-0.8,-0.4,-0.5,0.4,-0.5,-0.5,0,0.5,0
+  actor:
+    id: a2002
+    x: 20
+    y: 90
+    scale: 5
+    pose: point
+    emotion: neutral
+    facing: right
+    name: Hoge君
+    pose.points: 0.2 -1.7,-0.6 -0.4,1 -0.4,-0.5 -0.6,0.5 -0.6,0 -1.2,-0.1 -0.3,0 -0.0,-0.4 -0.5,0.4 -0.5,-0.5 0,0.5 0
+    rot: 0
 
 asset:
   id: as1000
@@ -899,7 +873,7 @@ asset:
   w: 55
   h: 55
   dx: -4
-  dy: -45.5
+  dy: -0.5
   s: 0.1
   rot: 0
   z: 1
