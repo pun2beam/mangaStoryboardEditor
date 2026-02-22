@@ -257,7 +257,7 @@ panel:
 * `head.shape`（`circle`/`square`/`none`、既定`circle`）
 * `name`（任意、デバッグ用）
 * `lookAt`（`actor:<id>` または `point(x,y)`、任意）
-* `attachments`（任意、配列。`asset`の`id`を`ref`で参照し、`dx`,`dy`,`s`,`rot`,`z`,`flipX`で相対配置。`asset`側の同名設定がある場合は `attachments` 側を優先）
+* `attachments`（任意、配列。`asset`の`id`を`ref`で参照し、`dx`,`dy`,`s`,`rot`,`anchorRot`,`z`,`flipX`で相対配置。`asset`側の同名設定がある場合は `attachments` 側を優先）
 * `style`（後述 styleRef）
 
 #### pose（プリセット）
@@ -484,6 +484,7 @@ balloon:
 * `panel,x,y`（指定時は従来どおりコマ内へ単体表示。`panel`なしは単体表示しない）
 * `dx,dy`（actor基準の相対座標。attachments側で未指定の場合の既定値）
 * `anchor`（任意。`dx,dy` の基準点。`head,lh,rh,le,re,neck,waist,groin,lk,rk,lf,rf` から指定。既定 `head`）
+* `anchorRot`（任意。`asset.anchor` の位置を中心にした追加回転角（度）。既定0）
 * `s`（actor.scaleに掛ける追加倍率、既定1）
 * `rot`（回転角、既定0）
 * `z`（actor内相対レイヤ。`pose.points.z` の線分と同じ z 軸で前後ソート）
