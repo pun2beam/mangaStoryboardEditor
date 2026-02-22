@@ -22,7 +22,7 @@ panel:
     text: キャラクターアセット
     scale: 1
     fontSize: 4
-    rotate: 0
+    rot: 0
     stroke: #000000
     fill: #a0f0a0
 
@@ -359,7 +359,7 @@ panel:
     text: ポーズアセット
     scale: 1
     fontSize: 4
-    rotate: 0
+    rot: 0
     stroke: #000000
     fill: #a0f0a0
 

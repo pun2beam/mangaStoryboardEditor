@@ -28,7 +28,7 @@ page:
       text: はじめに
       scale: 1
       fontSize: 5
-      rotate: 0
+      rot: 0
       stroke: #000000
       fill: #a0f0a0
     actor:
@@ -51,7 +51,7 @@ page:
       z: 1
       shape: oval
       tail: toActor(a1000)
-      fontsize: 25px
+      fontSize: 25px
       text: |
         この漫画は、左綴じ、横書きで
         作成されています(※1)。
@@ -64,7 +64,7 @@ page:
       z: 1
       shape: oval
       tail: toActor(a1000)
-      fontsize: 25px
+      fontSize: 25px
       text: |
         日本の大抵のマンガは、
         右綴じ、縦書きが
@@ -79,7 +79,7 @@ page:
       z: 1
       shape: oval
       tail: toActor(a1000)
-      fontsize: 25px
+      fontSize: 25px
       text: |
         右綴じ、左綴じとは
         表紙を上にして、
@@ -94,7 +94,7 @@ page:
       z: 1
       shape: oval
       tail: toActor(a1000)
-      fontsize: 25px
+      fontSize: 25px
       text: |
         科学系の解説マンガ
         を想定しているので
@@ -120,7 +120,7 @@ page:
       h: 30
       shape: square
       border: 2px
-      fontsize: 20
+      fontSize: 20
       text.direction: vertical
       text: |
         国語の　　
@@ -133,7 +133,7 @@ page:
       h: 30
       shape: square
       border: 2px
-      fontsize: 20
+      fontSize: 20
       text.direction: vertical
       text: 小説
     object:
@@ -144,7 +144,7 @@ page:
       h: 30
       shape: square
       border: 2px
-      fontsize: 20
+      fontSize: 20
       text: マンガ
     object:
       id: o1030
@@ -154,7 +154,7 @@ page:
       h: 30
       shape: square
       border: 2px
-      fontsize: 20
+      fontSize: 20
       text.direction: vertical
       text: 閉じ位置
     object:
@@ -165,7 +165,7 @@ page:
       h: 30
       shape: square
       border: 2px
-      fontsize: 20
+      fontSize: 20
       text.direction: vertical
       text: 閉じ位置
     object:
@@ -176,7 +176,7 @@ page:
       h: 30
       shape: square
       border: 2px
-      fontsize: 20
+      fontSize: 20
       text.direction: vertical
       text: 閉じ位置
     boxarrow:
@@ -256,7 +256,7 @@ page:
       h: 30
       shape: square
       border: 2px
-      fontsize: 15
+      fontSize: 15
       text.direction: horizontal
       text: |
         国語以外の
@@ -269,7 +269,7 @@ page:
       h: 30
       shape: square
       border: 2px
-      fontsize: 20
+      fontSize: 20
       text: 雑誌
     object:
       id: o1080
@@ -279,7 +279,7 @@ page:
       h: 30
       shape: square
       border: 2px
-      fontsize: 20
+      fontSize: 20
       text.direction: horizontal
       text: |
         外国の
@@ -292,7 +292,7 @@ page:
       h: 30
       shape: square
       border: 2px
-      fontsize: 20
+      fontSize: 20
       text.direction: vertical
       text: 閉じ位置
     object:
@@ -303,7 +303,7 @@ page:
       h: 30
       shape: square
       border: 2px
-      fontsize: 20
+      fontSize: 20
       text.direction: vertical
       text: 閉じ位置
     object:
@@ -314,7 +314,7 @@ page:
       h: 30
       shape: square
       border: 2px
-      fontsize: 20
+      fontSize: 20
       text.direction: vertical
       text: 閉じ位置
     caption:
@@ -396,7 +396,7 @@ page:
       z: 1
       shape: oval
       tail: toPoint(90,35)
-      fontsize: 25px
+      fontSize: 25px
       text.direction: vertical
       text: |
         タイトルは横書きでも
@@ -429,7 +429,7 @@ page:
       z: 1
       shape: oval
       tail: toActor(a1010)
-      fontsize: 25px
+      fontSize: 25px
       text: |
         $$
         \begin{aligned}
@@ -470,7 +470,7 @@ page:
       z: 1
       shape: oval
       tail: toActor(a1020)
-      fontsize: 30px
+      fontSize: 30px
       text: |
         そして、
         マンガのコマを読む順は右綴じとは逆になります。
@@ -965,7 +965,7 @@ page:
       text: 導入：何が目的?
       scale: 1
       fontSize: 5
-      rotate: 0
+      rot: 0
       stroke: #000000
       fill: #a0f0a0
     actor:
@@ -1014,7 +1014,7 @@ page:
       z: 1
       shape: oval
       tail: toActor(a1030)
-      fontsize: 25px
+      fontSize: 25px
       text: |
         なぜマンガ用のDSL(※1)を作成したのか
         わかりますか?
@@ -1026,7 +1026,7 @@ page:
       h: 20
       shape: oval
       tail: toActor(a1040)
-      fontsize: 25px
+      fontSize: 25px
       text: |
         うーん。
         ネームが書きやすくなるから
@@ -1039,7 +1039,7 @@ page:
       h: 20
       shape: thought
       tail: toActor(a1050)
-      fontsize: 25px
+      fontSize: 25px
       text: おなかすいたなぁ
     caption:
       id: c1260
@@ -1047,7 +1047,7 @@ page:
       y: 75
       w: 17
       h: 18
-      fontsize: 20px
+      fontSize: 20px
       text: |
         ※1：DSL
         (Domain Specific language)
@@ -1080,7 +1080,7 @@ page:
       h: 90
       shape: oval
       tail: toActor(a1060)
-      fontsize: 25px
+      fontSize: 25px
       text: |
         まぁ、広い意味では
         そうかもしれませんが
@@ -1115,7 +1115,7 @@ page:
       h: 90
       shape: oval
       tail: toActor(a1070)
-      fontsize: 25px
+      fontSize: 25px
       text: |
         たしかに
         保存のためにソフト使って
@@ -1179,7 +1179,7 @@ page:
       z: 1
       shape: oval
       tail: toActor(a1090)
-      fontsize: 25px
+      fontSize: 25px
       text: |
         じゃあ
         なぜこんな回りくどいことを?
@@ -1192,7 +1192,7 @@ page:
       z: 1
       shape: oval
       tail: toActor(a1080)
-      fontsize: 25px
+      fontSize: 25px
       text: |
         これは、LLM用なんです。
         要はDSLとしてLLMに出力してもらい
@@ -1206,7 +1206,7 @@ page:
       z: 1
       shape: thought
       tail: toActor(a1100)
-      fontsize: 25px
+      fontSize: 25px
       text: 確か冷蔵庫に...
     object:
       id: o1120
@@ -1214,7 +1214,7 @@ page:
       y: 80
       w: 10
       h: 20
-      fontsize: 25
+      fontSize: 25
       text.direction: vertical
       text: 冷蔵庫
   panel:
@@ -1232,7 +1232,7 @@ page:
       h: 28
       z: 1
       shape: oval
-      fontsize: 25px
+      fontSize: 25px
       text: |
         つまり、LLMに直接ネームを(SVGとして)
         作成してもらうと修正がしにくい為、
@@ -1247,7 +1247,7 @@ page:
       h: 20
       shape: none
       border: 2px
-      fontsize: 65
+      fontSize: 65
       text: |
         　　　　LLM　　　　　　
         　　↗　↕　　　　　　
@@ -1260,7 +1260,7 @@ page:
       h: 28
       z: 1
       shape: oval
-      fontsize: 25px
+      fontSize: 25px
       text: |
         なるほどLLMとの共同作業の為の中間言語
         ってわけですね。確かにいくつかためれば
@@ -1294,7 +1294,7 @@ page:
       y: 60
       w: 10
       h: 10
-      fontsize: 25
+      fontSize: 25
       text: ケーキ
     balloon:
       id: b1170
@@ -1305,7 +1305,7 @@ page:
       z: 1
       shape: thought
       tail: toActor(a1110)
-      fontsize: 25px
+      fontSize: 25px
       text: |
         そう簡単に
         いくかな...
@@ -1315,7 +1315,7 @@ page:
       y: 77
       w: 32
       h: 20
-      fontsize: 60px
+      fontSize: 60px
       text: つづく
 
 asset:
@@ -1379,7 +1379,7 @@ page:
       text: そもそもマンガによる解説ッて有効なの?
       scale: 1
       fontSize: 10
-      rotate: 0
+      rot: 0
       stroke: #000000
       fill: #a0f0a0
     actor:
@@ -1403,7 +1403,7 @@ page:
       z: 1
       shape: oval
       tail: toActor(a1120)
-      fontsize: 25px
+      fontSize: 25px
       text: |
         そもそもマンガによる
         解説ッて有効なんですか?
@@ -1428,7 +1428,7 @@ page:
       z: 2
       shape: oval
       tail: toActor(a1130)
-      fontsize: 25px
+      fontSize: 25px
       text: |
         私はいくつかの点で
         有効であると考えているよ
@@ -1453,7 +1453,7 @@ page:
       w: 20
       h: 20
       z: 1
-      fontsize: 60px
+      fontSize: 60px
       shape: oval
       text: 記憶
     object:
@@ -1463,7 +1463,7 @@ page:
       w: 20
       h: 20
       z: 1
-      fontsize: 60px
+      fontSize: 60px
       shape: oval
       text: 理解
     object:
@@ -1473,7 +1473,7 @@ page:
       w: 20
       h: 20
       z: 1
-      fontsize: 60px
+      fontSize: 60px
       shape: oval
       text: 推論
     object:
@@ -1483,7 +1483,7 @@ page:
       w: 20
       h: 20
       z: 1
-      fontsize: 60px
+      fontSize: 60px
       shape: oval
       text: 動機
     balloon:
@@ -1495,7 +1495,7 @@ page:
       z: 1
       shape: oval
       tail: toActor(a1130)
-      fontsize: 25px
+      fontSize: 25px
       text: マンガは
     balloon:
       id: b1210
@@ -1506,7 +1506,7 @@ page:
       z: 1
       shape: oval
       tail: toActor(a1130)
-      fontsize: 25px
+      fontSize: 25px
       text: 記憶に残りやすく
     balloon:
       id: b1220
@@ -1517,7 +1517,7 @@ page:
       z: 1
       shape: oval
       tail: toActor(a1130)
-      fontsize: 25px
+      fontSize: 25px
       text: 理解しやすく
     balloon:
       id: b1230
@@ -1528,7 +1528,7 @@ page:
       z: 1
       shape: oval
       tail: toActor(a1130)
-      fontsize: 25px
+      fontSize: 25px
       text: 推論を助け
     balloon:
       id: b1240
@@ -1539,7 +1539,7 @@ page:
       z: 1
       shape: oval
       tail: toActor(a1130)
-      fontsize: 25px
+      fontSize: 25px
       text: 読み始めやすい
     balloon:
       id: b1250
@@ -1550,7 +1550,7 @@ page:
       z: 1
       shape: oval
       tail: toActor(a1130)
-      fontsize: 25px
+      fontSize: 25px
       text: つまり、学習に**有利な形式**なんだ。
   panel:
     id: 1270
@@ -1564,7 +1564,7 @@ page:
       text: １. 記憶に残る理由
       scale: 1
       fontSize: 4
-      rotate: 0
+      rot: 0
       stroke: #000000
       fill: #a0f0a0
   panel:
@@ -1582,7 +1582,7 @@ page:
       z: 1
       shape: oval
       tail: toActor(a1130)
-      fontsize: 25px
+      fontSize: 25px
       text: まず記憶の話から。
     balloon:
       id: b1270
@@ -1593,7 +1593,7 @@ page:
       z: 1
       shape: oval
       tail: toActor(a1130)
-      fontsize: 25px
+      fontSize: 25px
       text: |
         人は語られた内容の評価を
         内容それ自体だけではなく
@@ -1613,7 +1613,7 @@ page:
       z: 1
       shape: oval
       tail: toActor(a1130)
-      fontsize: 25px
+      fontSize: 25px
       text: |
         マンガは先生役や解説役を置ける。
         それが理解の枠組みを作る。
@@ -1626,7 +1626,7 @@ page:
       z: 1
       shape: oval
       tail: toActor(a1120)
-      fontsize: 25px
+      fontSize: 25px
       text: |
         誰が話しているかで
         内容の重みが変わるんですね。
@@ -1639,7 +1639,7 @@ page:
       z: 1
       shape: oval
       tail: toActor(a1120)
-      fontsize: 25px
+      fontSize: 25px
       text: |
         そう、
         そして評価された内容を
@@ -1653,7 +1653,7 @@ page:
       z: 1
       shape: oval
       tail: toActor(a1120)
-      fontsize: 25px
+      fontSize: 25px
       text: |
         そもそも学習前は内容自体を
         判断する知識がないから
@@ -1674,7 +1674,7 @@ page:
       z: 1
       shape: oval
       tail: toActor(a1120)
-      fontsize: 25px
+      fontSize: 25px
       text: |
         さらにマンガには文字だけの情報より
         記憶のトリガーの提供が多い。
@@ -1687,7 +1687,7 @@ page:
       z: 1
       shape: oval
       tail: toActor(a1120)
-      fontsize: 25px
+      fontSize: 25px
       text: |
         匂いが記憶のトリガーになるって話しは
         よく知られた話だが、基本的に
@@ -1710,7 +1710,7 @@ page:
       z: 1
       shape: oval
       tail: toActor(a1130)
-      fontsize: 25px
+      fontSize: 25px
       text: |
         あー、なんとなくわかります
         教科書に書いた落書きページに
@@ -1725,7 +1725,7 @@ page:
       z: 1
       shape: oval
       tail: toActor(a1120)
-      fontsize: 25px
+      fontSize: 25px
       text: |
         う、、まぁ
         覚えてないとあまり意味はないのだけれど、
@@ -1748,7 +1748,7 @@ page:
       text: ２. 理解コストが低い理由
       scale: 1
       fontSize: 4
-      rotate: 0
+      rot: 0
       stroke: #000000
       fill: #a0f0a0
   panel:
@@ -1765,7 +1765,7 @@ page:
       h: 20
       z: 1
       shape: oval^
-      fontsize: 25px
+      fontSize: 25px
       text: 次に理解の負担。。
     balloon:
       id: b1370
@@ -1775,7 +1775,7 @@ page:
       h: 20
       z: 1
       shape: oval^
-      fontsize: 25px
+      fontSize: 25px
       text: 文章は順番にしか情報を出せない。。
   panel:
     id: 1340
@@ -1791,7 +1791,7 @@ page:
       h: 20
       z: 1
       shape: oval^
-      fontsize: 25px
+      fontSize: 25px
       text: |
         マンガは情報を
         同時に提示できる。。
@@ -1803,7 +1803,7 @@ page:
       h: 20
       z: 1
       shape: oval^
-      fontsize: 25px
+      fontSize: 25px
       text: |
         だから因果関係を
         一瞬で理解できる。
@@ -1821,7 +1821,7 @@ page:
       h: 20
       z: 1
       shape: oval^
-      fontsize: 25px
+      fontSize: 25px
       text: |
         さらに視線移動だけで
         補足にアクセスできる。
@@ -1833,7 +1833,7 @@ page:
       h: 30
       z: 1
       shape: oval^
-      fontsize: 25px
+      fontSize: 25px
       text: |
          あれですよね、文章で図5参照
         みたいなのって
@@ -1846,7 +1846,7 @@ page:
       h: 20
       z: 1
       shape: oval^
-      fontsize: 25px
+      fontSize: 25px
       text: |
         図5を見た後元の文章どこだっけ
         って迷子になりますよね。
@@ -1862,7 +1862,7 @@ page:
       text: ３. 推論を助ける理由
       scale: 1
       fontSize: 4
-      rotate: 0
+      rot: 0
       stroke: #000000
       fill: #a0f0a0
   panel:
@@ -1879,7 +1879,7 @@ page:
       h: 20
       z: 1
       shape: oval^
-      fontsize: 25px
+      fontSize: 25px
       text: 理解には推論が必要だ。
     balloon:
       id: b1440
@@ -1889,7 +1889,7 @@ page:
       h: 20
       z: 1
       shape: oval^
-      fontsize: 25px
+      fontSize: 25px
       text: 文章は頭の中で図を作る必要がある。
   panel:
     id: 1380
@@ -1905,7 +1905,7 @@ page:
       h: 20
       z: 1
       shape: oval^
-      fontsize: 25px
+      fontSize: 25px
       text: マンガは図が既にある。
     balloon:
       id: b1460
@@ -1915,7 +1915,7 @@ page:
       h: 20
       z: 1
       shape: oval^
-      fontsize: 25px
+      fontSize: 25px
       text: |
         つまり推論の負担を
         外部化できる。
@@ -1927,7 +1927,7 @@ page:
       h: 20
       z: 1
       shape: oval^
-      fontsize: 25px
+      fontSize: 25px
       text: |
         頭の中の作業を
         減らせるんですね。
@@ -1949,7 +1949,7 @@ page:
       text: ４. 読み始めやすい理由
       scale: 1
       fontSize: 4
-      rotate: 0
+      rot: 0
       stroke: #000000
       fill: #a0f0a0
   panel:
@@ -1966,7 +1966,7 @@ page:
       h: 20
       z: 1
       shape: oval^
-      fontsize: 25px
+      fontSize: 25px
       text: 最後は入口の広さ。
     balloon:
       id: b1490
@@ -1976,7 +1976,7 @@ page:
       h: 30
       z: 1
       shape: oval^
-      fontsize: 25px
+      fontSize: 25px
       text: 人は難しそうな文章を避ける。
   panel:
     id: 1410
@@ -1992,7 +1992,7 @@ page:
       h: 20
       z: 1
       shape: oval^
-      fontsize: 25px
+      fontSize: 25px
       text: マンガは理解できそうに見える。
     balloon:
       id: b1510
@@ -2002,5 +2002,5 @@ page:
       h: 30
       z: 1
       shape: oval^
-      fontsize: 25px
+      fontSize: 25px
       text: それだけで読者が増える。
