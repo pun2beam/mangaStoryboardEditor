@@ -342,10 +342,8 @@ actor:
   任意:
 * `shape`（`oval`/`box`/`thought`、既定`oval`）
 * `tail`（`none`/`toActor(<id>)`/`toPoint(x,y)`、既定`none`）
-* `fontsize`（既定: `4`。`12px` / `4%` / `4` のように指定可能。単位省略時はpageの`unit`を使用）
-* `fontSize`（後方互換。既定: 4 ※percent単位時の相対値、px単位ならpx）
-* `emphasis.fontsize`（任意。`**強調**` で囲んだ文字列に適用するサイズ。`12px` / `4%` / `4` を指定可能）
-* `emphasisFontSize` / `emphasisFontsize`（後方互換キー）
+* `fontSize`（既定: `4`。`12px` / `4%` / `4` のように指定可能。単位省略時はpageの`unit`を使用）
+* `emphasisFontSize`（任意。`**強調**` で囲んだ文字列に適用するサイズ。`12px` / `4%` / `4` を指定可能）
 * `padding`（既定: 2）
 * `align`（`left`/`center`/`right`、既定`center`）
 * `lineHeight`（既定: 1.2）
@@ -363,7 +361,7 @@ balloon:
   w:35
   h:18
   tail:toActor(a1)
-  fontsize:12px
+  fontSize:12px
   text: |
     ヤバい！
     遅刻だ！
@@ -387,15 +385,13 @@ balloon:
 * `style`（`box`/`none`、既定`box`）
 * `fontSize`, `padding`, `align`, `lineHeight`（既定はballoon準拠）
 * `valign`（`top`/`center`/`bottom`、既定`top`）
-* `vAlign` / `verticalAlign`（後方互換キー）
-* `emphasis.fontsize`（任意。`**強調**` で囲んだ文字列に適用するサイズ）
-* `emphasisFontSize` / `emphasisFontsize`（後方互換キー）
+* `emphasisFontSize`（任意。`**強調**` で囲んだ文字列に適用するサイズ）
 * `text.direction`（任意、`horizontal`/`vertical`。指定時はmetaより優先）
 
 補足:
 
 * `text` 内で `**...**` で囲った部分は強調として描画する。
-* `emphasis.fontsize` 未指定時は通常文字サイズの約 `1.35` 倍で描画する。
+* `emphasisFontSize` 未指定時は通常文字サイズの約 `1.35` 倍で描画する。
 
 ---
 
@@ -413,12 +409,11 @@ balloon:
   任意:
 * `scale`（既定1.0）
 * `strokeWidth`（任意、数値。棒人間の線の太さ。未指定時は `meta.actor.strokeWidth`、さらに未指定なら `2`）
-* `rotate`（度、既定0）
+* `rot`（度、既定0）
 * `fontSize`（既定: 8）
 * `fontWeight`（任意、既定: 700）
 * `stroke`（文字縁取り色、任意）
 * `strokeWidth`（文字縁取り幅、既定: 1）
-* `stroke.width` / `strokewidth`（後方互換キー）
 * `fill`（既定`black`）
 * `text.direction`（任意、`horizontal`/`vertical`。指定時はmetaより優先）
 
@@ -661,7 +656,7 @@ balloon:
   w:35
   h:18
   tail:toActor(a1)
-  fontsize:4%
+  fontSize:4%
   text: |
     ヤバい！
     遅刻だ！
@@ -680,7 +675,7 @@ sfx:
   panel:3
   x:10
   y:15
-  rotate:-15
+  rot:-15
   text: ドーン
 ```
 

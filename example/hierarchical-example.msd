@@ -33,7 +33,7 @@ page:
       h: 18
       shape: oval
       tail: toActor(a1000)
-      fontsize: 25px
+      fontSize: 25px
       text: |
         階層入力の
         テスト
@@ -53,7 +53,7 @@ page:
       y: 50
       w: 20
       h: 30
-      fontsize: 25px
+      fontSize: 25px
       shape: square
       text: |
         NOTE

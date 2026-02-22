@@ -551,7 +551,7 @@ function validateAndBuild(blocks) {
     if (object.w <= 0 || object.h <= 0) throw new Error(`Line ${object._line}: object width/height は正数`);
     object.shape = ["rect", "circle", "oval", "none"].includes(String(object.shape)) ? String(object.shape) : "rect";
     object.border = parseSizedValue(object.border, 1, pUnit(object, dicts, "panel"));
-    object.fontSize = parseSizedValue(object.fontsize ?? object.fontSize, 4, pUnit(object, dicts, "panel"));
+    object.fontSize = parseSizedValue(object.fontSize, 4, pUnit(object, dicts, "panel"));
     object.align = object.align || "center";
     object.padding = num(object.padding, 2);
     object.rot = num(object.rot, 0);
@@ -575,9 +575,9 @@ function validateAndBuild(blocks) {
     requireFields(balloon, ["w", "h", "text"], "balloon");
     balloon.shape = balloon.shape || "oval";
     balloon.align = balloon.align || "center";
-    balloon.fontSize = parseSizedValue(balloon.fontsize ?? balloon.fontSize, 4, pUnit(balloon, dicts, "panel"));
+    balloon.fontSize = parseSizedValue(balloon.fontSize, 4, pUnit(balloon, dicts, "panel"));
     balloon.emphasisFontSize = parseOptionalSizedValue(
-      balloon["emphasis.fontsize"] ?? balloon.emphasisFontsize ?? balloon.emphasisFontSize,
+      balloon.emphasisFontSize,
       pUnit(balloon, dicts, "panel"),
     );
     balloon.padding = num(balloon.padding, 2);
@@ -608,10 +608,10 @@ function validateAndBuild(blocks) {
     requireFields(caption, ["w", "h", "text"], "caption");
     caption.style = caption.style || "box";
     caption.align = normalizeHorizontalAlign(caption.align, "center");
-    caption.valign = normalizeVerticalAlign(caption.valign ?? caption.vAlign ?? caption.verticalAlign, "top");
-    caption.fontSize = parseSizedValue(caption.fontsize ?? caption.fontSize, 4, pUnit(caption, dicts, "panel"));
+    caption.valign = normalizeVerticalAlign(caption.valign, "top");
+    caption.fontSize = parseSizedValue(caption.fontSize, 4, pUnit(caption, dicts, "panel"));
     caption.emphasisFontSize = parseOptionalSizedValue(
-      caption["emphasis.fontsize"] ?? caption.emphasisFontsize ?? caption.emphasisFontSize,
+      caption.emphasisFontSize,
       pUnit(caption, dicts, "panel"),
     );
     caption.padding = num(caption.padding, 2);
@@ -622,10 +622,10 @@ function validateAndBuild(blocks) {
     s._autoPosition = s.x === undefined || s.x === null || s.x === "" || s.y === undefined || s.y === null || s.y === "";
     requireFields(s, ["text"], "sfx");
     s.scale = num(s.scale, 1);
-    s.rot = num(s.rot ?? s.rotate, 0);
+    s.rot = num(s.rot, 0);
     s.fontSize = num(s.fontSize, 8);
-    s.fontWeight = num(s.fontWeight ?? s["font.weight"] ?? s.fontweight, 700);
-    s.strokeWidth = num(s.strokeWidth ?? s["stroke.width"] ?? s.strokewidth, 1);
+    s.fontWeight = num(s.fontWeight, 700);
+    s.strokeWidth = num(s.strokeWidth, 1);
     s.fill = s.fill || "black";
     s.textDirection = normalizeTextDirection(s["text.direction"] ?? s.textDirection, scene.meta["text.direction"]);
   }
@@ -2763,7 +2763,6 @@ function setupObjectDrag() {
           const nextRotation = normalizeDegrees(state.startRot + angleDelta);
           if (state.kind === "sfx") {
             block.props.rot = roundedRotation(nextRotation);
-            delete block.props.rotate;
           } else {
             block.props.rot = roundedRotation(nextRotation);
           }

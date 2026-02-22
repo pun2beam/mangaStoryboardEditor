@@ -25,7 +25,7 @@ panel:
     y:5
     w:20
     h:20
-    fontsize:50px
+    fontSize:50px
     text: あ
 
 panel: 
@@ -41,7 +41,7 @@ panel:
     y:5
     w:20
     h:20
-    fontsize:50px
+    fontSize:50px
     text: い
 
 panel:
@@ -58,7 +58,7 @@ panel:
     y:5
     w:20
     h:20
-    fontsize:50px
+    fontSize:50px
     text: う
 
 panel:
@@ -74,7 +74,7 @@ panel:
     y:5
     w:20
     h:20
-    fontsize:50px
+    fontSize:50px
     text: え
 
 panel:
@@ -90,7 +90,7 @@ panel:
     y:5
     w:20
     h:20
-    fontsize:50px
+    fontSize:50px
     text: お
 
 panel:
@@ -106,7 +106,7 @@ panel:
     y:5
     w:20
     h:20
-    fontsize:50px
+    fontSize:50px
     text: か
 
 panel:
@@ -122,5 +122,5 @@ panel:
     y:5
     w:20
     h:20
-    fontsize:50px
+    fontSize:50px
     text: き
