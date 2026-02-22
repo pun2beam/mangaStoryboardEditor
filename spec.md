@@ -525,6 +525,7 @@ balloon:
 * `actor.attachments[].ref` の参照先 `asset` が存在する
 * `actor.extends` の参照先 `actor` が存在し、循環継承しない
 * `actor` 継承時、既定では `panel` は継承しない（`meta.actor.inheritPanel:on` 時のみ継承）
+* `actor` 継承時、`x,y` は継承しない（子で明示指定または自動配置で決定）
 * `w,h` は数値で、`w,h > 0`
 * `panel` の `x,y` は任意。`x,y` の両方が指定される場合はその値を優先し、いずれか欠ける場合は自動配置対象として扱う
 * 自動配置アルゴリズムの衝突回避対象は、**同一 `page` にすでに存在する `panel`** のみとする（他ページのpanelは対象外）

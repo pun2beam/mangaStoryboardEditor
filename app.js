@@ -731,6 +731,8 @@ function resolveActorInheritance(actors, meta = {}) {
       if (!inheritPanel) {
         delete inherited.panel;
       }
+      delete inherited.x;
+      delete inherited.y;
       delete inherited._line;
       delete inherited._order;
       delete inherited.extends;
