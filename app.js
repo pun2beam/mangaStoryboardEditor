@@ -644,6 +644,7 @@ function validateAndBuild(blocks) {
     a.z = num(a.z, 0);
     a.flipX = a.flipX === true;
     a.anchor = normalizeAssetAnchorPoint(a.anchor, a._line);
+    a.anchorRot = num(a.anchorRot, 0);
   }
   const assetsById = byId(scene.assets, "asset");
   for (const actor of scene.actors) {
@@ -655,6 +656,7 @@ function validateAndBuild(blocks) {
       attachment.dy = typeof attachment.dy === "number" ? attachment.dy : null;
       attachment.s = typeof attachment.s === "number" ? attachment.s : null;
       attachment.rot = typeof attachment.rot === "number" ? attachment.rot : null;
+      attachment.anchorRot = typeof attachment.anchorRot === "number" ? attachment.anchorRot : null;
       attachment.z = typeof attachment.z === "number" ? attachment.z : null;
       if (attachment.flipX === true) {
         attachment.flipX = true;
@@ -1622,6 +1624,7 @@ function resolveActorAttachments(actor, assetMap) {
     const width = asset.w * scale;
     const height = asset.h * scale;
     const rot = attachment.rot ?? asset.rot ?? 0;
+    const anchorRot = attachment.anchorRot ?? asset.anchorRot ?? 0;
     const flipX = attachment.flipX ?? asset.flipX ?? false;
     const z = attachment.z ?? asset.z ?? 0;
     const anchorPoint = resolveAttachmentAnchorPoint(actor, asset.anchor, poseScale);
@@ -1631,13 +1634,18 @@ function resolveActorAttachments(actor, assetMap) {
     const basisOffsetX = dragBasis === "center" ? width / 2 : 0;
     const basisOffsetY = dragBasis === "center" ? height / 2 : 0;
     const handlePoint = { x: x + basisOffsetX, y: y + basisOffsetY };
-    const cx = x + width / 2;
-    const cy = y + height / 2;
+    const centerX = x + width / 2;
+    const centerY = y + height / 2;
+    const cx = centerX;
+    const cy = centerY;
+    const anchorCx = anchorPoint.x;
+    const anchorCy = anchorPoint.y;
     // actor.facing === "left" applies scale(-1,1) to the parent <g>.
     // Attachment flipX adds another scale(-1,1) around the attachment center,
     // so a double inversion cancels out and the image is rendered in normal orientation.
     const transforms = [];
     if (rot) transforms.push(`rotate(${rot} ${cx} ${cy})`);
+    if (anchorRot) transforms.push(`rotate(${anchorRot} ${anchorCx} ${anchorCy})`);
     if (flipX) transforms.push(`translate(${cx} ${cy}) scale(-1,1) translate(${-cx} ${-cy})`);
     const transform = transforms.length > 0 ? ` transform="${transforms.join(" ")}"` : "";
     return [{
@@ -1646,7 +1654,7 @@ function resolveActorAttachments(actor, assetMap) {
       z,
       anchorPoint,
       handlePoint,
-      centerPoint: { x: cx, y: cy },
+      centerPoint: { x: centerX, y: centerY },
       markup: `<image x="${x}" y="${y}" width="${width}" height="${height}" href="${escapeXml(asset.src)}" opacity="${asset.opacity}"${transform}/>`
     }];
   });
