@@ -876,8 +876,10 @@ function normalizeAppendageRefs(value, line, pathLabel = "actor.appendages") {
     if (!appendage || typeof appendage !== "object") {
       throw new Error(`Line ${appendageLine}: ${pathLabel} の要素形式が不正です`);
     }
-    if (appendage.id === undefined || appendage.id === null || appendage.id === "") {
-      throw new Error(`Line ${appendageLine}: ${pathLabel}[].id は必須です`);
+    const hasId = appendage.id !== undefined && appendage.id !== null && appendage.id !== "";
+    const hasRef = appendage.ref !== undefined && appendage.ref !== null && appendage.ref !== "";
+    if (!hasId && !hasRef) {
+      throw new Error(`Line ${appendageLine}: ${pathLabel}[].id または ${pathLabel}[].ref は必須です`);
     }
     const normalized = { ...appendage };
     if (normalized.ref !== undefined && normalized.ref !== null && normalized.ref !== "") {
@@ -1008,20 +1010,34 @@ function resolveActorInheritance(actors, meta = {}) {
     return merged;
   };
   const mergeAppendagesById = (baseAppendages, ownAppendages) => {
+    const appendageMergeKey = (appendage) => {
+      if (appendage?.id !== undefined && appendage?.id !== null && appendage?.id !== "") {
+        return `id:${String(appendage.id)}`;
+      }
+      if (appendage?.ref !== undefined && appendage?.ref !== null && appendage?.ref !== "") {
+        return `ref:${String(appendage.ref)}`;
+      }
+      return "";
+    };
     const merged = [];
     const indexById = new Map();
     for (const appendage of baseAppendages) {
       const copy = { ...appendage };
       merged.push(copy);
-      indexById.set(String(copy.id), merged.length - 1);
+      const mergeKey = appendageMergeKey(copy);
+      if (mergeKey) {
+        indexById.set(mergeKey, merged.length - 1);
+      }
     }
     for (const appendage of ownAppendages) {
-      const appendageId = String(appendage.id);
+      const mergeKey = appendageMergeKey(appendage);
       const ownCopy = { ...appendage };
-      const baseIndex = indexById.get(appendageId);
+      const baseIndex = mergeKey ? indexById.get(mergeKey) : undefined;
       if (baseIndex === undefined) {
         merged.push(ownCopy);
-        indexById.set(appendageId, merged.length - 1);
+        if (mergeKey) {
+          indexById.set(mergeKey, merged.length - 1);
+        }
       } else {
         merged[baseIndex] = { ...merged[baseIndex], ...ownCopy };
       }
