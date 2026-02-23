@@ -70,9 +70,14 @@ const els = {
   downloadBtn: document.getElementById("downloadSvgBtn"),
   dragHandleToggle: document.getElementById("showDragHandles"),
   poseEditorToggle: document.getElementById("showPoseEditor"),
+  handDetailEditorToggle: document.getElementById("showHandDetailEditor"),
+  handPresetSelect: document.getElementById("handPresetSelect"),
+  handAppendageToggle: document.getElementById("showHandAppendage"),
   renumberBtn: document.getElementById("renumberIdsBtn"),
   split: document.querySelector(".split-root"),
 };
+const HAND_CHAIN_NAMES = ["thumb", "index", "middle", "ring", "little"];
+const HAND_PRESET_NAMES = new Set(["open", "grip", "point", "peace"]);
 let lastGoodSvg = "";
 let debounceId = null;
 let viewState = { scale: 1, panX: 0, panY: 0 };
@@ -84,6 +89,15 @@ function isDragHandleModeEnabled() {
 }
 function isPoseEditModeEnabled() {
   return Boolean(els.poseEditorToggle?.checked);
+}
+function isHandDetailEditModeEnabled() {
+  return isPoseEditModeEnabled() && Boolean(els.handDetailEditorToggle?.checked);
+}
+function isHandAppendageVisibleInUi() {
+  return Boolean(els.handAppendageToggle?.checked);
+}
+function selectedHandPresetValue() {
+  return normalizeHandPreset(els.handPresetSelect?.value);
 }
 function dragHandleRectFor(kind, item, panelRect, unit) {
   const target = rectTarget(panelRect);
@@ -811,7 +825,6 @@ function parseIndexedAppendageChains(appendage, line, fieldName, kind) {
 function validateAppendageChainsByKind(appendage, line) {
   const chains = Array.isArray(appendage.chains) ? appendage.chains : [];
   if (appendage.kind === "hand") {
-    const expectedNames = ["thumb", "index", "middle", "ring", "little"];
     if (chains.length !== 5) {
       throw new Error(`Line ${line}: kind=hand は chains を5本（thumb/index/middle/ring/little）指定してください`);
     }
@@ -820,7 +833,7 @@ function validateAppendageChainsByKind(appendage, line) {
         throw new Error(`Line ${line}: kind=hand の chains[${idx}].points は 1〜4 点で指定してください`);
       }
       if (!chain.name) {
-        chain.name = expectedNames[idx];
+        chain.name = HAND_CHAIN_NAMES[idx];
       }
     });
   }
@@ -849,20 +862,27 @@ function normalizeAppendages(value, line) {
     if (appendage.anchor === undefined || appendage.anchor === null || appendage.anchor === "") {
       throw new Error(`Line ${line}: actor.appendages[].anchor は必須です`);
     }
-    const hasIndexedField = (fieldName) => Object.keys(appendage).some((key) => new RegExp(`^${fieldName}\\[\\d+\\]\\.`).test(key));
-    const hasChains = (appendage.chains !== undefined && appendage.chains !== null && appendage.chains !== "") || hasIndexedField("chains");
-    const hasDigits = (appendage.digits !== undefined && appendage.digits !== null && appendage.digits !== "") || hasIndexedField("digits");
-    if (!hasChains && !hasDigits) {
-      throw new Error(`Line ${line}: actor.appendages[].chains または actor.appendages[].digits のいずれかは必須です`);
-    }
+    const hasIndexedField = (fieldName) => Object.keys(appendage).some((key) => new RegExp(`^${fieldName}\[\d+\]\.`).test(key));
     const kind = String(appendage.kind);
     const indexedChains = parseIndexedAppendageChains(appendage, line, "chains", kind);
     const indexedDigits = parseIndexedAppendageChains(appendage, line, "digits", kind);
+    const hasChains = (appendage.chains !== undefined && appendage.chains !== null && appendage.chains !== "") || hasIndexedField("chains");
+    const hasDigits = (appendage.digits !== undefined && appendage.digits !== null && appendage.digits !== "") || hasIndexedField("digits");
+    const handPreset = kind === "hand" ? normalizeHandPreset(appendage.preset ?? appendage.handPreset) : undefined;
+    const handDetailEdited = kind === "hand"
+      ? parseBooleanLike(appendage.handDetailEdited, hasChains || Boolean(indexedChains))
+      : false;
+    if (!hasChains && !hasDigits && kind !== "hand") {
+      throw new Error(`Line ${line}: actor.appendages[].chains または actor.appendages[].digits のいずれかは必須です`);
+    }
+    const chains = indexedChains
+      ?? (hasChains ? parseAppendagePointGroups(appendage.chains, line, "chains").map((points, index) => ({ name: `chain-${index}`, points })) : null)
+      ?? (kind === "hand" ? defaultHandChainsForPreset(handPreset) : []);
     const normalizedAppendage = {
       ...appendage,
       kind,
-      chains: indexedChains
-        ?? parseAppendagePointGroups(appendage.chains, line, "chains").map((points, index) => ({ name: `chain-${index}`, points })),
+      ...(kind === "hand" ? { preset: handPreset, handVisible: parseBooleanLike(appendage.handVisible, true), handDetailEdited } : {}),
+      chains,
       digits: indexedDigits
         ?? parseAppendagePointGroups(appendage.digits, line, "digits").map((points, index) => ({ name: `digit-${index}`, points })),
     };
@@ -870,6 +890,56 @@ function normalizeAppendages(value, line) {
     return normalizedAppendage;
   });
 }
+function defaultHandChainsForPreset(preset) {
+  const safePreset = HAND_PRESET_NAMES.has(String(preset)) ? String(preset) : "open";
+  const presets = {
+    open: [
+      [{ x: -4.8, y: -1.6 }, { x: -8, y: -4.8 }],
+      [{ x: -1.8, y: -2.4 }, { x: -2.2, y: -8 }],
+      [{ x: 0, y: -2.6 }, { x: 0, y: -8.6 }],
+      [{ x: 1.8, y: -2.4 }, { x: 2.1, y: -8 }],
+      [{ x: 3.4, y: -1.4 }, { x: 4.8, y: -6.2 }],
+    ],
+    grip: [
+      [{ x: -4.8, y: -1.2 }, { x: -7.8, y: 0.6 }],
+      [{ x: -1.8, y: -1.8 }, { x: -2.6, y: 1.8 }],
+      [{ x: 0, y: -1.8 }, { x: -0.2, y: 2 }],
+      [{ x: 1.8, y: -1.6 }, { x: 2.2, y: 1.9 }],
+      [{ x: 3.4, y: -0.8 }, { x: 4.8, y: 2.4 }],
+    ],
+    point: [
+      [{ x: -4.8, y: -1.2 }, { x: -7.2, y: 0.2 }],
+      [{ x: -1.8, y: -2.2 }, { x: -1.9, y: -8.8 }],
+      [{ x: 0, y: -1.8 }, { x: 0, y: 2.2 }],
+      [{ x: 1.8, y: -1.6 }, { x: 2.2, y: 2 }],
+      [{ x: 3.4, y: -0.8 }, { x: 4.6, y: 2.2 }],
+    ],
+    peace: [
+      [{ x: -4.8, y: -1.2 }, { x: -7.2, y: 0.2 }],
+      [{ x: -1.9, y: -2.4 }, { x: -2.1, y: -8.6 }],
+      [{ x: 0.2, y: -2.5 }, { x: 0.3, y: -8.8 }],
+      [{ x: 1.8, y: -1.4 }, { x: 2.3, y: 2.2 }],
+      [{ x: 3.4, y: -0.8 }, { x: 4.8, y: 2.3 }],
+    ],
+  };
+  return presets[safePreset].map((points, index) => ({
+    name: HAND_CHAIN_NAMES[index],
+    points: points.map((point) => ({ x: point.x, y: point.y })),
+  }));
+}
+function normalizeHandPreset(value) {
+  const preset = String(value ?? "").trim().toLowerCase();
+  return HAND_PRESET_NAMES.has(preset) ? preset : "open";
+}
+function parseBooleanLike(value, defaultValue = false) {
+  if (value === undefined || value === null || value === "") return defaultValue;
+  if (typeof value === "boolean") return value;
+  const text = String(value).trim().toLowerCase();
+  if (["true", "1", "yes", "on"].includes(text)) return true;
+  if (["false", "0", "no", "off"].includes(text)) return false;
+  return defaultValue;
+}
+
 function resolveActorInheritance(actors, meta = {}) {
   const actorMap = new Map(actors.map((actor) => [String(actor.id), actor]));
   const state = new Map();
@@ -1766,7 +1836,7 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
   const headPoint = resolveHeadPoint(actor._posePoints, s);
   const neckPoint = resolvePosePoint(actor._posePoints, "neck", s) || { x: 0, y: -s * 0.8 };
   const attachments = resolveActorAttachments(actor, assetMap);
-  const appendages = resolveActorAppendages(actor);
+  const appendages = resolveActorAppendages(actor, kind, id);
   const hideHeadAndFace = actor.emotion === "none";
   const faceMarkup = actor.facing === "back" || hideHeadAndFace
     ? ""
@@ -1798,12 +1868,30 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
     ${poseHandles}
   </g>`;
 }
-function resolveActorAppendages(actor) {
+function renderHandChainHandles(actor, appendage, appendageIndex, anchorPoint, appendageScale, kind, id) {
+  if (!isHandDetailEditModeEnabled()) return "";
+  if (kind !== "actor" || !id || String(id) !== String(selectedActorId)) return "";
+  if (appendage.kind !== "hand") return "";
+  const chains = Array.isArray(appendage.chains) ? appendage.chains : [];
+  return chains.map((chain, chainIndex) => {
+    const chainPoints = Array.isArray(chain?.points) ? chain.points : [];
+    if (chainPoints.length === 0) return "";
+    return chainPoints.map((point, pointIndex) => {
+      const x = anchorPoint.x + point.x * appendageScale;
+      const y = anchorPoint.y + point.y * appendageScale;
+      return `<circle class="hand-chain-point-handle" data-kind="actor" data-id="${escapeXml(String(id))}" data-appendage-index="${appendageIndex}" data-chain-index="${chainIndex}" data-chain-point-index="${pointIndex}" cx="${x}" cy="${y}" r="4"/>`;
+    }).join("");
+  }).join("");
+}
+function resolveActorAppendages(actor, kind, id) {
   if (!Array.isArray(actor.appendages) || actor.appendages.length === 0) return [];
   const poseScale = 20 * actor.scale;
   const appendageScale = actor.scale;
   return actor.appendages.flatMap((appendage, appendageIndex) => {
     const anchorPoint = resolveAttachmentAnchorPoint(actor, appendage.anchor, poseScale);
+    if (appendage.kind === "hand" && appendage.handVisible === false) {
+      return [];
+    }
     const buildPolyline = (pointGroups, className, width) => pointGroups
       .map((group) => {
         const chainPoints = Array.isArray(group?.points) ? group.points : group;
@@ -1815,6 +1903,7 @@ function resolveActorAppendages(actor) {
       .join("");
     const chainMarkup = buildPolyline(appendage.chains || [], "appendage-chain", Math.max(1, actor.strokeWidth * 0.9));
     const digitsMarkup = buildPolyline(appendage.digits || [], "appendage-digit", Math.max(1, actor.strokeWidth * 0.7));
+    const detailHandles = renderHandChainHandles(actor, appendage, appendageIndex, anchorPoint, appendageScale, kind, id);
     const transforms = [];
     if (appendage.rotAnchor) transforms.push(`rotate(${appendage.rotAnchor} ${anchorPoint.x} ${anchorPoint.y})`);
     if (appendage.flipX) transforms.push(`translate(${anchorPoint.x} ${anchorPoint.y}) scale(-1,1) translate(${-anchorPoint.x} ${-anchorPoint.y})`);
@@ -1824,7 +1913,7 @@ function resolveActorAppendages(actor) {
       id: appendage.id,
       kind: appendage.kind,
       z: appendage.z,
-      markup: `<g data-appendage-id="${escapeXml(String(appendage.id))}" data-appendage-kind="${escapeXml(String(appendage.kind))}"${transform}>${chainMarkup}${digitsMarkup}</g>`,
+      markup: `<g data-appendage-id="${escapeXml(String(appendage.id))}" data-appendage-kind="${escapeXml(String(appendage.kind))}"${transform}>${chainMarkup}${digitsMarkup}${detailHandles}</g>`,
     }];
   });
 }
@@ -2635,6 +2724,36 @@ function escapeXml(str) {
 function syncDragHandleModeClass() {
   els.canvas.classList.toggle("drag-handle-active", isDragHandleModeEnabled() || isPoseEditModeEnabled());
 }
+function syncHandUiFromSelectedActor() {
+  if (!currentScene || !selectedActorId) return;
+  const actor = currentScene.actors?.find((entry) => String(entry.id) === String(selectedActorId));
+  if (!actor) return;
+  const hand = actor.appendages?.find((appendage) => appendage?.kind === "hand");
+  if (!hand) return;
+  if (els.handPresetSelect) {
+    els.handPresetSelect.value = normalizeHandPreset(hand.preset);
+  }
+  if (els.handAppendageToggle) {
+    els.handAppendageToggle.checked = hand.handVisible !== false;
+  }
+}
+function applyHandUiStateToActorBlock(actorBlock, actorId) {
+  if (!actorBlock || actorBlock.type !== "actor" || String(actorBlock.props.id) !== String(actorId)) return;
+  if (!Array.isArray(actorBlock.props.appendages)) return;
+  for (const appendage of actorBlock.props.appendages) {
+    if (!appendage || typeof appendage !== "object" || appendage.kind !== "hand") continue;
+    appendage.preset = selectedHandPresetValue();
+    appendage.handVisible = isHandAppendageVisibleInUi();
+    const hasExplicitChains = Array.isArray(appendage.chains) && appendage.chains.length > 0;
+    const detailEdited = parseBooleanLike(appendage.handDetailEdited, hasExplicitChains);
+    if (detailEdited) {
+      appendage.handDetailEdited = true;
+    } else {
+      delete appendage.handDetailEdited;
+      delete appendage.chains;
+    }
+  }
+}
 function update() {
   try {
     const blocks = parseBlocks(els.input.value);
@@ -2645,6 +2764,7 @@ function update() {
     els.canvas.innerHTML = svg;
     els.errorBox.hidden = true;
     els.banner.hidden = true;
+    syncHandUiFromSelectedActor();
   } catch (err) {
     if (lastGoodSvg) {
       els.canvas.innerHTML = lastGoodSvg;
@@ -2800,6 +2920,7 @@ function setupObjectDrag() {
     if (kind === "actor" && id) {
       const selectionChanged = String(selectedActorId) !== String(id);
       selectedActorId = id;
+      syncHandUiFromSelectedActor();
       if (selectionChanged && isPoseEditModeEnabled() && !target.dataset.posePoint) {
         update();
       }
@@ -2850,6 +2971,48 @@ function setupObjectDrag() {
         startDx: startDelta.dx,
         startDy: startDelta.dy,
         attachmentPointTargets,
+      };
+      event.preventDefault();
+      return;
+    }
+    const appendageIndex = target.dataset.appendageIndex;
+    const chainIndex = target.dataset.chainIndex;
+    const chainPointIndex = target.dataset.chainPointIndex;
+    if (appendageIndex !== undefined && chainIndex !== undefined && chainPointIndex !== undefined) {
+      if (!isHandDetailEditModeEnabled() || kind !== "actor" || !id) return;
+      const actorInfo = actorWithPanel(id);
+      if (!actorInfo) return;
+      const parsedAppendageIndex = Number.parseInt(appendageIndex, 10);
+      const parsedChainIndex = Number.parseInt(chainIndex, 10);
+      const parsedChainPointIndex = Number.parseInt(chainPointIndex, 10);
+      if (!Number.isInteger(parsedAppendageIndex) || !Number.isInteger(parsedChainIndex) || !Number.isInteger(parsedChainPointIndex)) return;
+      const actorAppendage = actorInfo.actor.appendages?.[parsedAppendageIndex];
+      const chain = actorAppendage?.chains?.[parsedChainIndex];
+      const pointInChain = chain?.points?.[parsedChainPointIndex];
+      if (!actorAppendage || actorAppendage.kind !== "hand" || !pointInChain) return;
+      const start = scenePointFromEvent(event);
+      if (!start) return;
+      const chainPointTargets = Array.from(els.canvas.querySelectorAll(
+        `[data-kind="actor"][data-id="${escapeCssValue(String(id))}"][data-appendage-index="${escapeCssValue(String(parsedAppendageIndex))}"][data-chain-index="${escapeCssValue(String(parsedChainIndex))}"][data-chain-point-index="${escapeCssValue(String(parsedChainPointIndex))}"]`
+      ));
+      target.setPointerCapture(event.pointerId);
+      isObjectDragging = true;
+      state = {
+        pointerId: event.pointerId,
+        captureTarget: target,
+        targets: [],
+        kind: "actor",
+        id,
+        handleType: "hand-chain-point",
+        actor: actorInfo.actor,
+        appendageIndex: parsedAppendageIndex,
+        chainIndex: parsedChainIndex,
+        chainPointIndex: parsedChainPointIndex,
+        appendage: actorAppendage,
+        start,
+        panelRect: actorInfo.panelRect,
+        unit: actorInfo.unit,
+        chainPointTargets,
       };
       event.preventDefault();
       return;
@@ -2961,6 +3124,18 @@ function setupObjectDrag() {
         handle.setAttribute("cx", String(delta.localPoint.x));
         handle.setAttribute("cy", String(delta.localPoint.y));
       }
+    } else if (state.handleType === "hand-chain-point") {
+      const localPoint = actorLocalPointFromScene(point, state.actor, state.panelRect, state.unit);
+      const safeScale = Math.max(Math.abs(num(state.actor.scale, 0)), 1e-6);
+      const anchorPoint = resolveAttachmentAnchorPoint(state.actor, state.appendage.anchor, 20 * safeScale);
+      const pointX = (localPoint.x - anchorPoint.x) / safeScale;
+      const pointY = (localPoint.y - anchorPoint.y) / safeScale;
+      if (!Number.isFinite(pointX) || !Number.isFinite(pointY)) return;
+      state.previewChainPoint = { x: roundedPoseCoord(pointX), y: roundedPoseCoord(pointY) };
+      for (const handle of state.chainPointTargets) {
+        handle.setAttribute("cx", String(anchorPoint.x + state.previewChainPoint.x * safeScale));
+        handle.setAttribute("cy", String(anchorPoint.y + state.previewChainPoint.y * safeScale));
+      }
     } else if (state.handleType === "rotate" && state.originalPoint && state.startAngle !== null) {
       const currentAngle = angleFromPointClockwiseTop(point, state.originalPoint);
       const angleDelta = signedAngleDelta(currentAngle, state.startAngle);
@@ -3005,6 +3180,30 @@ function setupObjectDrag() {
           if (!delta) return;
           attachment.dx = delta.roundedDx;
           attachment.dy = delta.roundedDy;
+          applyHandUiStateToActorBlock(block, state.id);
+          const updatedBlocks = blocks;
+          els.input.value = stringifyBlocks(updatedBlocks);
+          update();
+        } else if (state.handleType === "hand-chain-point") {
+          const appendages = block.props.appendages;
+          if (!Array.isArray(appendages)) return;
+          const appendage = appendages[state.appendageIndex];
+          if (!appendage || appendage.kind !== "hand") return;
+          if (!Array.isArray(appendage.chains) || appendage.chains.length === 0) {
+            appendage.chains = defaultHandChainsForPreset(normalizeHandPreset(appendage.preset));
+          }
+          const chain = appendage?.chains?.[state.chainIndex];
+          const chainPoint = chain?.points?.[state.chainPointIndex];
+          if (!chainPoint) return;
+          const localPoint = actorLocalPointFromScene(point, state.actor, state.panelRect, state.unit);
+          const safeScale = Math.max(Math.abs(num(state.actor.scale, 0)), 1e-6);
+          const anchorPoint = resolveAttachmentAnchorPoint(state.actor, appendage.anchor, 20 * safeScale);
+          const pointX = roundedPoseCoord((localPoint.x - anchorPoint.x) / safeScale);
+          const pointY = roundedPoseCoord((localPoint.y - anchorPoint.y) / safeScale);
+          chainPoint.x = pointX;
+          chainPoint.y = pointY;
+          appendage.handDetailEdited = true;
+          applyHandUiStateToActorBlock(block, state.id);
           const updatedBlocks = blocks;
           els.input.value = stringifyBlocks(updatedBlocks);
           update();
@@ -3056,6 +3255,15 @@ function setupObjectDrag() {
   els.canvas.addEventListener("pointerup", finishDrag);
   els.canvas.addEventListener("pointercancel", finishDrag);
 }
+function persistSelectedActorHandUiState() {
+  if (!selectedActorId) return;
+  const blocks = parseBlocks(els.input.value);
+  const actorBlock = blocks.find((block) => block.type === "actor" && String(block.props.id) === String(selectedActorId));
+  if (!actorBlock) return;
+  applyHandUiStateToActorBlock(actorBlock, selectedActorId);
+  els.input.value = stringifyBlocks(blocks);
+  update();
+}
 function setupDragHandleToggle() {
   if (els.dragHandleToggle) {
     els.dragHandleToggle.addEventListener("change", () => {
@@ -3067,6 +3275,21 @@ function setupDragHandleToggle() {
     els.poseEditorToggle.addEventListener("change", () => {
       syncDragHandleModeClass();
       update();
+    });
+  }
+  if (els.handDetailEditorToggle) {
+    els.handDetailEditorToggle.addEventListener("change", () => {
+      update();
+    });
+  }
+  if (els.handPresetSelect) {
+    els.handPresetSelect.addEventListener("change", () => {
+      persistSelectedActorHandUiState();
+    });
+  }
+  if (els.handAppendageToggle) {
+    els.handAppendageToggle.addEventListener("change", () => {
+      persistSelectedActorHandUiState();
     });
   }
   syncDragHandleModeClass();

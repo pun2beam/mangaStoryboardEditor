@@ -130,3 +130,10 @@ html, body { margin: 0; height: 100%; color: var(--text); background: var(--bg);
   stroke-width: 1.4;
   cursor: pointer;
 }
+
+.hand-chain-point-handle {
+  fill: #ffffff;
+  stroke: #16a34a;
+  stroke-width: 1.4;
+  cursor: pointer;
+}
