@@ -568,6 +568,7 @@ function validateAndBuild(blocks) {
     actor.y = num(actor.y, 0);
     actor.stroke = actor.stroke || scene.meta?.["actor.stroke"] || "black";
     actor.strokeWidth = positiveNum(actor.strokeWidth, positiveNum(scene.meta?.["actor.strokeWidth"], 2));
+    actor.outline = parseBooleanLike(actor.outline, parseBooleanLike(scene.meta?.["actor.outline"], true));
     actor.attachments = normalizeAttachments(actor.attachments, actor._line);
     actor.appendages = normalizeAppendageRefs(actor.appendages, actor._line, "actor.appendages");
     actor._posePoints = parsePosePoints(actor["pose.points"], actor._line);
@@ -1834,9 +1835,10 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
   const s = 20 * actor.scale;
   const rot = num(actor.rot, 0);
   const mirror = actor.facing === "left" ? -1 : 1;
+  const drawOutline = parseBooleanLike(actor.outline, true);
   const pose = hasPosePoints(actor._posePoints)
-    ? poseSegmentsFromPoints(actor._posePoints, actor._posePointZ, s, actor.strokeWidth, actor.stroke)
-    : poseSegments(actor.pose, actor._posePointZ, s, actor.strokeWidth, actor.stroke);
+    ? poseSegmentsFromPoints(actor._posePoints, actor._posePointZ, s, actor.strokeWidth, actor.stroke, drawOutline)
+    : poseSegments(actor.pose, actor._posePointZ, s, actor.strokeWidth, actor.stroke, drawOutline);
   const headPoint = resolveHeadPoint(actor._posePoints, s);
   const neckPoint = resolvePosePoint(actor._posePoints, "neck", s) || { x: 0, y: -s * 0.8 };
   const attachments = resolveActorAttachments(actor, assetMap);
@@ -1846,7 +1848,7 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
     ? ""
     : `${eyePath(actor.eye, s, headPoint)}${emotionPath(actor.emotion, s, headPoint)}`;
   const headShape = hideHeadAndFace ? "none" : actor["head.shape"];
-  const headMarkup = headOutline(headShape, s, actor.strokeWidth, headPoint);
+  const headMarkup = headOutline(headShape, s, actor.strokeWidth, headPoint, drawOutline ? "black" : actor.stroke);
   const nameLabel = showActorName && actor.name
     ? `<text x="0" y="${-s * 2.9}" font-size="${Math.max(10, s * 0.55)}" text-anchor="middle" dominant-baseline="auto" fill="black">${escapeXml(String(actor.name))}</text>`
     : "";
@@ -1856,7 +1858,9 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
   const groupTransform = rot ? `translate(${p.x},${p.y}) rotate(${rot})` : `translate(${p.x},${p.y})`;
   const attrs = renderDataAttrs(kind, id);
   const neckHeadLine = [
-    `<line x1="${headPoint.x}" y1="${headPoint.y}" x2="${neckPoint.x}" y2="${neckPoint.y}" stroke="black" stroke-width="${actor.strokeWidth + 2}" stroke-linecap="butt" stroke-linejoin="round"/>`,
+    drawOutline
+      ? `<line x1="${headPoint.x}" y1="${headPoint.y}" x2="${neckPoint.x}" y2="${neckPoint.y}" stroke="black" stroke-width="${actor.strokeWidth + 2}" stroke-linecap="butt" stroke-linejoin="round"/>`
+      : "",
     `<line x1="${headPoint.x}" y1="${headPoint.y}" x2="${neckPoint.x}" y2="${neckPoint.y}" stroke="${actor.stroke}" stroke-width="${actor.strokeWidth}" stroke-linecap="butt" stroke-linejoin="round"/>`,
   ].join("");
   const actorLayers = [
@@ -1927,14 +1931,14 @@ function hasPosePoints(points) {
 function resolveHeadPoint(points, scale) {
   return resolvePosePoint(points, "head", scale) || { x: 0, y: -scale * 2.2 };
 }
-function headOutline(shape, s, strokeWidth, headPoint = { x: 0, y: -s * 2.2 }) {
+function headOutline(shape, s, strokeWidth, headPoint = { x: 0, y: -s * 2.2 }, strokeColor = "black") {
   const radius = s * 0.45;
   if (shape === "square") {
     const side = radius * 2;
-    return `<rect x="${headPoint.x - radius}" y="${headPoint.y - radius}" width="${side}" height="${side}" fill="white" stroke="black" stroke-width="${strokeWidth}"/>`;
+    return `<rect x="${headPoint.x - radius}" y="${headPoint.y - radius}" width="${side}" height="${side}" fill="white" stroke="${strokeColor}" stroke-width="${strokeWidth}"/>`;
   }
   if (shape === "none") return "";
-  return `<circle cx="${headPoint.x}" cy="${headPoint.y}" r="${radius}" fill="white" stroke="black" stroke-width="${strokeWidth}"/>`;
+  return `<circle cx="${headPoint.x}" cy="${headPoint.y}" r="${radius}" fill="white" stroke="${strokeColor}" stroke-width="${strokeWidth}"/>`;
 }
 function resolveActorAttachments(actor, assetMap) {
   if (!Array.isArray(actor.attachments) || actor.attachments.length === 0) return [];
@@ -2031,17 +2035,17 @@ function posePresetPoints(pose, s) {
     rf: leg.rf,
   };
 }
-function poseSegments(pose, pointZ, s, strokeWidth, strokeColor = "black") {
+function poseSegments(pose, pointZ, s, strokeWidth, strokeColor = "black", drawOutline = true) {
   const presetPoints = posePresetPoints(pose, s);
   const point = (name) => presetPoints[name] || null;
-  return poseLinesWithZ(point, pointZ, strokeWidth, strokeColor);
+  return poseLinesWithZ(point, pointZ, strokeWidth, strokeColor, drawOutline);
 }
-function poseSegmentsFromPoints(points, pointZ, s, strokeWidth, strokeColor = "black") {
+function poseSegmentsFromPoints(points, pointZ, s, strokeWidth, strokeColor = "black", drawOutline = true) {
   const presetPoints = posePresetPoints("stand", s);
   const point = (name) => resolvePosePoint(points, name, s) || presetPoints[name] || null;
-  return poseLinesWithZ(point, pointZ, strokeWidth, strokeColor);
+  return poseLinesWithZ(point, pointZ, strokeWidth, strokeColor, drawOutline);
 }
-function poseLinesWithZ(pointResolver, pointZ, strokeWidth, strokeColor = "black") {
+function poseLinesWithZ(pointResolver, pointZ, strokeWidth, strokeColor = "black", drawOutline = true) {
   const lineDefs = [
     ["neck", "le", "le"],
     ["le", "lh", "lh"],
@@ -2075,7 +2079,9 @@ function poseLinesWithZ(pointResolver, pointZ, strokeWidth, strokeColor = "black
       z,
       order: i,
       markup: [
-        `<line x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="black" stroke-width="${strokeWidth + 2}" stroke-linecap="butt" stroke-linejoin="round"/>`,
+        drawOutline
+          ? `<line x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="black" stroke-width="${strokeWidth + 2}" stroke-linecap="butt" stroke-linejoin="round"/>`
+          : "",
         `<line x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="${strokeColor}" stroke-width="${strokeWidth}" stroke-linecap="butt" stroke-linejoin="round"/>`,
       ].join(""),
     });
