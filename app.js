@@ -773,6 +773,7 @@ function parseAppendagePointGroups(raw, line, fieldName) {
     return points.length >= 2 ? points : null;
   };
   if (Array.isArray(raw)) {
+    if (raw.length === 0) return [];
     const groups = raw.map((group, index) => normalizeGroup(group, index)).filter(Boolean);
     if (groups.length > 0) return groups;
   }
