@@ -2816,9 +2816,12 @@ function syncDragHandleModeClass() {
 function applyHandUiStateToActorBlock(actorBlock, actorId) {
   if (!actorBlock || actorBlock.type !== "actor" || String(actorBlock.props.id) !== String(actorId)) return;
   if (!Array.isArray(actorBlock.props.appendages)) return;
+  const hasIndexedField = (appendage, fieldName) => Object.keys(appendage || {}).some((key) => new RegExp(`^${fieldName}\\[\\d+\\]\\.`).test(key));
   for (const appendage of actorBlock.props.appendages) {
     if (!appendage || typeof appendage !== "object" || appendage.kind !== "hand") continue;
-    const hasExplicitChains = Array.isArray(appendage.chains) && appendage.chains.length > 0;
+    const hasExplicitChains =
+      (appendage.chains !== undefined && appendage.chains !== null && appendage.chains !== "")
+      || hasIndexedField(appendage, "chains");
     const detailEdited = parseBooleanLike(appendage.handDetailEdited, hasExplicitChains);
     if (detailEdited) {
       appendage.handDetailEdited = true;
@@ -3412,6 +3415,48 @@ function serializeList(list, indentLevel) {
   }
   return `\n${lines.join("\n")}`;
 }
+function appendagePointGroupsToDslString(groups) {
+  if (!Array.isArray(groups)) return groups;
+  return groups
+    .map((group) => {
+      const points = Array.isArray(group?.points) ? group.points : (Array.isArray(group) ? group : []);
+      return points
+        .map((point) => `${roundedPoseCoord(point?.x ?? 0)},${roundedPoseCoord(point?.y ?? 0)}`)
+        .join(" ");
+    })
+    .join(" | ");
+}
+function normalizeAppendageDslFields(appendage) {
+  if (!appendage || typeof appendage !== "object") return appendage;
+  const normalized = { ...appendage };
+  for (const key of Object.keys(normalized)) {
+    if (/^(chains|digits)\[\d+\]\.(name|points)$/.test(key)) delete normalized[key];
+  }
+  if (Array.isArray(normalized.chains)) {
+    normalized.chains = appendagePointGroupsToDslString(normalized.chains);
+  }
+  if (Array.isArray(normalized.digits)) {
+    normalized.digits = appendagePointGroupsToDslString(normalized.digits);
+  }
+  return normalized;
+}
+function normalizeBlocksForDslOutput(blocks) {
+  return blocks.map((block) => {
+    if (block.type === "appendage") {
+      return { ...block, props: normalizeAppendageDslFields(block.props) };
+    }
+    if (block.type === "actor" && Array.isArray(block.props?.appendages)) {
+      return {
+        ...block,
+        props: {
+          ...block.props,
+          appendages: block.props.appendages.map((appendage) => normalizeAppendageDslFields(appendage)),
+        },
+      };
+    }
+    return block;
+  });
+}
 function stringifyFlatBlocks(blocks) {
   const out = [];
   for (const block of blocks) {
@@ -3501,6 +3546,7 @@ function stringifyBlocks(blocks) {
   if (!layoutMeta.page.persistGenerated) {
     blocksForSerialization = blocks.filter((block) => !(block.type === "page" && String(block.props.id ?? "").startsWith("auto-p")));
   }
+  blocksForSerialization = normalizeBlocksForDslOutput(blocksForSerialization);
   const prefersHierarchical = blocksForSerialization.some((block) => block.sourceFormat === "hierarchical");
   if (prefersHierarchical) return stringifyHierarchicalBlocks(blocksForSerialization);
   return stringifyFlatBlocks(blocksForSerialization);
