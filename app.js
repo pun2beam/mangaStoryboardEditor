@@ -883,6 +883,36 @@ function normalizeAppendageRefs(value, line, pathLabel = "actor.appendages") {
     return normalized;
   });
 }
+function parseAppendageOutlineWidthSpec(raw, line, pathLabel) {
+  if (raw === undefined || raw === null || raw === "") return { mode: "uniform", width: 2 };
+  if (typeof raw === "number") {
+    if (!Number.isFinite(raw)) {
+      throw new Error(`Line ${line}: ${pathLabel}[].outlineWidth は数値で指定してください`);
+    }
+    return { mode: "uniform", width: raw };
+  }
+  const source = Array.isArray(raw) ? raw.join(" ") : String(raw).trim();
+  if (!source) return { mode: "uniform", width: 2 };
+  const numeric = Number(source);
+  if (Number.isFinite(numeric)) return { mode: "uniform", width: numeric };
+  const groups = source
+    .split("|")
+    .map((segment) => segment.trim())
+    .filter(Boolean)
+    .map((segment, groupIndex) => {
+      const tokens = segment.split(/[\s,]+/).filter(Boolean);
+      const values = tokens.map((token) => Number(token));
+      if (values.length === 0 || values.some((value) => !Number.isFinite(value))) {
+        throw new Error(`Line ${line}: ${pathLabel}[].outlineWidth[${groupIndex}] は数値列で指定してください`);
+      }
+      return values;
+    });
+  if (groups.length === 0) {
+    throw new Error(`Line ${line}: ${pathLabel}[].outlineWidth の形式が不正です`);
+  }
+  return { mode: "point-sequence", groups };
+}
+
 function normalizeAppendages(value, line, pathLabel = "actor.appendages") {
   if (value === undefined || value === null || value === "") return [];
   if (!Array.isArray(value)) throw new Error(`Line ${line}: ${pathLabel} は配列で指定してください`);
@@ -910,6 +940,26 @@ function normalizeAppendages(value, line, pathLabel = "actor.appendages") {
       chains,
       digits: parseAppendagePointGroups(appendage.digits, appendageLine, "digits").map((points, index) => ({ name: `digit-${index}`, points })),
     };
+    normalizedAppendage._outlineWidthSpec = parseAppendageOutlineWidthSpec(
+      normalizedAppendage.outlineWidth,
+      appendageLine,
+      pathLabel,
+    );
+    if (normalizedAppendage._outlineWidthSpec.mode === "point-sequence") {
+      const lineGroups = [
+        ...normalizedAppendage.chains.map((group) => group.points),
+        ...normalizedAppendage.digits.map((group) => group.points),
+      ];
+      const outlineGroups = normalizedAppendage._outlineWidthSpec.groups;
+      if (outlineGroups.length !== lineGroups.length) {
+        throw new Error(`Line ${appendageLine}: ${pathLabel}[].outlineWidth のグループ数は chains+digits と一致させてください`);
+      }
+      outlineGroups.forEach((outlineGroup, index) => {
+        if (outlineGroup.length !== lineGroups[index].length) {
+          throw new Error(`Line ${appendageLine}: ${pathLabel}[].outlineWidth[${index}] の要素数は対応する点列と一致させてください`);
+        }
+      });
+    }
     validateAppendageChainsByKind(normalizedAppendage, appendageLine);
     return normalizedAppendage;
   });
@@ -1908,18 +1958,42 @@ function resolveActorAppendages(actor) {
   const drawOutline = parseBooleanLike(actor.outline, true);
   return actor.appendages.flatMap((appendage, appendageIndex) => {
     const anchorPoint = resolveAttachmentAnchorPoint(actor, appendage.anchor, poseScale);
-    const outlineWidth = Math.max(0, num(appendage.outlineWidth, 2));
+    const outlineSpec = appendage._outlineWidthSpec || { mode: "uniform", width: num(appendage.outlineWidth, 2) };
+    const chainCount = Array.isArray(appendage.chains) ? appendage.chains.length : 0;
+    const resolvePerPointOutlineWidths = (className, groupIndex) => {
+      if (outlineSpec.mode !== "point-sequence") return null;
+      const offset = className === "appendage-chain" ? 0 : chainCount;
+      return outlineSpec.groups[offset + groupIndex] || null;
+    };
     const buildPolyline = (pointGroups, className, width, strokeColor) => pointGroups
-      .map((group) => {
+      .map((group, groupIndex) => {
         const chainPoints = Array.isArray(group?.points) ? group.points : group;
-        const points = chainPoints
-          .map((point) => `${anchorPoint.x + point.x * appendageScale},${anchorPoint.y + point.y * appendageScale}`)
-          .join(" ");
-        const outlineMarkup = drawOutline && outlineWidth > 0
-          ? `<polyline class="${className}-outline" points="${points}" fill="none" stroke="black" stroke-width="${width + outlineWidth}" stroke-linecap="round" stroke-linejoin="round"/>`
-          : "";
-        const strokeMarkup = `<polyline class="${className}" points="${points}" fill="none" stroke="${strokeColor}" stroke-width="${width}" stroke-linecap="round" stroke-linejoin="round"/>`;
-        return `${outlineMarkup}${strokeMarkup}`;
+        const scaledPoints = chainPoints.map((point) => ({
+          x: anchorPoint.x + point.x * appendageScale,
+          y: anchorPoint.y + point.y * appendageScale,
+        }));
+        const points = scaledPoints.map((point) => `${point.x},${point.y}`).join(" ");
+        const perPointOutlineWidths = resolvePerPointOutlineWidths(className, groupIndex);
+        if (!perPointOutlineWidths) {
+          const outlineWidth = Math.max(0, num(outlineSpec.width, 2));
+          const outlineMarkup = drawOutline && outlineWidth > 0
+            ? `<polyline class="${className}-outline" points="${points}" fill="none" stroke="black" stroke-width="${width + outlineWidth}" stroke-linecap="round" stroke-linejoin="round"/>`
+            : "";
+          const strokeMarkup = `<polyline class="${className}" points="${points}" fill="none" stroke="${strokeColor}" stroke-width="${width}" stroke-linecap="round" stroke-linejoin="round"/>`;
+          return `${outlineMarkup}${strokeMarkup}`;
+        }
+        const segments = [];
+        for (let i = 0; i < scaledPoints.length - 1; i += 1) {
+          const start = scaledPoints[i];
+          const end = scaledPoints[i + 1];
+          const segmentOutlineWidth = Math.max(0, num(perPointOutlineWidths[i + 1], 0));
+          const segmentOutline = drawOutline && segmentOutlineWidth > 0
+            ? `<line class="${className}-outline" x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="black" stroke-width="${width + segmentOutlineWidth}" stroke-linecap="round" stroke-linejoin="round"/>`
+            : "";
+          const segmentStroke = `<line class="${className}" x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="${strokeColor}" stroke-width="${width}" stroke-linecap="round" stroke-linejoin="round"/>`;
+          segments.push(`${segmentOutline}${segmentStroke}`);
+        }
+        return segments.join("");
       })
       .join("");
     const strokeColor = appendage.stroke || actor.stroke;
