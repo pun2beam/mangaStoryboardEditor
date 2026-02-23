@@ -366,13 +366,23 @@ function parseListOfObjects(lines, startIndex, keyIndent) {
     if (!itemMatch) throw new Error(`Line ${i + 1}: 配列形式が不正です`);
     const item = {};
     const inline = itemMatch[1].trim();
+    const itemIndent = indent;
     if (inline) {
       const inlineKv = inline.match(/^([\w.\-[\]]+)\s*:\s*(.*)$/);
       if (!inlineKv) throw new Error(`Line ${i + 1}: 配列要素の key:value 形式が不正です`);
-      item[inlineKv[1]] = parseValue(inlineKv[2].trim());
+      const inlineKey = inlineKv[1];
+      const inlineRawValue = inlineKv[2];
+      if (inlineRawValue === "" && hasListAtIndent(lines, i + 1, itemIndent)) {
+        const parsed = parseListOfObjects(lines, i + 1, itemIndent);
+        item[inlineKey] = parsed.value;
+        i = parsed.nextIndex;
+      } else {
+        item[inlineKey] = parseValue(inlineRawValue.trim());
+        i += 1;
+      }
+    } else {
+      i += 1;
     }
-    const itemIndent = indent;
-    i += 1;
     while (i < lines.length) {
       const child = lines[i];
       const childTrimmed = child.trim();
@@ -3376,8 +3386,8 @@ function serializeValue(value, indentLevel) {
   }
   return String(value);
 }
-function formatSerializedKeyValue(prefix, value) {
-  const serialized = serializeValue(value, prefix.length);
+function formatSerializedKeyValue(prefix, value, indentLevel) {
+  const serialized = serializeValue(value, indentLevel);
   return serialized.startsWith("\n") ? `${prefix}:${serialized}` : `${prefix}: ${serialized}`;
 }
 function serializeList(list, indentLevel) {
@@ -3391,10 +3401,10 @@ function serializeList(list, indentLevel) {
         continue;
       }
       const [firstKey, firstValue] = entries[0];
-      lines.push(formatSerializedKeyValue(`${" ".repeat(indentLevel)}- ${firstKey}`, firstValue));
+      lines.push(formatSerializedKeyValue(`${" ".repeat(indentLevel)}- ${firstKey}`, firstValue, indentLevel));
       for (let i = 1; i < entries.length; i += 1) {
         const [key, value] = entries[i];
-        lines.push(formatSerializedKeyValue(`${" ".repeat(indentLevel + 2)}${key}`, value));
+        lines.push(formatSerializedKeyValue(`${" ".repeat(indentLevel + 2)}${key}`, value, indentLevel + 2));
       }
       continue;
     }
