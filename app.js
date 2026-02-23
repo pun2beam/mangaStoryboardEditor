@@ -2836,6 +2836,32 @@ function setupObjectDrag() {
     return { x: unrotatedX * mirror, y: unrotatedY };
   }
 
+  function chainPointFromActorLocal(localPoint, appendage, actorScale) {
+    const safeScale = Math.max(Math.abs(actorScale), 1e-6);
+    const anchorPoint = resolveAttachmentAnchorPoint(appendage.actor, appendage.anchor, 20 * safeScale);
+    let x = localPoint.x;
+    let y = localPoint.y;
+    if (appendage.rotAnchor) {
+      const radians = (-num(appendage.rotAnchor, 0) * Math.PI) / 180;
+      const cos = Math.cos(radians);
+      const sin = Math.sin(radians);
+      const translatedX = x - anchorPoint.x;
+      const translatedY = y - anchorPoint.y;
+      x = translatedX * cos - translatedY * sin + anchorPoint.x;
+      y = translatedX * sin + translatedY * cos + anchorPoint.y;
+    }
+    if (appendage.flipX) {
+      x = anchorPoint.x - (x - anchorPoint.x);
+    }
+    const pointX = (x - anchorPoint.x) / safeScale;
+    const pointY = (y - anchorPoint.y) / safeScale;
+    return {
+      anchorPoint,
+      pointX,
+      pointY,
+    };
+  }
+
   function actorWithPanel(actorId) {
     const actor = currentScene?.actors?.find((entry) => String(entry.id) === String(actorId));
     if (!actor) return null;
@@ -3095,10 +3121,13 @@ function setupObjectDrag() {
       }
     } else if (state.handleType === "hand-chain-point") {
       const localPoint = actorLocalPointFromScene(point, state.actor, state.panelRect, state.unit);
+      const { anchorPoint, pointX, pointY } = chainPointFromActorLocal(localPoint, {
+        actor: state.actor,
+        anchor: state.appendage.anchor,
+        rotAnchor: state.appendage.rotAnchor,
+        flipX: state.appendage.flipX,
+      }, num(state.actor.scale, 0));
       const safeScale = Math.max(Math.abs(num(state.actor.scale, 0)), 1e-6);
-      const anchorPoint = resolveAttachmentAnchorPoint(state.actor, state.appendage.anchor, 20 * safeScale);
-      const pointX = (localPoint.x - anchorPoint.x) / safeScale;
-      const pointY = (localPoint.y - anchorPoint.y) / safeScale;
       if (!Number.isFinite(pointX) || !Number.isFinite(pointY)) return;
       state.previewChainPoint = { x: roundedPoseCoord(pointX), y: roundedPoseCoord(pointY) };
       for (const handle of state.chainPointTargets) {
@@ -3173,12 +3202,16 @@ function setupObjectDrag() {
           const chainPoint = chain?.points?.[state.chainPointIndex];
           if (!chainPoint) return;
           const localPoint = actorLocalPointFromScene(point, state.actor, state.panelRect, state.unit);
-          const safeScale = Math.max(Math.abs(num(state.actor.scale, 0)), 1e-6);
-          const anchorPoint = resolveAttachmentAnchorPoint(state.actor, appendage.anchor, 20 * safeScale);
-          const pointX = roundedPoseCoord((localPoint.x - anchorPoint.x) / safeScale);
-          const pointY = roundedPoseCoord((localPoint.y - anchorPoint.y) / safeScale);
-          chainPoint.x = pointX;
-          chainPoint.y = pointY;
+          const { pointX, pointY } = chainPointFromActorLocal(localPoint, {
+            actor: state.actor,
+            anchor: appendage.anchor,
+            rotAnchor: appendage.rotAnchor,
+            flipX: appendage.flipX,
+          }, num(state.actor.scale, 0));
+          const roundedX = roundedPoseCoord(pointX);
+          const roundedY = roundedPoseCoord(pointY);
+          chainPoint.x = roundedX;
+          chainPoint.y = roundedY;
           applyAppendageUiStateToActorBlock(block, state.id);
           const updatedBlocks = blocks;
           els.input.value = stringifyBlocks(updatedBlocks);
