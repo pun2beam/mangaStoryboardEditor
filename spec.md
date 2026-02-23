@@ -275,6 +275,7 @@ panel:
   * `z`（任意、actor内相対レイヤ）
   * `rotAnchor`（任意、`anchor` を中心にした回転角。既定 `0°`）
   * `stroke`（任意、色。未指定時は `actor.stroke` を使用）
+  * `outlineWidth`（任意、数値。appendage の縁取り太さ（各線の `strokeWidth` への加算値）。未指定時は `2`、`0` で縁取りなし）
   * `chains` または `digits`（いずれか必須）
     * 既存: `chains: "x1,y1 x2,y2 | ..."` のグループ指定（各グループ2点以上）
     * 新形式: `chains[N].name`, `chains[N].points`（`name` は任意。未指定可）
@@ -557,6 +558,7 @@ balloon:
 * `actor.appendages[].rotAnchor` 未指定時は `0°` を既定値とする
 * `actor.stroke` 未指定時は `meta.actor.stroke`（さらに未指定なら `black`）を使用する
 * `actor.appendages[].stroke` 未指定時は `actor.stroke` を使用する
+* `actor.appendages[].outlineWidth` 未指定時は `2` を使用し、`0` 以下は縁取りなしとして扱う
 * `actor.outline` 未指定時は `meta.actor.outline`（さらに未指定なら `on`）を使用する
 * `kind=hand` のとき、`chains` は 5 本（`thumb/index/middle/ring/little`）で、各 chain は 1〜4 点
 * `kind=tail` のとき、`chains` は 1 本で、2 点以上
