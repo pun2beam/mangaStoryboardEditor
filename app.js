@@ -568,6 +568,7 @@ function validateAndBuild(blocks) {
     actor.y = num(actor.y, 0);
     actor.stroke = actor.stroke || scene.meta?.["actor.stroke"] || "black";
     actor.strokeWidth = positiveNum(actor.strokeWidth, positiveNum(scene.meta?.["actor.strokeWidth"], 2));
+    actor.jointMaskRadius = positiveNum(actor.jointMaskRadius, positiveNum(scene.meta?.["actor.jointMaskRadius"], actor.strokeWidth * 0.6));
     actor.outline = parseBooleanLike(actor.outline, parseBooleanLike(scene.meta?.["actor.outline"], true));
     actor.attachments = normalizeAttachments(actor.attachments, actor._line);
     actor.appendages = normalizeAppendageRefs(actor.appendages, actor._line, "actor.appendages");
@@ -1837,8 +1838,8 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
   const mirror = actor.facing === "left" ? -1 : 1;
   const drawOutline = parseBooleanLike(actor.outline, true);
   const pose = hasPosePoints(actor._posePoints)
-    ? poseSegmentsFromPoints(actor._posePoints, actor._posePointZ, s, actor.strokeWidth, actor.stroke, drawOutline)
-    : poseSegments(actor.pose, actor._posePointZ, s, actor.strokeWidth, actor.stroke, drawOutline);
+    ? poseSegmentsFromPoints(actor._posePoints, actor._posePointZ, s, actor.strokeWidth, actor.stroke, drawOutline, actor.jointMaskRadius)
+    : poseSegments(actor.pose, actor._posePointZ, s, actor.strokeWidth, actor.stroke, drawOutline, actor.jointMaskRadius);
   const headPoint = resolveHeadPoint(actor._posePoints, s);
   const neckPoint = resolvePosePoint(actor._posePoints, "neck", s) || { x: 0, y: -s * 0.8 };
   const attachments = resolveActorAttachments(actor, assetMap);
@@ -2035,17 +2036,17 @@ function posePresetPoints(pose, s) {
     rf: leg.rf,
   };
 }
-function poseSegments(pose, pointZ, s, strokeWidth, strokeColor = "black", drawOutline = true) {
+function poseSegments(pose, pointZ, s, strokeWidth, strokeColor = "black", drawOutline = true, jointMaskRadius = null) {
   const presetPoints = posePresetPoints(pose, s);
   const point = (name) => presetPoints[name] || null;
-  return poseLinesWithZ(point, pointZ, strokeWidth, strokeColor, drawOutline);
+  return poseLinesWithZ(point, pointZ, strokeWidth, strokeColor, drawOutline, jointMaskRadius);
 }
-function poseSegmentsFromPoints(points, pointZ, s, strokeWidth, strokeColor = "black", drawOutline = true) {
+function poseSegmentsFromPoints(points, pointZ, s, strokeWidth, strokeColor = "black", drawOutline = true, jointMaskRadius = null) {
   const presetPoints = posePresetPoints("stand", s);
   const point = (name) => resolvePosePoint(points, name, s) || presetPoints[name] || null;
-  return poseLinesWithZ(point, pointZ, strokeWidth, strokeColor, drawOutline);
+  return poseLinesWithZ(point, pointZ, strokeWidth, strokeColor, drawOutline, jointMaskRadius);
 }
-function poseLinesWithZ(pointResolver, pointZ, strokeWidth, strokeColor = "black", drawOutline = true) {
+function poseLinesWithZ(pointResolver, pointZ, strokeWidth, strokeColor = "black", drawOutline = true, jointMaskRadius = null) {
   const lineDefs = [
     ["neck", "le", "le"],
     ["le", "lh", "lh"],
@@ -2060,7 +2061,7 @@ function poseLinesWithZ(pointResolver, pointZ, strokeWidth, strokeColor = "black
   ];
   const segments = [];
   const jointMap = new Map();
-  const jointRadius = Math.max(0.5, strokeWidth * 0.6);
+  const jointRadius = positiveNum(jointMaskRadius, Math.max(0.5, strokeWidth * 0.6));
   for (let i = 0; i < lineDefs.length; i += 1) {
     const [from, to, zKey] = lineDefs[i];
     const start = pointResolver(from);
