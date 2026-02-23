@@ -3220,9 +3220,23 @@ function setupObjectDrag() {
           const appendages = block.props.appendages;
           if (!Array.isArray(appendages)) return;
           const appendage = appendages[state.appendageIndex];
-          if (!appendage || appendage.kind !== "hand") return;
+          if (!appendage || typeof appendage !== "object") return;
+          const resolvedAppendage = state.appendage && typeof state.appendage === "object" ? state.appendage : null;
+          const isHandAppendage = appendage.kind === "hand" || (appendage.ref !== undefined && resolvedAppendage?.kind === "hand");
+          if (!isHandAppendage) return;
+          if (appendage.kind !== "hand") {
+            appendage.kind = "hand";
+          }
           if (!Array.isArray(appendage.chains) || appendage.chains.length === 0) {
-            appendage.chains = defaultHandChainsForPreset(normalizeHandPreset(appendage.preset));
+            const sourceChains = Array.isArray(resolvedAppendage?.chains) ? resolvedAppendage.chains : null;
+            appendage.chains = sourceChains
+              ? sourceChains.map((chain, chainIndex) => ({
+                name: chain?.name ?? HAND_CHAIN_NAMES[chainIndex] ?? `chain-${chainIndex}`,
+                points: Array.isArray(chain?.points)
+                  ? chain.points.map((point) => ({ x: point.x, y: point.y }))
+                  : [],
+              }))
+              : defaultHandChainsForPreset(normalizeHandPreset(appendage.preset ?? resolvedAppendage?.preset));
           }
           const chain = appendage?.chains?.[state.chainIndex];
           const chainPoint = chain?.points?.[state.chainPointIndex];
