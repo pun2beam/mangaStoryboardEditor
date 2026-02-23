@@ -448,6 +448,23 @@ function parsePosePointZ(raw, line) {
   }
   return zMap;
 }
+function parsePosePointOutlineWidth(raw, line) {
+  if (raw === undefined || raw === null || raw === "") return {};
+  const source = Array.isArray(raw) ? raw.join(" ") : String(raw);
+  const tokens = source.split(/[\s,]+/).filter(Boolean);
+  if (tokens.length !== POSE_POINT_NAMES.length) {
+    throw new Error(`Line ${line}: actor.pose.points.outlineWidth は${POSE_POINT_NAMES.length}個の数値が必要です`);
+  }
+  const values = tokens.map((token) => Number(token));
+  if (values.some((value) => !Number.isFinite(value))) {
+    throw new Error(`Line ${line}: actor.pose.points.outlineWidth に数値以外が含まれています`);
+  }
+  const outlineWidthMap = {};
+  for (let i = 0; i < POSE_POINT_NAMES.length; i += 1) {
+    outlineWidthMap[POSE_POINT_NAMES[i]] = values[i];
+  }
+  return outlineWidthMap;
+}
 function validateAndBuild(blocks) {
   const scene = { meta: {}, pages: [], panels: [], actors: [], objects: [], boxarrows: [], balloons: [], captions: [], sfx: [], assets: [], appendages: [], styles: [] };
   for (const b of blocks) {
@@ -574,6 +591,7 @@ function validateAndBuild(blocks) {
     actor.appendages = normalizeAppendageRefs(actor.appendages, actor._line, "actor.appendages");
     actor._posePoints = parsePosePoints(actor["pose.points"], actor._line);
     actor._posePointZ = parsePosePointZ(actor["pose.points.z"], actor._line);
+    actor._posePointOutlineWidth = parsePosePointOutlineWidth(actor["pose.points.outlineWidth"], actor._line);
   }
   for (const object of scene.objects) {
     object._autoPosition = object.x === undefined || object.x === null || object.x === "" || object.y === undefined || object.y === null || object.y === "";
@@ -1838,8 +1856,8 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
   const mirror = actor.facing === "left" ? -1 : 1;
   const drawOutline = parseBooleanLike(actor.outline, true);
   const pose = hasPosePoints(actor._posePoints)
-    ? poseSegmentsFromPoints(actor._posePoints, actor._posePointZ, s, actor.strokeWidth, actor.stroke, drawOutline, actor.jointMaskRadius)
-    : poseSegments(actor.pose, actor._posePointZ, s, actor.strokeWidth, actor.stroke, drawOutline, actor.jointMaskRadius);
+    ? poseSegmentsFromPoints(actor._posePoints, actor._posePointZ, actor._posePointOutlineWidth, s, actor.strokeWidth, actor.stroke, drawOutline, actor.jointMaskRadius)
+    : poseSegments(actor.pose, actor._posePointZ, actor._posePointOutlineWidth, s, actor.strokeWidth, actor.stroke, drawOutline, actor.jointMaskRadius);
   const headPoint = resolveHeadPoint(actor._posePoints, s);
   const neckPoint = resolvePosePoint(actor._posePoints, "neck", s) || { x: 0, y: -s * 0.8 };
   const attachments = resolveActorAttachments(actor, assetMap);
@@ -1858,9 +1876,10 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
   const appendageHandles = renderAppendagePointHandles(actor, appendages, kind, id);
   const groupTransform = rot ? `translate(${p.x},${p.y}) rotate(${rot})` : `translate(${p.x},${p.y})`;
   const attrs = renderDataAttrs(kind, id);
+  const headOutlineWidth = Math.max(0, num(actor._posePointOutlineWidth?.head, 2));
   const neckHeadLine = [
-    drawOutline
-      ? `<line x1="${headPoint.x}" y1="${headPoint.y}" x2="${neckPoint.x}" y2="${neckPoint.y}" stroke="black" stroke-width="${actor.strokeWidth + 2}" stroke-linecap="butt" stroke-linejoin="round"/>`
+    drawOutline && headOutlineWidth > 0
+      ? `<line x1="${headPoint.x}" y1="${headPoint.y}" x2="${neckPoint.x}" y2="${neckPoint.y}" stroke="black" stroke-width="${actor.strokeWidth + headOutlineWidth}" stroke-linecap="butt" stroke-linejoin="round"/>`
       : "",
     `<line x1="${headPoint.x}" y1="${headPoint.y}" x2="${neckPoint.x}" y2="${neckPoint.y}" stroke="${actor.stroke}" stroke-width="${actor.strokeWidth}" stroke-linecap="butt" stroke-linejoin="round"/>`,
   ].join("");
@@ -2041,17 +2060,17 @@ function posePresetPoints(pose, s) {
     rf: leg.rf,
   };
 }
-function poseSegments(pose, pointZ, s, strokeWidth, strokeColor = "black", drawOutline = true, jointMaskRadius = null) {
+function poseSegments(pose, pointZ, pointOutlineWidth, s, strokeWidth, strokeColor = "black", drawOutline = true, jointMaskRadius = null) {
   const presetPoints = posePresetPoints(pose, s);
   const point = (name) => presetPoints[name] || null;
-  return poseLinesWithZ(point, pointZ, strokeWidth, strokeColor, drawOutline, jointMaskRadius);
+  return poseLinesWithZ(point, pointZ, pointOutlineWidth, strokeWidth, strokeColor, drawOutline, jointMaskRadius);
 }
-function poseSegmentsFromPoints(points, pointZ, s, strokeWidth, strokeColor = "black", drawOutline = true, jointMaskRadius = null) {
+function poseSegmentsFromPoints(points, pointZ, pointOutlineWidth, s, strokeWidth, strokeColor = "black", drawOutline = true, jointMaskRadius = null) {
   const presetPoints = posePresetPoints("stand", s);
   const point = (name) => resolvePosePoint(points, name, s) || presetPoints[name] || null;
-  return poseLinesWithZ(point, pointZ, strokeWidth, strokeColor, drawOutline, jointMaskRadius);
+  return poseLinesWithZ(point, pointZ, pointOutlineWidth, strokeWidth, strokeColor, drawOutline, jointMaskRadius);
 }
-function poseLinesWithZ(pointResolver, pointZ, strokeWidth, strokeColor = "black", drawOutline = true, jointMaskRadius = null) {
+function poseLinesWithZ(pointResolver, pointZ, pointOutlineWidth, strokeWidth, strokeColor = "black", drawOutline = true, jointMaskRadius = null) {
   const lineDefs = [
     ["neck", "le", "le"],
     ["le", "lh", "lh"],
@@ -2081,12 +2100,13 @@ function poseLinesWithZ(pointResolver, pointZ, strokeWidth, strokeColor = "black
     };
     recordJoint(from, start);
     recordJoint(to, end);
+    const outlineWidth = Math.max(0, num(pointOutlineWidth?.[zKey], 2));
     segments.push({
       z,
       order: i,
       markup: [
-        drawOutline
-          ? `<line x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="black" stroke-width="${strokeWidth + 2}" stroke-linecap="butt" stroke-linejoin="butt"/>`
+        drawOutline && outlineWidth > 0
+          ? `<line x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="black" stroke-width="${strokeWidth + outlineWidth}" stroke-linecap="butt" stroke-linejoin="butt"/>`
           : "",
         `<line x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="${strokeColor}" stroke-width="${strokeWidth}" stroke-linecap="butt" stroke-linejoin="butt"/>`,
       ].join(""),
