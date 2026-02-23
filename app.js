@@ -1855,7 +1855,10 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
   const appendageHandles = renderAppendagePointHandles(actor, appendages, kind, id);
   const groupTransform = rot ? `translate(${p.x},${p.y}) rotate(${rot})` : `translate(${p.x},${p.y})`;
   const attrs = renderDataAttrs(kind, id);
-  const neckHeadLine = `<line x1="${headPoint.x}" y1="${headPoint.y}" x2="${neckPoint.x}" y2="${neckPoint.y}" stroke="${actor.stroke}" stroke-width="${actor.strokeWidth}" stroke-linecap="round"/>`;
+  const neckHeadLine = [
+    `<line x1="${headPoint.x}" y1="${headPoint.y}" x2="${neckPoint.x}" y2="${neckPoint.y}" stroke="black" stroke-width="${actor.strokeWidth + 2}" stroke-linecap="butt" stroke-linejoin="round"/>`,
+    `<line x1="${headPoint.x}" y1="${headPoint.y}" x2="${neckPoint.x}" y2="${neckPoint.y}" stroke="${actor.stroke}" stroke-width="${actor.strokeWidth}" stroke-linecap="butt" stroke-linejoin="round"/>`,
+  ].join("");
   const actorLayers = [
     ...attachments.map((attachment, index) => ({ z: num(attachment.z, 0), order: 100 + index, markup: attachment.markup })),
     ...appendages.map((appendage, index) => ({ z: num(appendage.z, 0), order: 150 + index, markup: appendage.markup })),
@@ -2052,18 +2055,37 @@ function poseLinesWithZ(pointResolver, pointZ, strokeWidth, strokeColor = "black
     ["rk", "rf", "rf"],
   ];
   const segments = [];
+  const jointMap = new Map();
+  const jointRadius = Math.max(0.5, strokeWidth * 0.6);
   for (let i = 0; i < lineDefs.length; i += 1) {
     const [from, to, zKey] = lineDefs[i];
     const start = pointResolver(from);
     const end = pointResolver(to);
     if (!start || !end) continue;
+    const z = num(pointZ?.[zKey], 0);
+    const recordJoint = (name, point) => {
+      const existing = jointMap.get(name);
+      if (!existing || z > existing.z) {
+        jointMap.set(name, { point, z });
+      }
+    };
+    recordJoint(from, start);
+    recordJoint(to, end);
     segments.push({
-      z: num(pointZ?.[zKey], 0),
+      z,
       order: i,
-      markup: `<line x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="${strokeColor}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round"/>`,
+      markup: [
+        `<line x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="black" stroke-width="${strokeWidth + 2}" stroke-linecap="butt" stroke-linejoin="round"/>`,
+        `<line x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="${strokeColor}" stroke-width="${strokeWidth}" stroke-linecap="butt" stroke-linejoin="round"/>`,
+      ].join(""),
     });
   }
-  return segments;
+  const jointMasks = Array.from(jointMap.entries()).map(([name, data], index) => ({
+    z: data.z,
+    order: lineDefs.length + index,
+    markup: `<circle data-joint-mask="${name}" cx="${data.point.x}" cy="${data.point.y}" r="${jointRadius}" fill="${strokeColor}"/>`,
+  }));
+  return [...segments, ...jointMasks];
 }
 function eyePath(eye, s, headPoint = { x: 0, y: -s * 2.2 }) {
   const headY = headPoint.y;
