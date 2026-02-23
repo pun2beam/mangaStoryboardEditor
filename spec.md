@@ -264,12 +264,15 @@ panel:
   * `anchor`（必須。既存ジョイント名: `head,lh,rh,le,re,neck,waist,groin,lk,rk,lf,rf`）
   * `flipX`（任意、左右反転）
   * `z`（任意、actor内相対レイヤ）
-  * `rotAnchor`（任意、`anchor` を中心にした回転角）
+  * `rotAnchor`（任意、`anchor` を中心にした回転角。既定 `0°`）
   * `chains` または `digits`（いずれか必須）
     * 既存: `chains: "x1,y1 x2,y2 | ..."` のグループ指定（各グループ2点以上）
     * 新形式: `chains[N].name`, `chains[N].points`（例: `chains[0].name: thumb`, `chains[0].points: x1,y1 x2,y2`）
     * `kind=hand` は `chains` を5本（`thumb/index/middle/ring/little`）推奨し、各 chain の点数は 1〜4 を許容
     * `kind=tail` は `chains` 1本、点数 2以上を許容
+  * 点群座標系は `anchor` 原点のローカル座標（`x,y`）として解釈する
+  * 変換順序は `local points` → `flipX` → `rot`（+`rotAnchor`）→ actor 座標系への平行移動
+  * `z` は actor 内の `pose.points.z` 線分および `attachments[].z` と同一ソート軸で扱う
 * `style`（後述 styleRef）
 
 #### pose（プリセット）
@@ -534,8 +537,11 @@ balloon:
 * `asset` は `panel` を持つ場合のみ参照先 `panel` が存在する
 * `actor.attachments[].ref` の参照先 `asset` が存在する
 * `actor.appendages[]` 指定時、各要素に `id`,`kind`,`anchor` があり、`chains` または `digits` のいずれかを持つ
+* `actor.appendages[].anchor` は既存ジョイント集合（`head,lh,rh,le,re,neck,waist,groin,lk,rk,lf,rf`）に含まれること
 * 既存 `chains`/`digits` 文字列形式では、各点列グループが2点以上であること
+* `actor.appendages[].chains` / `digits` の数値列は `x,y` ペア（偶数個）であること
 * `chains[N].name`/`chains[N].points` 形式を指定した場合、`chains[N].points` は点列として解釈される
+* `actor.appendages[].rotAnchor` 未指定時は `0°` を既定値とする
 * `kind=hand` のとき、`chains` は 5 本（`thumb/index/middle/ring/little`）で、各 chain は 1〜4 点
 * `kind=tail` のとき、`chains` は 1 本で、2 点以上
 * `actor.extends` の参照先 `actor` が存在し、循環継承しない
