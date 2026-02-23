@@ -3188,6 +3188,9 @@ function setupObjectDrag() {
           const appendage = appendages[state.appendageIndex];
           if (!appendage || typeof appendage !== "object") return;
           const resolvedAppendage = state.appendage && typeof state.appendage === "object" ? state.appendage : null;
+          const effectiveAnchor = appendage.anchor ?? resolvedAppendage?.anchor;
+          const effectiveRotAnchor = appendage.rotAnchor ?? resolvedAppendage?.rotAnchor;
+          const effectiveFlipX = appendage.flipX ?? resolvedAppendage?.flipX;
           if (!Array.isArray(appendage.chains) || appendage.chains.length === 0) {
             const sourceChains = Array.isArray(resolvedAppendage?.chains) ? resolvedAppendage.chains : null;
             appendage.chains = sourceChains
@@ -3204,9 +3207,9 @@ function setupObjectDrag() {
           const localPoint = actorLocalPointFromScene(point, state.actor, state.panelRect, state.unit);
           const { pointX, pointY } = chainPointFromActorLocal(localPoint, {
             actor: state.actor,
-            anchor: appendage.anchor,
-            rotAnchor: appendage.rotAnchor,
-            flipX: appendage.flipX,
+            anchor: effectiveAnchor,
+            rotAnchor: effectiveRotAnchor,
+            flipX: effectiveFlipX,
           }, num(state.actor.scale, 0));
           const roundedX = roundedPoseCoord(pointX);
           const roundedY = roundedPoseCoord(pointY);
