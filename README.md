@@ -132,7 +132,6 @@ appendage `ref` の最小例（トップレベル定義を actor から参照）
 ```msd
 appendage:
   id: apHandBase
-  kind: hand
   anchor: rh
   chains: 0,0 2,-2 | 0,0 2,-3 | 0,0 1,-3 | 0,0 0,-3 | 0,0 -1,-2
 
