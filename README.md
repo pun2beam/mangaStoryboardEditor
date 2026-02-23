@@ -90,6 +90,7 @@ page:
 - `asset.anchorRot` で `asset.anchor` の位置を中心にした追加回転を指定できます（度数法、既定: `0`）。`asset.rot`（画像中心回転）と併用できます。
 - `Pose編集` で attachment ハンドルをドラッグすると `actor.attachments[].dx`,`dy` が更新されます。既定のドラッグ基準点は画像左上（描画式: `x = anchorX + dx * actor.scale`, `y = anchorY + dy * actor.scale`）で、`asset.dragBasis: center` の場合は画像中心基準（`width/2`,`height/2` を差し引いて逆算）になります。
 - `asset.flipX`（既定: `false`）で左右反転できます。`actor.attachments[].flipX` を指定した場合はそちらが優先されます。
+- `actor.appendages[]` は `ref` でトップレベル `appendage` 定義（`id`）を参照できます。参照先の設定を継承しつつ、指定したプロパティだけ上書きできます。
 - 将来の単位指定拡張や GUI でのポーズ編集は、DSLコアとは分離した別機能として段階的に導入する方針です。
 
 asset 単体の最小例（asset側で左右反転）:
@@ -123,6 +124,27 @@ actor:
   y: 80
   attachments:
     - ref: asHand
+      flipX: true
+```
+
+appendage `ref` の最小例（トップレベル定義を actor から参照）:
+
+```msd
+appendage:
+  id: apHandBase
+  kind: hand
+  anchor: rh
+  chains: 0,0 2,-2 | 0,0 2,-3 | 0,0 1,-3 | 0,0 0,-3 | 0,0 -1,-2
+
+actor:
+  id: a1
+  panel: 1
+  x: 50
+  y: 80
+  appendages:
+    - id: handAlt
+      ref: apHandBase
+      anchor: lh
       flipX: true
 ```
 
