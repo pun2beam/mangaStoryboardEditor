@@ -119,6 +119,7 @@ SVG描画順は原則：
 * `actor.stroke`（任意、色。棒人間の線色の既定値。既定: `black`）
 * `actor.strokeWidth`（任意、数値。棒人間の線の太さの既定値。既定: `2`）
 * `actor.outline`（任意、`on`/`off`。棒人間の縁取り表示の既定値。既定: `on`）
+* `actor.jointMaskRadius`（任意、数値。関節のつなぎ目を埋める円半径の既定値。既定: `actor.strokeWidth * 0.6`）
 * `text.direction`（任意、`horizontal`/`vertical`。既定: `horizontal`。全体の文字方向）
 * `base.panel.direction`（任意、`right.bottom`/`left.bottom`。panel自動配置の既定方向。既定: `right.bottom`）
 * `base.panel.margin`（任意、数値。panel自動配置時のコマ間余白。既定: `0`）
@@ -251,6 +252,7 @@ panel:
 * `stroke`（任意、色。棒人間の線色。未指定時は `meta.actor.stroke`、さらに未指定なら `black`）
 * `strokeWidth`（任意、数値。棒人間の線の太さ。未指定時は `meta.actor.strokeWidth`、さらに未指定なら `2`）
 * `outline`（任意、`on`/`off`。棒人間の縁取り表示。未指定時は `meta.actor.outline`、さらに未指定なら `on`）
+* `jointMaskRadius`（任意、数値。関節のつなぎ目を埋める円半径。未指定時は `meta.actor.jointMaskRadius`、さらに未指定なら `strokeWidth * 0.6`）
 * `rot`（度。足元基準で回転。既定0）
 * `facing`（`left`/`right`/`back`、既定`right`）
 * `pose`（既定`stand`）
