@@ -2184,9 +2184,10 @@ function poseLinesWithZ(pointResolver, pointZ, pointOutlineWidth, strokeWidth, s
     if (!start || !end) continue;
     const z = num(pointZ?.[zKey], 0);
     const recordJoint = (name, point) => {
+      const degree = jointDegreeMap.get(name) || 0;
       const existing = jointMap.get(name);
       if (!existing || z > existing.z) {
-        jointMap.set(name, { point, z });
+        jointMap.set(name, { point, z, degree });
       }
     };
     recordJoint(from, start);
@@ -2218,11 +2219,13 @@ function poseLinesWithZ(pointResolver, pointZ, pointOutlineWidth, strokeWidth, s
       }];
     })
     : [];
-  const jointMasks = Array.from(jointMap.entries()).map(([name, data], index) => ({
-    z: data.z,
-    order: lineDefs.length + endpointCaps.length + index,
-    markup: `<circle data-joint-mask="${name}" cx="${data.point.x}" cy="${data.point.y}" r="${jointRadius}" fill="${strokeColor}"/>`,
-  }));
+  const jointMasks = Array.from(jointMap.entries())
+    .filter(([, data]) => data.degree >= 2)
+    .map(([name, data], index) => ({
+      z: data.z,
+      order: lineDefs.length + endpointCaps.length + index,
+      markup: `<circle data-joint-mask="${name}" cx="${data.point.x}" cy="${data.point.y}" r="${jointRadius}" fill="${strokeColor}"/>`,
+    }));
   return [...segments, ...endpointCaps, ...jointMasks];
 }
 function eyePath(eye, s, headPoint = { x: 0, y: -s * 2.2 }) {

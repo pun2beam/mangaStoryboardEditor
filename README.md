@@ -85,7 +85,7 @@ page:
 - 棒人間の線色は `meta.actor.stroke`（全体既定）と `actor.stroke`（個別上書き）で指定できます（既定: `black`）。
 - 棒人間の線の太さは `meta.actor.strokeWidth`（全体既定）と `actor.strokeWidth`（個別上書き）で指定できます。
 - 棒人間の縁取りは `meta.actor.outline`（全体既定）と `actor.outline`（個別上書き）で `on/off` 指定できます（既定: `on`）。
-- 関節のつなぎ目を埋める円の半径は `meta.actor.jointMaskRadius`（全体既定）と `actor.jointMaskRadius`（個別上書き）で指定できます（既定: `strokeWidth * 0.6`）。
+- 関節補正用マスク円の半径は `meta.actor.jointMaskRadius`（全体既定）と `actor.jointMaskRadius`（個別上書き）で指定できます（既定: `Math.max(0.5, strokeWidth * 0.6)`）。末端点（degree=1）は joint mask の対象外で、endpoint-cap 側で丸めます。
 - `pose.points` は24値（12点）で指定し、先頭の `head(x,y)` を頭の位置と首への接続起点として使います。
 - `pose.points.z` は12値（`head,lh,rh,le,re,neck,waist,groin,lk,rk,lf,rf` 順）で指定できます。`pose.points` の各部位線分の前後関係に使われます。`neck-head` 線分は `head` の値を使って前後関係を指定できます。
 - `pose.points.outlineWidth` は12値（`head,lh,rh,le,re,neck,waist,groin,lk,rk,lf,rf` 順）で指定できます。各部位線分の縁取り太さ（`strokeWidth` への加算値）を個別指定します。`0` で縁取りなしになります。
@@ -96,7 +96,7 @@ page:
 - `Pose編集` で attachment ハンドルをドラッグすると `actor.attachments[].dx`,`dy` が更新されます。既定のドラッグ基準点は画像左上（描画式: `x = anchorX + dx * actor.scale`, `y = anchorY + dy * actor.scale`）で、`asset.dragBasis: center` の場合は画像中心基準（`width/2`,`height/2` を差し引いて逆算）になります。
 - `asset.flipX`（既定: `false`）で左右反転できます。`actor.attachments[].flipX` を指定した場合はそちらが優先されます。
 - `actor.appendages[]` は `ref` でトップレベル `appendage` 定義（`id`）を参照できます。参照先の設定を継承しつつ、指定したプロパティだけ上書きできます。
-- `actor.appendages[].outlineWidth` で appendage の縁取り太さを指定できます。単一数値（従来どおり）に加えて、`|` 区切りで各点列グループごとの数値列（例: `0,0,0,1 | 0,0,1`）も指定できます。数値列形式では各グループの要素数を対応する点列の点数と一致させ、各線分の縁取り太さは「終点側の値」を使います。未指定時は `2`、`0` で縁取りなしになります。
+- `actor.appendages[].outlineWidth` で appendage の縁取り太さを指定できます。単一数値（従来どおり）に加えて、`|` 区切りで各点列グループごとの数値列（例: `0,0,0,1 | 0,0,1`）も指定できます。数値列形式では各グループの要素数を対応する点列の点数と一致させ、各線分の縁取り太さは「終点側の値」を使います。未指定時は `2`、`0` で縁取りなしになります。 appendage でも末端の丸めは endpoint-cap で行い、関節補正マスクを使う場合は内部点（接続数2以上）だけを対象にします。
 - 将来の単位指定拡張や GUI でのポーズ編集は、DSLコアとは分離した別機能として段階的に導入する方針です。
 
 asset 単体の最小例（asset側で左右反転）:
