@@ -842,31 +842,6 @@ function parseAppendagePointSequence(raw, line, fieldName, options = {}) {
   }
   return points;
 }
-function parseIndexedAppendageChains(appendage, line, fieldName, kind) {
-  const chainEntries = [];
-  for (const [key, value] of Object.entries(appendage)) {
-    const m = key.match(new RegExp(`^${fieldName}\\[(\\d+)\\]\\.(name|points)$`));
-    if (!m) continue;
-    chainEntries.push({ index: Number(m[1]), prop: m[2], value });
-  }
-  if (chainEntries.length === 0) return null;
-  const chainsByIndex = new Map();
-  for (const { index, prop, value } of chainEntries) {
-    if (!chainsByIndex.has(index)) chainsByIndex.set(index, {});
-    chainsByIndex.get(index)[prop] = value;
-  }
-  const ordered = Array.from(chainsByIndex.entries())
-    .sort((a, b) => a[0] - b[0])
-    .map(([index, chain]) => ({
-      index,
-      name: chain.name === undefined || chain.name === null ? "" : String(chain.name),
-      points: parseAppendagePointSequence(chain.points, line, `${fieldName}[${index}].points`, {
-        minPoints: kind === "hand" ? 1 : 2,
-        maxPoints: kind === "hand" ? 4 : Infinity,
-      }),
-    }));
-  return ordered;
-}
 function validateAppendageChainsByKind(appendage, line) {
   const chains = Array.isArray(appendage.chains) ? appendage.chains : [];
   if (appendage.kind === "hand") {
@@ -925,29 +900,24 @@ function normalizeAppendages(value, line, pathLabel = "actor.appendages") {
     if (appendage.anchor === undefined || appendage.anchor === null || appendage.anchor === "") {
       throw new Error(`Line ${appendageLine}: ${pathLabel}[].anchor は必須です`);
     }
-    const hasIndexedField = (fieldName) => Object.keys(appendage).some((key) => new RegExp(`^${fieldName}\[\d+\]\.`).test(key));
     const kind = String(appendage.kind || "appendage");
-    const indexedChains = parseIndexedAppendageChains(appendage, appendageLine, "chains", kind);
-    const indexedDigits = parseIndexedAppendageChains(appendage, appendageLine, "digits", kind);
-    const hasChains = (appendage.chains !== undefined && appendage.chains !== null && appendage.chains !== "") || hasIndexedField("chains");
-    const hasDigits = (appendage.digits !== undefined && appendage.digits !== null && appendage.digits !== "") || hasIndexedField("digits");
+    const hasChains = appendage.chains !== undefined && appendage.chains !== null && appendage.chains !== "";
+    const hasDigits = appendage.digits !== undefined && appendage.digits !== null && appendage.digits !== "";
     const handPreset = kind === "hand" ? normalizeHandPreset(appendage.preset ?? appendage.handPreset) : undefined;
     const handDetailEdited = kind === "hand"
-      ? parseBooleanLike(appendage.handDetailEdited, hasChains || Boolean(indexedChains))
+      ? parseBooleanLike(appendage.handDetailEdited, hasChains)
       : false;
     if (!hasChains && !hasDigits && kind !== "hand") {
       throw new Error(`Line ${appendageLine}: ${pathLabel}[].chains または ${pathLabel}[].digits のいずれかは必須です`);
     }
-    const chains = indexedChains
-      ?? (hasChains ? parseAppendagePointGroups(appendage.chains, appendageLine, "chains").map((points, index) => ({ name: `chain-${index}`, points })) : null)
+    const chains = (hasChains ? parseAppendagePointGroups(appendage.chains, appendageLine, "chains").map((points, index) => ({ name: `chain-${index}`, points })) : null)
       ?? (kind === "hand" ? defaultHandChainsForPreset(handPreset) : []);
     const normalizedAppendage = {
       ...appendage,
       kind,
       ...(kind === "hand" ? { preset: handPreset, handVisible: parseBooleanLike(appendage.handVisible, true), handDetailEdited } : {}),
       chains,
-      digits: indexedDigits
-        ?? parseAppendagePointGroups(appendage.digits, appendageLine, "digits").map((points, index) => ({ name: `digit-${index}`, points })),
+      digits: parseAppendagePointGroups(appendage.digits, appendageLine, "digits").map((points, index) => ({ name: `digit-${index}`, points })),
     };
     validateAppendageChainsByKind(normalizedAppendage, appendageLine);
     return normalizedAppendage;
@@ -2816,12 +2786,9 @@ function syncDragHandleModeClass() {
 function applyHandUiStateToActorBlock(actorBlock, actorId) {
   if (!actorBlock || actorBlock.type !== "actor" || String(actorBlock.props.id) !== String(actorId)) return;
   if (!Array.isArray(actorBlock.props.appendages)) return;
-  const hasIndexedField = (appendage, fieldName) => Object.keys(appendage || {}).some((key) => new RegExp(`^${fieldName}\\[\\d+\\]\\.`).test(key));
   for (const appendage of actorBlock.props.appendages) {
     if (!appendage || typeof appendage !== "object" || appendage.kind !== "hand") continue;
-    const hasExplicitChains =
-      (appendage.chains !== undefined && appendage.chains !== null && appendage.chains !== "")
-      || hasIndexedField(appendage, "chains");
+    const hasExplicitChains = appendage.chains !== undefined && appendage.chains !== null && appendage.chains !== "";
     const detailEdited = parseBooleanLike(appendage.handDetailEdited, hasExplicitChains);
     if (detailEdited) {
       appendage.handDetailEdited = true;
