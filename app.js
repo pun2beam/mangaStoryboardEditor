@@ -766,6 +766,15 @@ function parseAppendagePointGroups(raw, line, fieldName) {
   };
   if (Array.isArray(raw)) {
     if (raw.length === 0) return [];
+    if (raw.every((entry) => entry && typeof entry === "object" && Array.isArray(entry.points))) {
+      const groups = raw
+        .map((entry, index) => {
+          const points = normalizeGroup(entry.points, index);
+          return points ?? (Array.isArray(entry.points) ? entry.points.map((point) => toPoint(point)).filter(Boolean) : null);
+        })
+        .filter((points) => Array.isArray(points) && points.length >= 1);
+      if (groups.length > 0) return groups;
+    }
     const groups = raw.map((group, index) => normalizeGroup(group, index)).filter(Boolean);
     if (groups.length > 0) return groups;
   }
