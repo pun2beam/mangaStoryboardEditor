@@ -1977,9 +1977,9 @@ function resolveActorAppendages(actor) {
         if (!perPointOutlineWidths) {
           const outlineWidth = Math.max(0, num(outlineSpec.width, 2));
           const outlineMarkup = drawOutline && outlineWidth > 0
-            ? `<polyline class="${className}-outline" points="${points}" fill="none" stroke="black" stroke-width="${width + outlineWidth}" stroke-linecap="round" stroke-linejoin="round"/>`
+            ? `<polyline class="${className}-outline" points="${points}" fill="none" stroke="black" stroke-width="${width + outlineWidth}" stroke-linecap="butt" stroke-linejoin="round"/>`
             : "";
-          const strokeMarkup = `<polyline class="${className}" points="${points}" fill="none" stroke="${strokeColor}" stroke-width="${width}" stroke-linecap="round" stroke-linejoin="round"/>`;
+          const strokeMarkup = `<polyline class="${className}" points="${points}" fill="none" stroke="${strokeColor}" stroke-width="${width}" stroke-linecap="butt" stroke-linejoin="round"/>`;
           return `${outlineMarkup}${strokeMarkup}`;
         }
         const segments = [];
@@ -1988,9 +1988,9 @@ function resolveActorAppendages(actor) {
           const end = scaledPoints[i + 1];
           const segmentOutlineWidth = Math.max(0, num(perPointOutlineWidths[i + 1], 0));
           const segmentOutline = drawOutline && segmentOutlineWidth > 0
-            ? `<line class="${className}-outline" x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="black" stroke-width="${width + segmentOutlineWidth}" stroke-linecap="round" stroke-linejoin="round"/>`
+            ? `<line class="${className}-outline" x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="black" stroke-width="${width + segmentOutlineWidth}" stroke-linecap="butt" stroke-linejoin="round"/>`
             : "";
-          const segmentStroke = `<line class="${className}" x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="${strokeColor}" stroke-width="${width}" stroke-linecap="round" stroke-linejoin="round"/>`;
+          const segmentStroke = `<line class="${className}" x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="${strokeColor}" stroke-width="${width}" stroke-linecap="butt" stroke-linejoin="round"/>`;
           segments.push(`${segmentOutline}${segmentStroke}`);
         }
         return segments.join("");
