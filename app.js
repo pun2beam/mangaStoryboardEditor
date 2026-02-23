@@ -1883,6 +1883,34 @@ function renderAttachmentPointHandles(attachments, kind, id) {
     return `<circle class="attachment-point-handle" data-kind="actor" data-id="${escapeXml(String(id))}" data-attachment-index="${attachment.attachmentIndex}" data-attachment-ref="${escapeXml(String(attachment.ref))}" cx="${handlePoint.x}" cy="${handlePoint.y}" r="4"/>`;
   }).join("");
 }
+function appendageTransformAttr(appendage, anchorPoint) {
+  const transforms = [];
+  if (appendage.rotAnchor) transforms.push(`rotate(${appendage.rotAnchor} ${anchorPoint.x} ${anchorPoint.y})`);
+  if (appendage.flipX) transforms.push(`translate(${anchorPoint.x} ${anchorPoint.y}) scale(-1,1) translate(${-anchorPoint.x} ${-anchorPoint.y})`);
+  return transforms.length > 0 ? ` transform="${transforms.join(" ")}"` : "";
+}
+function renderHandPointHandles(actor, appendages, kind, id) {
+  if (!isHandDetailEditModeEnabled()) return "";
+  if (kind !== "actor" || !id || String(id) !== String(selectedActorId)) return "";
+  const appendageScale = actor.scale;
+  return appendages.map((appendage) => {
+    if (appendage.kind !== "hand") return "";
+    const actorAppendage = actor.appendages?.[appendage.appendageIndex];
+    if (!actorAppendage || actorAppendage.kind !== "hand") return "";
+    const chains = Array.isArray(actorAppendage.chains) ? actorAppendage.chains : [];
+    const circles = chains.map((chain, chainIndex) => {
+      const chainPoints = Array.isArray(chain?.points) ? chain.points : [];
+      if (chainPoints.length === 0) return "";
+      return chainPoints.map((point, pointIndex) => {
+        const x = appendage.anchorPoint.x + point.x * appendageScale;
+        const y = appendage.anchorPoint.y + point.y * appendageScale;
+        return `<circle class="hand-chain-point-handle" data-kind="actor" data-id="${escapeXml(String(id))}" data-appendage-index="${appendage.appendageIndex}" data-chain-index="${chainIndex}" data-chain-point-index="${pointIndex}" cx="${x}" cy="${y}" r="4"/>`;
+      }).join("");
+    }).join("");
+    if (!circles) return "";
+    return `<g data-appendage-id="${escapeXml(String(appendage.id))}" data-appendage-kind="${escapeXml(String(appendage.kind))}"${appendageTransformAttr(actorAppendage, appendage.anchorPoint)}>${circles}</g>`;
+  }).join("");
+}
 function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) {
   const p = pointInPanel(actor.x, actor.y, panelRect, unit);
   const s = 20 * actor.scale;
@@ -1894,7 +1922,7 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
   const headPoint = resolveHeadPoint(actor._posePoints, s);
   const neckPoint = resolvePosePoint(actor._posePoints, "neck", s) || { x: 0, y: -s * 0.8 };
   const attachments = resolveActorAttachments(actor, assetMap);
-  const appendages = resolveActorAppendages(actor, kind, id);
+  const appendages = resolveActorAppendages(actor);
   const hideHeadAndFace = actor.emotion === "none";
   const faceMarkup = actor.facing === "back" || hideHeadAndFace
     ? ""
@@ -1906,6 +1934,7 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
     : "";
   const poseHandles = renderPosePointHandles(actor, kind, id, s);
   const attachmentHandles = renderAttachmentPointHandles(attachments, kind, id);
+  const handHandles = renderHandPointHandles(actor, appendages, kind, id);
   const groupTransform = rot ? `translate(${p.x},${p.y}) rotate(${rot})` : `translate(${p.x},${p.y})`;
   const attrs = renderDataAttrs(kind, id);
   const neckHeadLine = `<line x1="${headPoint.x}" y1="${headPoint.y}" x2="${neckPoint.x}" y2="${neckPoint.y}" stroke="black" stroke-width="${actor.strokeWidth}" stroke-linecap="round"/>`;
@@ -1921,27 +1950,13 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
     <g transform="scale(${mirror},1)">
       ${actorLayers}
       ${attachmentHandles}
+      ${handHandles}
     </g>
     ${nameLabel}
     ${poseHandles}
   </g>`;
 }
-function renderHandChainHandles(actor, appendage, appendageIndex, anchorPoint, appendageScale, kind, id) {
-  if (!isHandDetailEditModeEnabled()) return "";
-  if (kind !== "actor" || !id || String(id) !== String(selectedActorId)) return "";
-  if (appendage.kind !== "hand") return "";
-  const chains = Array.isArray(appendage.chains) ? appendage.chains : [];
-  return chains.map((chain, chainIndex) => {
-    const chainPoints = Array.isArray(chain?.points) ? chain.points : [];
-    if (chainPoints.length === 0) return "";
-    return chainPoints.map((point, pointIndex) => {
-      const x = anchorPoint.x + point.x * appendageScale;
-      const y = anchorPoint.y + point.y * appendageScale;
-      return `<circle class="hand-chain-point-handle" data-kind="actor" data-id="${escapeXml(String(id))}" data-appendage-index="${appendageIndex}" data-chain-index="${chainIndex}" data-chain-point-index="${pointIndex}" cx="${x}" cy="${y}" r="4"/>`;
-    }).join("");
-  }).join("");
-}
-function resolveActorAppendages(actor, kind, id) {
+function resolveActorAppendages(actor) {
   if (!Array.isArray(actor.appendages) || actor.appendages.length === 0) return [];
   const poseScale = 20 * actor.scale;
   const appendageScale = actor.scale;
@@ -1961,17 +1976,14 @@ function resolveActorAppendages(actor, kind, id) {
       .join("");
     const chainMarkup = buildPolyline(appendage.chains || [], "appendage-chain", Math.max(1, actor.strokeWidth * 0.9));
     const digitsMarkup = buildPolyline(appendage.digits || [], "appendage-digit", Math.max(1, actor.strokeWidth * 0.7));
-    const detailHandles = renderHandChainHandles(actor, appendage, appendageIndex, anchorPoint, appendageScale, kind, id);
-    const transforms = [];
-    if (appendage.rotAnchor) transforms.push(`rotate(${appendage.rotAnchor} ${anchorPoint.x} ${anchorPoint.y})`);
-    if (appendage.flipX) transforms.push(`translate(${anchorPoint.x} ${anchorPoint.y}) scale(-1,1) translate(${-anchorPoint.x} ${-anchorPoint.y})`);
-    const transform = transforms.length > 0 ? ` transform="${transforms.join(" ")}"` : "";
+    const transform = appendageTransformAttr(appendage, anchorPoint);
     return [{
       appendageIndex,
       id: appendage.id,
       kind: appendage.kind,
       z: appendage.z,
-      markup: `<g data-appendage-id="${escapeXml(String(appendage.id))}" data-appendage-kind="${escapeXml(String(appendage.kind))}"${transform}>${chainMarkup}${digitsMarkup}${detailHandles}</g>`,
+      anchorPoint,
+      markup: `<g data-appendage-id="${escapeXml(String(appendage.id))}" data-appendage-kind="${escapeXml(String(appendage.kind))}"${transform}>${chainMarkup}${digitsMarkup}</g>`,
     }];
   });
 }
