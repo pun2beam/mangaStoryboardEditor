@@ -2081,9 +2081,9 @@ function poseLinesWithZ(pointResolver, pointZ, strokeWidth, strokeColor = "black
       order: i,
       markup: [
         drawOutline
-          ? `<line x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="black" stroke-width="${strokeWidth + 2}" stroke-linecap="round" stroke-linejoin="butt"/>`
+          ? `<line x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="black" stroke-width="${strokeWidth + 2}" stroke-linecap="butt" stroke-linejoin="butt"/>`
           : "",
-        `<line x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="${strokeColor}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="butt"/>`,
+        `<line x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="${strokeColor}" stroke-width="${strokeWidth}" stroke-linecap="butt" stroke-linejoin="butt"/>`,
       ].join(""),
     });
   }
