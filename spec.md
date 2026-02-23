@@ -258,6 +258,7 @@ panel:
 * `pose`（既定`stand`）
 * `pose.points`（任意、12点×`x,y` を1文字列で指定。指定時は `pose` より優先）
 * `pose.points.z`（任意、12値を `head,lh,rh,le,re,neck,waist,groin,lk,rk,lf,rf` 順で指定。`pose.points` の各部位線分のz順に使用）
+* `pose.points.outlineWidth`（任意、12値を `head,lh,rh,le,re,neck,waist,groin,lk,rk,lf,rf` 順で指定。部位ごとの縁取り太さ（`strokeWidth` に加算）に使用。`0` で縁取りなし）
 * `emotion`（既定`neutral`）
 * `eye`（`right`/`left`/`up`/`down`/`cry`/`close`/`wink`、既定`right`）
 * `head.shape`（`circle`/`square`/`none`、既定`circle`）
@@ -577,6 +578,7 @@ balloon:
 * `actor.pose.points` 指定時、値は 24 個の数値（12点×`x,y`）であること
 * `actor.pose.points` と `actor.pose` が同時指定された場合、`pose.points` を優先する
 * `actor.pose.points.z` 指定時、値は 12 個の数値（`head,lh,rh,le,re,neck,waist,groin,lk,rk,lf,rf`）であること
+* `actor.pose.points.outlineWidth` 指定時、値は 12 個の数値（`head,lh,rh,le,re,neck,waist,groin,lk,rk,lf,rf`）であること
 * `actor.pose.points` 未指定時は既存どおり `pose` プリセットで描画する
 
 ---

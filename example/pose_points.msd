@@ -28,6 +28,7 @@ actor:
   pose: run
   pose.points: 0,-2.2,-0.6,-0.6,1,-1,-0.5,-1,0.5,-1,0,-1.6,-0.1,-1,0,-0.8,-0.4,-0.5,0.4,-0.5,-0.5,0,0.5,0
   pose.points.z: 0,1,1,1,1,0,0,0,0,0,0,0
+  pose.points.outlineWidth: 0,2,2,2,2,2,2,2,2,2,4,4
   emotion: smile
   facing: right
   name: pose.points優先
