@@ -1886,6 +1886,7 @@ function resolveActorAppendages(actor) {
   if (!Array.isArray(actor.appendages) || actor.appendages.length === 0) return [];
   const poseScale = 20 * actor.scale;
   const appendageScale = actor.scale;
+  const drawOutline = parseBooleanLike(actor.outline, true);
   return actor.appendages.flatMap((appendage, appendageIndex) => {
     const anchorPoint = resolveAttachmentAnchorPoint(actor, appendage.anchor, poseScale);
     const buildPolyline = (pointGroups, className, width, strokeColor) => pointGroups
@@ -1894,7 +1895,11 @@ function resolveActorAppendages(actor) {
         const points = chainPoints
           .map((point) => `${anchorPoint.x + point.x * appendageScale},${anchorPoint.y + point.y * appendageScale}`)
           .join(" ");
-        return `<polyline class="${className}" points="${points}" fill="none" stroke="${strokeColor}" stroke-width="${width}" stroke-linecap="round" stroke-linejoin="round"/>`;
+        const outlineMarkup = drawOutline
+          ? `<polyline class="${className}-outline" points="${points}" fill="none" stroke="black" stroke-width="${width + 2}" stroke-linecap="round" stroke-linejoin="round"/>`
+          : "";
+        const strokeMarkup = `<polyline class="${className}" points="${points}" fill="none" stroke="${strokeColor}" stroke-width="${width}" stroke-linecap="round" stroke-linejoin="round"/>`;
+        return `${outlineMarkup}${strokeMarkup}`;
       })
       .join("");
     const strokeColor = appendage.stroke || actor.stroke;
