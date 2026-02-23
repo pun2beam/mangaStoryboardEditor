@@ -258,7 +258,7 @@ panel:
 * `name`（任意、デバッグ用）
 * `lookAt`（`actor:<id>` または `point(x,y)`、任意）
 * `attachments`（任意、**asset参照専用**の配列。`asset`の`id`を`ref`で参照し、`dx`,`dy`,`s`,`rot`,`anchorRot`,`z`,`flipX`で相対配置。`asset`側の同名設定がある場合は `attachments` 側を優先）
-* `appendages`（任意、配列。手足や尻尾などの可変点列を actor 側で直接定義）
+* `appendages`（任意、配列。`appendage` の `id` を `ref` で参照し、必要に応じて `kind`,`anchor`,`chains`,`digits`,`flipX`,`z`,`rotAnchor` などを上書き）
   * `id`（必須）
   * `kind`（必須。例: `hand` / `foot` / `tail`）
   * `anchor`（必須。既存ジョイント名: `head,lh,rh,le,re,neck,waist,groin,lk,rk,lf,rf`）
@@ -535,8 +535,11 @@ balloon:
 * `object/boxarrow/balloon/caption/sfx` は参照先 `panel` が存在する
 * `actor` は `panel` を持つ場合のみ参照先 `panel` が存在する
 * `asset` は `panel` を持つ場合のみ参照先 `panel` が存在する
+* `appendage` の各 `id` は一意である
+* `appendage` は各要素に `id`,`kind`,`anchor` があり、`chains` または `digits` のいずれかを持つ
 * `actor.attachments[].ref` の参照先 `asset` が存在する
-* `actor.appendages[]` 指定時、各要素に `id`,`kind`,`anchor` があり、`chains` または `digits` のいずれかを持つ
+* `actor.appendages[]` 指定時、各要素に `id` があり、`ref` 指定時は参照先 `appendage` が存在する
+* `actor.appendages[]` は `ref` 展開後に `kind`,`anchor` と `chains` または `digits` のいずれかを満たす
 * `actor.appendages[].anchor` は既存ジョイント集合（`head,lh,rh,le,re,neck,waist,groin,lk,rk,lf,rf`）に含まれること
 * 既存 `chains`/`digits` 文字列形式では、各点列グループが2点以上であること
 * `actor.appendages[].chains` / `digits` の数値列は `x,y` ペア（偶数個）であること

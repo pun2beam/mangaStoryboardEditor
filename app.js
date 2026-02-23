@@ -25,6 +25,7 @@ const ID_PREFIX_BY_TYPE = Object.freeze({
   caption: "c",
   sfx: "s",
   asset: "as",
+  appendage: "ap",
   style: "st",
 });
 const ID_REFERENCE_FIELDS_BY_TYPE = Object.freeze({
@@ -48,6 +49,7 @@ const HIERARCHICAL_BLOCK_TYPES = new Set([
   "caption",
   "sfx",
   "asset",
+  "appendage",
   "style",
 ]);
 const HIERARCHY_PARENT_REF = Object.freeze({
@@ -435,7 +437,7 @@ function parsePosePointZ(raw, line) {
   return zMap;
 }
 function validateAndBuild(blocks) {
-  const scene = { meta: {}, pages: [], panels: [], actors: [], objects: [], boxarrows: [], balloons: [], captions: [], sfx: [], assets: [], styles: [] };
+  const scene = { meta: {}, pages: [], panels: [], actors: [], objects: [], boxarrows: [], balloons: [], captions: [], sfx: [], assets: [], appendages: [], styles: [] };
   for (const b of blocks) {
     const key = b.type === "sfx" ? "sfx" : `${b.type}s`;
     if (b.type === "meta") {
@@ -554,7 +556,7 @@ function validateAndBuild(blocks) {
     actor.y = num(actor.y, 0);
     actor.strokeWidth = positiveNum(actor.strokeWidth, positiveNum(scene.meta?.["actor.strokeWidth"], 2));
     actor.attachments = normalizeAttachments(actor.attachments, actor._line);
-    actor.appendages = normalizeAppendages(actor.appendages, actor._line);
+    actor.appendages = normalizeAppendageRefs(actor.appendages, actor._line, "actor.appendages");
     actor._posePoints = parsePosePoints(actor["pose.points"], actor._line);
     actor._posePointZ = parsePosePointZ(actor["pose.points.z"], actor._line);
   }
@@ -661,6 +663,16 @@ function validateAndBuild(blocks) {
     a.anchor = normalizeAssetAnchorPoint(a.anchor, a._line);
     a.anchorRot = num(a.anchorRot, 0);
   }
+  for (const appendageDef of scene.appendages) {
+    appendageDef.kind = String(appendageDef.kind || "appendage");
+    appendageDef.anchor = normalizeAssetAnchorPoint(appendageDef.anchor, appendageDef._line);
+    appendageDef.z = typeof appendageDef.z === "number" ? appendageDef.z : 0;
+    appendageDef.flipX = appendageDef.flipX === true;
+    appendageDef.rotAnchor = typeof appendageDef.rotAnchor === "number" ? appendageDef.rotAnchor : 0;
+  }
+  const appendageDefs = normalizeAppendages(scene.appendages, 0, "appendage");
+  scene.appendages = appendageDefs;
+  const appendagesById = byId(scene.appendages, "appendage");
   const assetsById = byId(scene.assets, "asset");
   for (const actor of scene.actors) {
     for (const attachment of actor.attachments) {
@@ -681,6 +693,15 @@ function validateAndBuild(blocks) {
         attachment.flipX = null;
       }
     }
+    const resolvedActorAppendages = actor.appendages.map((appendage) => {
+      if (!appendage.ref) return { ...appendage };
+      const source = appendagesById.get(String(appendage.ref));
+      if (!source) {
+        throw new Error(`Line ${actor._line}: 未定義 appendage 参照 ${appendage.ref}`);
+      }
+      return { ...source, ...appendage };
+    });
+    actor.appendages = normalizeAppendages(resolvedActorAppendages, actor._line, "actor.appendages");
     for (const appendage of actor.appendages) {
       appendage.kind = String(appendage.kind || "appendage");
       appendage.anchor = normalizeAssetAnchorPoint(appendage.anchor, actor._line);
@@ -846,26 +867,45 @@ function validateAppendageChainsByKind(appendage, line) {
     }
   }
 }
-function normalizeAppendages(value, line) {
+function normalizeAppendageRefs(value, line, pathLabel = "actor.appendages") {
   if (value === undefined || value === null || value === "") return [];
-  if (!Array.isArray(value)) throw new Error(`Line ${line}: actor.appendages は配列で指定してください`);
+  if (!Array.isArray(value)) throw new Error(`Line ${line}: ${pathLabel} は配列で指定してください`);
   return value.map((appendage) => {
+    const appendageLine = Number(appendage?._line) || line;
     if (!appendage || typeof appendage !== "object") {
-      throw new Error(`Line ${line}: actor.appendages の要素形式が不正です`);
+      throw new Error(`Line ${appendageLine}: ${pathLabel} の要素形式が不正です`);
     }
     if (appendage.id === undefined || appendage.id === null || appendage.id === "") {
-      throw new Error(`Line ${line}: actor.appendages[].id は必須です`);
+      throw new Error(`Line ${appendageLine}: ${pathLabel}[].id は必須です`);
+    }
+    const normalized = { ...appendage };
+    if (normalized.ref !== undefined && normalized.ref !== null && normalized.ref !== "") {
+      normalized.ref = String(normalized.ref);
+    }
+    return normalized;
+  });
+}
+function normalizeAppendages(value, line, pathLabel = "actor.appendages") {
+  if (value === undefined || value === null || value === "") return [];
+  if (!Array.isArray(value)) throw new Error(`Line ${line}: ${pathLabel} は配列で指定してください`);
+  return value.map((appendage) => {
+    const appendageLine = Number(appendage?._line) || line;
+    if (!appendage || typeof appendage !== "object") {
+      throw new Error(`Line ${appendageLine}: ${pathLabel} の要素形式が不正です`);
+    }
+    if (appendage.id === undefined || appendage.id === null || appendage.id === "") {
+      throw new Error(`Line ${appendageLine}: ${pathLabel}[].id は必須です`);
     }
     if (appendage.kind === undefined || appendage.kind === null || appendage.kind === "") {
-      throw new Error(`Line ${line}: actor.appendages[].kind は必須です`);
+      throw new Error(`Line ${appendageLine}: ${pathLabel}[].kind は必須です`);
     }
     if (appendage.anchor === undefined || appendage.anchor === null || appendage.anchor === "") {
-      throw new Error(`Line ${line}: actor.appendages[].anchor は必須です`);
+      throw new Error(`Line ${appendageLine}: ${pathLabel}[].anchor は必須です`);
     }
     const hasIndexedField = (fieldName) => Object.keys(appendage).some((key) => new RegExp(`^${fieldName}\[\d+\]\.`).test(key));
     const kind = String(appendage.kind);
-    const indexedChains = parseIndexedAppendageChains(appendage, line, "chains", kind);
-    const indexedDigits = parseIndexedAppendageChains(appendage, line, "digits", kind);
+    const indexedChains = parseIndexedAppendageChains(appendage, appendageLine, "chains", kind);
+    const indexedDigits = parseIndexedAppendageChains(appendage, appendageLine, "digits", kind);
     const hasChains = (appendage.chains !== undefined && appendage.chains !== null && appendage.chains !== "") || hasIndexedField("chains");
     const hasDigits = (appendage.digits !== undefined && appendage.digits !== null && appendage.digits !== "") || hasIndexedField("digits");
     const handPreset = kind === "hand" ? normalizeHandPreset(appendage.preset ?? appendage.handPreset) : undefined;
@@ -873,10 +913,10 @@ function normalizeAppendages(value, line) {
       ? parseBooleanLike(appendage.handDetailEdited, hasChains || Boolean(indexedChains))
       : false;
     if (!hasChains && !hasDigits && kind !== "hand") {
-      throw new Error(`Line ${line}: actor.appendages[].chains または actor.appendages[].digits のいずれかは必須です`);
+      throw new Error(`Line ${appendageLine}: ${pathLabel}[].chains または ${pathLabel}[].digits のいずれかは必須です`);
     }
     const chains = indexedChains
-      ?? (hasChains ? parseAppendagePointGroups(appendage.chains, line, "chains").map((points, index) => ({ name: `chain-${index}`, points })) : null)
+      ?? (hasChains ? parseAppendagePointGroups(appendage.chains, appendageLine, "chains").map((points, index) => ({ name: `chain-${index}`, points })) : null)
       ?? (kind === "hand" ? defaultHandChainsForPreset(handPreset) : []);
     const normalizedAppendage = {
       ...appendage,
@@ -884,9 +924,9 @@ function normalizeAppendages(value, line) {
       ...(kind === "hand" ? { preset: handPreset, handVisible: parseBooleanLike(appendage.handVisible, true), handDetailEdited } : {}),
       chains,
       digits: indexedDigits
-        ?? parseAppendagePointGroups(appendage.digits, line, "digits").map((points, index) => ({ name: `digit-${index}`, points })),
+        ?? parseAppendagePointGroups(appendage.digits, appendageLine, "digits").map((points, index) => ({ name: `digit-${index}`, points })),
     };
-    validateAppendageChainsByKind(normalizedAppendage, line);
+    validateAppendageChainsByKind(normalizedAppendage, appendageLine);
     return normalizedAppendage;
   });
 }
@@ -3464,6 +3504,16 @@ function rewriteReferences(blocks, remap) {
           if (!attachment || typeof attachment !== "object") continue;
           const mapped = assetMap.get(String(attachment.ref));
           if (mapped) attachment.ref = mapped;
+        }
+      }
+    }
+    if (block.type === "actor" && Array.isArray(block.props.appendages)) {
+      const appendageMap = remap.appendage;
+      if (appendageMap) {
+        for (const appendage of block.props.appendages) {
+          if (!appendage || typeof appendage !== "object") continue;
+          const mapped = appendageMap.get(String(appendage.ref));
+          if (mapped) appendage.ref = mapped;
         }
       }
     }
