@@ -693,6 +693,22 @@ function normalizeAttachments(value, line) {
 }
 function parseAppendagePointGroups(raw, line, fieldName) {
   if (raw === undefined || raw === null || raw === "") return [];
+  const parsePointSequenceTokens = (source, sequenceName) => {
+    const tokens = String(source).split(/[\s,]+/).filter(Boolean);
+    if (tokens.length === 0) return [];
+    const values = tokens.map((token) => Number(token));
+    if (values.some((value) => !Number.isFinite(value))) {
+      throw new Error(`Line ${line}: actor.appendages[].${sequenceName} は数値列で指定してください`);
+    }
+    if (values.length % 2 !== 0) {
+      throw new Error(`Line ${line}: actor.appendages[].${sequenceName} は x,y ペアの偶数個で指定してください`);
+    }
+    const points = [];
+    for (let i = 0; i < values.length; i += 2) {
+      points.push({ x: values[i], y: values[i + 1] });
+    }
+    return points;
+  };
   const toPoint = (entry) => {
     if (Array.isArray(entry) && entry.length >= 2) {
       const x = Number(entry[0]);
@@ -713,13 +729,16 @@ function parseAppendagePointGroups(raw, line, fieldName) {
     }
     return null;
   };
-  const normalizeGroup = (group) => {
+  const normalizeGroup = (group, groupIndex) => {
     if (!Array.isArray(group)) return null;
-    const points = group.map((entry) => toPoint(entry)).filter(Boolean);
+    const points = group.map((entry) => toPoint(entry));
+    if (points.some((point) => !point)) {
+      throw new Error(`Line ${line}: actor.appendages[].${fieldName}[${groupIndex}] に不正な点座標があります`);
+    }
     return points.length >= 2 ? points : null;
   };
   if (Array.isArray(raw)) {
-    const groups = raw.map((group) => normalizeGroup(group)).filter(Boolean);
+    const groups = raw.map((group, index) => normalizeGroup(group, index)).filter(Boolean);
     if (groups.length > 0) return groups;
   }
   const source = String(raw);
@@ -727,11 +746,8 @@ function parseAppendagePointGroups(raw, line, fieldName) {
     .split("|")
     .map((segment) => segment.trim())
     .filter(Boolean)
-    .map((segment) => {
-      const points = segment
-        .split(/\s+/)
-        .map((token) => toPoint(token))
-        .filter(Boolean);
+    .map((segment, index) => {
+      const points = parsePointSequenceTokens(segment, `${fieldName}[${index}]`);
       return points.length >= 2 ? points : null;
     })
     .filter(Boolean);
@@ -747,16 +763,18 @@ function parseAppendagePointSequence(raw, line, fieldName, options = {}) {
     throw new Error(`Line ${line}: actor.appendages[].${fieldName} は点列を指定してください`);
   }
   const source = Array.isArray(raw) ? raw.join(" ") : String(raw);
-  const points = source
-    .split(/\s+/)
-    .map((token) => token.trim())
-    .filter(Boolean)
-    .map((token) => {
-      const m = token.match(/^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/);
-      if (!m) return null;
-      return { x: Number(m[1]), y: Number(m[2]) };
-    })
-    .filter(Boolean);
+  const tokens = source.split(/[\s,]+/).filter(Boolean);
+  const values = tokens.map((token) => Number(token));
+  if (values.some((value) => !Number.isFinite(value))) {
+    throw new Error(`Line ${line}: actor.appendages[].${fieldName} は数値列で指定してください`);
+  }
+  if (values.length % 2 !== 0) {
+    throw new Error(`Line ${line}: actor.appendages[].${fieldName} は x,y ペアの偶数個で指定してください`);
+  }
+  const points = [];
+  for (let i = 0; i < values.length; i += 2) {
+    points.push({ x: values[i], y: values[i + 1] });
+  }
   if (points.length < minPoints || points.length > maxPoints) {
     if (Number.isFinite(maxPoints)) {
       throw new Error(`Line ${line}: actor.appendages[].${fieldName} は ${minPoints}〜${maxPoints} 点で指定してください`);
