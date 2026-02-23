@@ -350,7 +350,7 @@ function parseListOfObjects(lines, startIndex, keyIndent) {
     const indent = indentWidth(line);
     if (indent <= keyIndent) break;
     const itemMatch = line.match(/^\s*-\s*(.*)$/);
-    if (!itemMatch) throw new Error(`Line ${i + 1}: attachments の配列形式が不正です`);
+    if (!itemMatch) throw new Error(`Line ${i + 1}: 配列形式が不正です`);
     const item = {};
     const inline = itemMatch[1].trim();
     if (inline) {
@@ -540,6 +540,7 @@ function validateAndBuild(blocks) {
     actor.y = num(actor.y, 0);
     actor.strokeWidth = positiveNum(actor.strokeWidth, positiveNum(scene.meta?.["actor.strokeWidth"], 2));
     actor.attachments = normalizeAttachments(actor.attachments, actor._line);
+    actor.appendages = normalizeAppendages(actor.appendages, actor._line);
     actor._posePoints = parsePosePoints(actor["pose.points"], actor._line);
     actor._posePointZ = parsePosePointZ(actor["pose.points.z"], actor._line);
   }
@@ -666,6 +667,13 @@ function validateAndBuild(blocks) {
         attachment.flipX = null;
       }
     }
+    for (const appendage of actor.appendages) {
+      appendage.kind = String(appendage.kind || "appendage");
+      appendage.anchor = normalizeAssetAnchorPoint(appendage.anchor, actor._line);
+      appendage.z = typeof appendage.z === "number" ? appendage.z : 0;
+      appendage.flipX = appendage.flipX === true;
+      appendage.rotAnchor = typeof appendage.rotAnchor === "number" ? appendage.rotAnchor : 0;
+    }
   }
   autoPlacePanelItems(scene, dicts);
   return scene;
@@ -681,6 +689,83 @@ function normalizeAttachments(value, line) {
       throw new Error(`Line ${line}: actor.attachments.ref は必須です`);
     }
     return { ...attachment };
+  });
+}
+function parseAppendagePointGroups(raw, line, fieldName) {
+  if (raw === undefined || raw === null || raw === "") return [];
+  const toPoint = (entry) => {
+    if (Array.isArray(entry) && entry.length >= 2) {
+      const x = Number(entry[0]);
+      const y = Number(entry[1]);
+      if (Number.isFinite(x) && Number.isFinite(y)) return { x, y };
+      return null;
+    }
+    if (entry && typeof entry === "object") {
+      const x = Number(entry.x);
+      const y = Number(entry.y);
+      if (Number.isFinite(x) && Number.isFinite(y)) return { x, y };
+      return null;
+    }
+    if (typeof entry === "string") {
+      const m = entry.trim().match(/^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/);
+      if (!m) return null;
+      return { x: Number(m[1]), y: Number(m[2]) };
+    }
+    return null;
+  };
+  const normalizeGroup = (group) => {
+    if (!Array.isArray(group)) return null;
+    const points = group.map((entry) => toPoint(entry)).filter(Boolean);
+    return points.length >= 2 ? points : null;
+  };
+  if (Array.isArray(raw)) {
+    const groups = raw.map((group) => normalizeGroup(group)).filter(Boolean);
+    if (groups.length > 0) return groups;
+  }
+  const source = String(raw);
+  const groups = source
+    .split("|")
+    .map((segment) => segment.trim())
+    .filter(Boolean)
+    .map((segment) => {
+      const points = segment
+        .split(/\s+/)
+        .map((token) => toPoint(token))
+        .filter(Boolean);
+      return points.length >= 2 ? points : null;
+    })
+    .filter(Boolean);
+  if (groups.length === 0) {
+    throw new Error(`Line ${line}: actor.appendages[].${fieldName} は 2点以上の点列を含む必要があります`);
+  }
+  return groups;
+}
+function normalizeAppendages(value, line) {
+  if (value === undefined || value === null || value === "") return [];
+  if (!Array.isArray(value)) throw new Error(`Line ${line}: actor.appendages は配列で指定してください`);
+  return value.map((appendage) => {
+    if (!appendage || typeof appendage !== "object") {
+      throw new Error(`Line ${line}: actor.appendages の要素形式が不正です`);
+    }
+    if (appendage.id === undefined || appendage.id === null || appendage.id === "") {
+      throw new Error(`Line ${line}: actor.appendages[].id は必須です`);
+    }
+    if (appendage.kind === undefined || appendage.kind === null || appendage.kind === "") {
+      throw new Error(`Line ${line}: actor.appendages[].kind は必須です`);
+    }
+    if (appendage.anchor === undefined || appendage.anchor === null || appendage.anchor === "") {
+      throw new Error(`Line ${line}: actor.appendages[].anchor は必須です`);
+    }
+    const hasChains = appendage.chains !== undefined && appendage.chains !== null && appendage.chains !== "";
+    const hasDigits = appendage.digits !== undefined && appendage.digits !== null && appendage.digits !== "";
+    if (!hasChains && !hasDigits) {
+      throw new Error(`Line ${line}: actor.appendages[].chains または actor.appendages[].digits のいずれかは必須です`);
+    }
+    return {
+      ...appendage,
+      chains: parseAppendagePointGroups(appendage.chains, line, "chains"),
+      digits: parseAppendagePointGroups(appendage.digits, line, "digits"),
+    };
   });
 }
 function resolveActorInheritance(actors, meta = {}) {
@@ -703,6 +788,27 @@ function resolveActorInheritance(actors, meta = {}) {
       if (baseIndex === undefined) {
         merged.push(ownCopy);
         indexByRef.set(ref, merged.length - 1);
+      } else {
+        merged[baseIndex] = { ...merged[baseIndex], ...ownCopy };
+      }
+    }
+    return merged;
+  };
+  const mergeAppendagesById = (baseAppendages, ownAppendages) => {
+    const merged = [];
+    const indexById = new Map();
+    for (const appendage of baseAppendages) {
+      const copy = { ...appendage };
+      merged.push(copy);
+      indexById.set(String(copy.id), merged.length - 1);
+    }
+    for (const appendage of ownAppendages) {
+      const appendageId = String(appendage.id);
+      const ownCopy = { ...appendage };
+      const baseIndex = indexById.get(appendageId);
+      if (baseIndex === undefined) {
+        merged.push(ownCopy);
+        indexById.set(appendageId, merged.length - 1);
       } else {
         merged[baseIndex] = { ...merged[baseIndex], ...ownCopy };
       }
@@ -741,6 +847,9 @@ function resolveActorInheritance(actors, meta = {}) {
       Object.assign(actor, inherited, ownProps);
       if (Array.isArray(inherited.attachments) && Array.isArray(ownProps.attachments)) {
         actor.attachments = mergeAttachmentsByRef(inherited.attachments, ownProps.attachments);
+      }
+      if (Array.isArray(inherited.appendages) && Array.isArray(ownProps.appendages)) {
+        actor.appendages = mergeAppendagesById(inherited.appendages, ownProps.appendages);
       }
       actor.extends = baseId;
     }
@@ -1555,6 +1664,7 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
   const headPoint = resolveHeadPoint(actor._posePoints, s);
   const neckPoint = resolvePosePoint(actor._posePoints, "neck", s) || { x: 0, y: -s * 0.8 };
   const attachments = resolveActorAttachments(actor, assetMap);
+  const appendages = resolveActorAppendages(actor);
   const hideHeadAndFace = actor.emotion === "none";
   const faceMarkup = actor.facing === "back" || hideHeadAndFace
     ? ""
@@ -1571,6 +1681,7 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
   const neckHeadLine = `<line x1="${headPoint.x}" y1="${headPoint.y}" x2="${neckPoint.x}" y2="${neckPoint.y}" stroke="black" stroke-width="${actor.strokeWidth}" stroke-linecap="round"/>`;
   const actorLayers = [
     ...attachments.map((attachment, index) => ({ z: num(attachment.z, 0), order: 100 + index, markup: attachment.markup })),
+    ...appendages.map((appendage, index) => ({ z: num(appendage.z, 0), order: 150 + index, markup: appendage.markup })),
     { z: num(actor._posePointZ?.head, 0), order: 0, markup: neckHeadLine },
     ...pose,
     { z: 0, order: 10, markup: headMarkup },
@@ -1584,6 +1695,35 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
     ${nameLabel}
     ${poseHandles}
   </g>`;
+}
+function resolveActorAppendages(actor) {
+  if (!Array.isArray(actor.appendages) || actor.appendages.length === 0) return [];
+  const poseScale = 20 * actor.scale;
+  const appendageScale = actor.scale;
+  return actor.appendages.flatMap((appendage, appendageIndex) => {
+    const anchorPoint = resolveAttachmentAnchorPoint(actor, appendage.anchor, poseScale);
+    const buildPolyline = (pointGroups, className, width) => pointGroups
+      .map((group) => {
+        const points = group
+          .map((point) => `${anchorPoint.x + point.x * appendageScale},${anchorPoint.y + point.y * appendageScale}`)
+          .join(" ");
+        return `<polyline class="${className}" points="${points}" fill="none" stroke="black" stroke-width="${width}" stroke-linecap="round" stroke-linejoin="round"/>`;
+      })
+      .join("");
+    const chainMarkup = buildPolyline(appendage.chains || [], "appendage-chain", Math.max(1, actor.strokeWidth * 0.9));
+    const digitsMarkup = buildPolyline(appendage.digits || [], "appendage-digit", Math.max(1, actor.strokeWidth * 0.7));
+    const transforms = [];
+    if (appendage.rotAnchor) transforms.push(`rotate(${appendage.rotAnchor} ${anchorPoint.x} ${anchorPoint.y})`);
+    if (appendage.flipX) transforms.push(`translate(${anchorPoint.x} ${anchorPoint.y}) scale(-1,1) translate(${-anchorPoint.x} ${-anchorPoint.y})`);
+    const transform = transforms.length > 0 ? ` transform="${transforms.join(" ")}"` : "";
+    return [{
+      appendageIndex,
+      id: appendage.id,
+      kind: appendage.kind,
+      z: appendage.z,
+      markup: `<g data-appendage-id="${escapeXml(String(appendage.id))}" data-appendage-kind="${escapeXml(String(appendage.kind))}"${transform}>${chainMarkup}${digitsMarkup}</g>`,
+    }];
+  });
 }
 function resolvePosePoint(points, name, scale) {
   const raw = points?.[name];

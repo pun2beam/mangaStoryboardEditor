@@ -257,7 +257,15 @@ panel:
 * `head.shape`（`circle`/`square`/`none`、既定`circle`）
 * `name`（任意、デバッグ用）
 * `lookAt`（`actor:<id>` または `point(x,y)`、任意）
-* `attachments`（任意、配列。`asset`の`id`を`ref`で参照し、`dx`,`dy`,`s`,`rot`,`anchorRot`,`z`,`flipX`で相対配置。`asset`側の同名設定がある場合は `attachments` 側を優先）
+* `attachments`（任意、**asset参照専用**の配列。`asset`の`id`を`ref`で参照し、`dx`,`dy`,`s`,`rot`,`anchorRot`,`z`,`flipX`で相対配置。`asset`側の同名設定がある場合は `attachments` 側を優先）
+* `appendages`（任意、配列。手足や尻尾などの可変点列を actor 側で直接定義）
+  * `id`（必須）
+  * `kind`（必須。例: `hand` / `foot` / `tail`）
+  * `anchor`（必須。既存ジョイント名: `head,lh,rh,le,re,neck,waist,groin,lk,rk,lf,rf`）
+  * `flipX`（任意、左右反転）
+  * `z`（任意、actor内相対レイヤ）
+  * `rotAnchor`（任意、`anchor` を中心にした回転角）
+  * `chains` または `digits`（いずれか必須。2点以上の可変点列グループ）
 * `style`（後述 styleRef）
 
 #### pose（プリセット）
@@ -290,6 +298,8 @@ panel:
 * `pose.points.z` を指定した場合、`pose.points` 由来の各部位線分（腕・胴・脚）を `pose.points.z` の値で前後ソートして描画する。
 * `neck-head` 線分は `pose.points.z` の `head` 値で前後関係を指定する。
 * `actor.attachments[].z` は `pose.points.z` と同一の actor 内 z ソートに統合される。
+* `actor.appendages[].z` も `pose.points.z` と同一の actor 内 z ソートに統合される。
+* 実装では `attachments`（asset参照）と `appendages`（可変点列）を別パスで処理し、レンダリング時の z ソートでのみ統合する。
   * `pose.points` 指定時は、`pose` プリセット値が同時にあっても `pose.points` を採用する。
   * `pose.points` 未指定時は既存どおり `pose` プリセットで描画する（既定 `stand`）。
 
@@ -519,6 +529,7 @@ balloon:
 * `actor` は `panel` を持つ場合のみ参照先 `panel` が存在する
 * `asset` は `panel` を持つ場合のみ参照先 `panel` が存在する
 * `actor.attachments[].ref` の参照先 `asset` が存在する
+* `actor.appendages[]` 指定時、各要素に `id`,`kind`,`anchor` があり、`chains` または `digits` のいずれかが2点以上の点列グループを持つ
 * `actor.extends` の参照先 `actor` が存在し、循環継承しない
 * `actor` 継承時、既定では `panel` は継承しない（`meta.actor.inheritPanel:on` 時のみ継承）
 * `actor` 継承時、`x,y` は継承しない（子で明示指定または自動配置で決定）
