@@ -265,7 +265,11 @@ panel:
   * `flipX`（任意、左右反転）
   * `z`（任意、actor内相対レイヤ）
   * `rotAnchor`（任意、`anchor` を中心にした回転角）
-  * `chains` または `digits`（いずれか必須。2点以上の可変点列グループ）
+  * `chains` または `digits`（いずれか必須）
+    * 既存: `chains: "x1,y1 x2,y2 | ..."` のグループ指定（各グループ2点以上）
+    * 新形式: `chains[N].name`, `chains[N].points`（例: `chains[0].name: thumb`, `chains[0].points: x1,y1 x2,y2`）
+    * `kind=hand` は `chains` を5本（`thumb/index/middle/ring/little`）推奨し、各 chain の点数は 1〜4 を許容
+    * `kind=tail` は `chains` 1本、点数 2以上を許容
 * `style`（後述 styleRef）
 
 #### pose（プリセット）
@@ -529,7 +533,11 @@ balloon:
 * `actor` は `panel` を持つ場合のみ参照先 `panel` が存在する
 * `asset` は `panel` を持つ場合のみ参照先 `panel` が存在する
 * `actor.attachments[].ref` の参照先 `asset` が存在する
-* `actor.appendages[]` 指定時、各要素に `id`,`kind`,`anchor` があり、`chains` または `digits` のいずれかが2点以上の点列グループを持つ
+* `actor.appendages[]` 指定時、各要素に `id`,`kind`,`anchor` があり、`chains` または `digits` のいずれかを持つ
+* 既存 `chains`/`digits` 文字列形式では、各点列グループが2点以上であること
+* `chains[N].name`/`chains[N].points` 形式を指定した場合、`chains[N].points` は点列として解釈される
+* `kind=hand` のとき、`chains` は 5 本（`thumb/index/middle/ring/little`）で、各 chain は 1〜4 点
+* `kind=tail` のとき、`chains` は 1 本で、2 点以上
 * `actor.extends` の参照先 `actor` が存在し、循環継承しない
 * `actor` 継承時、既定では `panel` は継承しない（`meta.actor.inheritPanel:on` 時のみ継承）
 * `actor` 継承時、`x,y` は継承しない（子で明示指定または自動配置で決定）
