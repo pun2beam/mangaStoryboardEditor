@@ -842,31 +842,6 @@ function parseAppendagePointSequence(raw, line, fieldName, options = {}) {
   }
   return points;
 }
-function parseIndexedAppendageChains(appendage, line, fieldName, kind) {
-  const chainEntries = [];
-  for (const [key, value] of Object.entries(appendage)) {
-    const m = key.match(new RegExp(`^${fieldName}\\[(\\d+)\\]\\.(name|points)$`));
-    if (!m) continue;
-    chainEntries.push({ index: Number(m[1]), prop: m[2], value });
-  }
-  if (chainEntries.length === 0) return null;
-  const chainsByIndex = new Map();
-  for (const { index, prop, value } of chainEntries) {
-    if (!chainsByIndex.has(index)) chainsByIndex.set(index, {});
-    chainsByIndex.get(index)[prop] = value;
-  }
-  const ordered = Array.from(chainsByIndex.entries())
-    .sort((a, b) => a[0] - b[0])
-    .map(([index, chain]) => ({
-      index,
-      name: chain.name === undefined || chain.name === null ? "" : String(chain.name),
-      points: parseAppendagePointSequence(chain.points, line, `${fieldName}[${index}].points`, {
-        minPoints: kind === "hand" ? 1 : 2,
-        maxPoints: kind === "hand" ? 4 : Infinity,
-      }),
-    }));
-  return ordered;
-}
 function validateAppendageChainsByKind(appendage, line) {
   const chains = Array.isArray(appendage.chains) ? appendage.chains : [];
   if (appendage.kind === "hand") {
@@ -925,29 +900,24 @@ function normalizeAppendages(value, line, pathLabel = "actor.appendages") {
     if (appendage.anchor === undefined || appendage.anchor === null || appendage.anchor === "") {
       throw new Error(`Line ${appendageLine}: ${pathLabel}[].anchor は必須です`);
     }
-    const hasIndexedField = (fieldName) => Object.keys(appendage).some((key) => new RegExp(`^${fieldName}\[\d+\]\.`).test(key));
     const kind = String(appendage.kind || "appendage");
-    const indexedChains = parseIndexedAppendageChains(appendage, appendageLine, "chains", kind);
-    const indexedDigits = parseIndexedAppendageChains(appendage, appendageLine, "digits", kind);
-    const hasChains = (appendage.chains !== undefined && appendage.chains !== null && appendage.chains !== "") || hasIndexedField("chains");
-    const hasDigits = (appendage.digits !== undefined && appendage.digits !== null && appendage.digits !== "") || hasIndexedField("digits");
+    const hasChains = appendage.chains !== undefined && appendage.chains !== null && appendage.chains !== "";
+    const hasDigits = appendage.digits !== undefined && appendage.digits !== null && appendage.digits !== "";
     const handPreset = kind === "hand" ? normalizeHandPreset(appendage.preset ?? appendage.handPreset) : undefined;
     const handDetailEdited = kind === "hand"
-      ? parseBooleanLike(appendage.handDetailEdited, hasChains || Boolean(indexedChains))
+      ? parseBooleanLike(appendage.handDetailEdited, hasChains)
       : false;
     if (!hasChains && !hasDigits && kind !== "hand") {
       throw new Error(`Line ${appendageLine}: ${pathLabel}[].chains または ${pathLabel}[].digits のいずれかは必須です`);
     }
-    const chains = indexedChains
-      ?? (hasChains ? parseAppendagePointGroups(appendage.chains, appendageLine, "chains").map((points, index) => ({ name: `chain-${index}`, points })) : null)
+    const chains = (hasChains ? parseAppendagePointGroups(appendage.chains, appendageLine, "chains").map((points, index) => ({ name: `chain-${index}`, points })) : null)
       ?? (kind === "hand" ? defaultHandChainsForPreset(handPreset) : []);
     const normalizedAppendage = {
       ...appendage,
       kind,
       ...(kind === "hand" ? { preset: handPreset, handVisible: parseBooleanLike(appendage.handVisible, true), handDetailEdited } : {}),
       chains,
-      digits: indexedDigits
-        ?? parseAppendagePointGroups(appendage.digits, appendageLine, "digits").map((points, index) => ({ name: `digit-${index}`, points })),
+      digits: parseAppendagePointGroups(appendage.digits, appendageLine, "digits").map((points, index) => ({ name: `digit-${index}`, points })),
     };
     validateAppendageChainsByKind(normalizedAppendage, appendageLine);
     return normalizedAppendage;
@@ -2818,7 +2788,7 @@ function applyHandUiStateToActorBlock(actorBlock, actorId) {
   if (!Array.isArray(actorBlock.props.appendages)) return;
   for (const appendage of actorBlock.props.appendages) {
     if (!appendage || typeof appendage !== "object" || appendage.kind !== "hand") continue;
-    const hasExplicitChains = Array.isArray(appendage.chains) && appendage.chains.length > 0;
+    const hasExplicitChains = appendage.chains !== undefined && appendage.chains !== null && appendage.chains !== "";
     const detailEdited = parseBooleanLike(appendage.handDetailEdited, hasExplicitChains);
     if (detailEdited) {
       appendage.handDetailEdited = true;
@@ -3412,6 +3382,48 @@ function serializeList(list, indentLevel) {
   }
   return `\n${lines.join("\n")}`;
 }
+function appendagePointGroupsToDslString(groups) {
+  if (!Array.isArray(groups)) return groups;
+  return groups
+    .map((group) => {
+      const points = Array.isArray(group?.points) ? group.points : (Array.isArray(group) ? group : []);
+      return points
+        .map((point) => `${roundedPoseCoord(point?.x ?? 0)},${roundedPoseCoord(point?.y ?? 0)}`)
+        .join(" ");
+    })
+    .join(" | ");
+}
+function normalizeAppendageDslFields(appendage) {
+  if (!appendage || typeof appendage !== "object") return appendage;
+  const normalized = { ...appendage };
+  for (const key of Object.keys(normalized)) {
+    if (/^(chains|digits)\[\d+\]\.(name|points)$/.test(key)) delete normalized[key];
+  }
+  if (Array.isArray(normalized.chains)) {
+    normalized.chains = appendagePointGroupsToDslString(normalized.chains);
+  }
+  if (Array.isArray(normalized.digits)) {
+    normalized.digits = appendagePointGroupsToDslString(normalized.digits);
+  }
+  return normalized;
+}
+function normalizeBlocksForDslOutput(blocks) {
+  return blocks.map((block) => {
+    if (block.type === "appendage") {
+      return { ...block, props: normalizeAppendageDslFields(block.props) };
+    }
+    if (block.type === "actor" && Array.isArray(block.props?.appendages)) {
+      return {
+        ...block,
+        props: {
+          ...block.props,
+          appendages: block.props.appendages.map((appendage) => normalizeAppendageDslFields(appendage)),
+        },
+      };
+    }
+    return block;
+  });
+}
 function stringifyFlatBlocks(blocks) {
   const out = [];
   for (const block of blocks) {
@@ -3501,6 +3513,7 @@ function stringifyBlocks(blocks) {
   if (!layoutMeta.page.persistGenerated) {
     blocksForSerialization = blocks.filter((block) => !(block.type === "page" && String(block.props.id ?? "").startsWith("auto-p")));
   }
+  blocksForSerialization = normalizeBlocksForDslOutput(blocksForSerialization);
   const prefersHierarchical = blocksForSerialization.some((block) => block.sourceFormat === "hierarchical");
   if (prefersHierarchical) return stringifyHierarchicalBlocks(blocksForSerialization);
   return stringifyFlatBlocks(blocksForSerialization);
