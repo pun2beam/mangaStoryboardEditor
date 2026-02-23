@@ -347,6 +347,11 @@ function hasListAtIndent(lines, startIndex, keyIndent) {
 }
 function parseListOfObjects(lines, startIndex, keyIndent) {
   const list = [];
+  const isListItemAtIndent = (line, indent) => {
+    if (!line) return false;
+    const m = line.match(/^(\s*)-\s*/);
+    return Boolean(m && m[1].length === indent);
+  };
   let i = startIndex;
   while (i < lines.length) {
     const line = lines[i];
@@ -377,10 +382,17 @@ function parseListOfObjects(lines, startIndex, keyIndent) {
       }
       const childIndent = indentWidth(child);
       if (childIndent <= itemIndent) break;
-      if (/^\s*-\s*/.test(child)) break;
+      if (isListItemAtIndent(child, itemIndent)) break;
       const childKv = child.match(/^\s+([\w.\-[\]]+)\s*:\s*(.*)$/);
       if (!childKv) throw new Error(`Line ${i + 1}: 配列要素の key:value 形式が不正です`);
-      item[childKv[1]] = parseValue(childKv[2].trim());
+      const [, childKey, childRawValue] = childKv;
+      if (childRawValue === "" && hasListAtIndent(lines, i + 1, childIndent)) {
+        const parsed = parseListOfObjects(lines, i + 1, childIndent);
+        item[childKey] = parsed.value;
+        i = parsed.nextIndex;
+        continue;
+      }
+      item[childKey] = parseValue(childRawValue.trim());
       i += 1;
     }
     list.push(item);
