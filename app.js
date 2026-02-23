@@ -3376,6 +3376,10 @@ function serializeValue(value, indentLevel) {
   }
   return String(value);
 }
+function formatSerializedKeyValue(prefix, value) {
+  const serialized = serializeValue(value, prefix.length);
+  return serialized.startsWith("\n") ? `${prefix}:${serialized}` : `${prefix}: ${serialized}`;
+}
 function serializeList(list, indentLevel) {
   if (list.length === 0) return "";
   const lines = [];
@@ -3387,10 +3391,10 @@ function serializeList(list, indentLevel) {
         continue;
       }
       const [firstKey, firstValue] = entries[0];
-      lines.push(`${" ".repeat(indentLevel)}- ${firstKey}: ${serializeValue(firstValue, indentLevel + 2)}`);
+      lines.push(formatSerializedKeyValue(`${" ".repeat(indentLevel)}- ${firstKey}`, firstValue));
       for (let i = 1; i < entries.length; i += 1) {
         const [key, value] = entries[i];
-        lines.push(`${" ".repeat(indentLevel + 2)}${key}: ${serializeValue(value, indentLevel + 2)}`);
+        lines.push(formatSerializedKeyValue(`${" ".repeat(indentLevel + 2)}${key}`, value));
       }
       continue;
     }
