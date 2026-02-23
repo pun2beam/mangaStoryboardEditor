@@ -148,7 +148,7 @@ function parseDsl(text) {
         i += 1;
         continue;
       }
-      const kv = bodyRaw.match(/^\s{2,}([\w.-]+)\s*:\s*(.*)$/);
+      const kv = bodyRaw.match(/^\s{2,}([\w.\-[\]]+)\s*:\s*(.*)$/);
       if (!kv) throw new Error(`Line ${i + 1}: key:value 形式ではありません`);
       const [, key, rawValue] = kv;
       const keyIndent = indentWidth(bodyRaw);
@@ -223,7 +223,7 @@ function parseHierarchicalBlock(lines, startIndex, baseIndent) {
       i = child.nextIndex;
       continue;
     }
-    const kv = line.match(/^\s+([\w.-]+)\s*:\s*(.*)$/);
+    const kv = line.match(/^\s+([\w.\-[\]]+)\s*:\s*(.*)$/);
     if (!kv || indent !== baseIndent + 2) throw new Error(`Line ${i + 1}: key:value 形式ではありません`);
     const [, key, rawValue] = kv;
     const keyIndent = indentWidth(line);
@@ -354,7 +354,7 @@ function parseListOfObjects(lines, startIndex, keyIndent) {
     const item = {};
     const inline = itemMatch[1].trim();
     if (inline) {
-      const inlineKv = inline.match(/^([\w.-]+)\s*:\s*(.*)$/);
+      const inlineKv = inline.match(/^([\w.\-[\]]+)\s*:\s*(.*)$/);
       if (!inlineKv) throw new Error(`Line ${i + 1}: 配列要素の key:value 形式が不正です`);
       item[inlineKv[1]] = parseValue(inlineKv[2].trim());
     }
@@ -370,7 +370,7 @@ function parseListOfObjects(lines, startIndex, keyIndent) {
       const childIndent = indentWidth(child);
       if (childIndent <= itemIndent) break;
       if (/^\s*-\s*/.test(child)) break;
-      const childKv = child.match(/^\s+([\w.-]+)\s*:\s*(.*)$/);
+      const childKv = child.match(/^\s+([\w.\-[\]]+)\s*:\s*(.*)$/);
       if (!childKv) throw new Error(`Line ${i + 1}: 配列要素の key:value 形式が不正です`);
       item[childKv[1]] = parseValue(childKv[2].trim());
       i += 1;
@@ -740,6 +740,81 @@ function parseAppendagePointGroups(raw, line, fieldName) {
   }
   return groups;
 }
+function parseAppendagePointSequence(raw, line, fieldName, options = {}) {
+  const { minPoints = 2, maxPoints = Infinity, allowEmpty = false } = options;
+  if (raw === undefined || raw === null || raw === "") {
+    if (allowEmpty) return [];
+    throw new Error(`Line ${line}: actor.appendages[].${fieldName} は点列を指定してください`);
+  }
+  const source = Array.isArray(raw) ? raw.join(" ") : String(raw);
+  const points = source
+    .split(/\s+/)
+    .map((token) => token.trim())
+    .filter(Boolean)
+    .map((token) => {
+      const m = token.match(/^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/);
+      if (!m) return null;
+      return { x: Number(m[1]), y: Number(m[2]) };
+    })
+    .filter(Boolean);
+  if (points.length < minPoints || points.length > maxPoints) {
+    if (Number.isFinite(maxPoints)) {
+      throw new Error(`Line ${line}: actor.appendages[].${fieldName} は ${minPoints}〜${maxPoints} 点で指定してください`);
+    }
+    throw new Error(`Line ${line}: actor.appendages[].${fieldName} は ${minPoints} 点以上で指定してください`);
+  }
+  return points;
+}
+function parseIndexedAppendageChains(appendage, line, fieldName, kind) {
+  const chainEntries = [];
+  for (const [key, value] of Object.entries(appendage)) {
+    const m = key.match(new RegExp(`^${fieldName}\\[(\\d+)\\]\\.(name|points)$`));
+    if (!m) continue;
+    chainEntries.push({ index: Number(m[1]), prop: m[2], value });
+  }
+  if (chainEntries.length === 0) return null;
+  const chainsByIndex = new Map();
+  for (const { index, prop, value } of chainEntries) {
+    if (!chainsByIndex.has(index)) chainsByIndex.set(index, {});
+    chainsByIndex.get(index)[prop] = value;
+  }
+  const ordered = Array.from(chainsByIndex.entries())
+    .sort((a, b) => a[0] - b[0])
+    .map(([index, chain]) => ({
+      index,
+      name: chain.name === undefined || chain.name === null ? "" : String(chain.name),
+      points: parseAppendagePointSequence(chain.points, line, `${fieldName}[${index}].points`, {
+        minPoints: kind === "hand" ? 1 : 2,
+        maxPoints: kind === "hand" ? 4 : Infinity,
+      }),
+    }));
+  return ordered;
+}
+function validateAppendageChainsByKind(appendage, line) {
+  const chains = Array.isArray(appendage.chains) ? appendage.chains : [];
+  if (appendage.kind === "hand") {
+    const expectedNames = ["thumb", "index", "middle", "ring", "little"];
+    if (chains.length !== 5) {
+      throw new Error(`Line ${line}: kind=hand は chains を5本（thumb/index/middle/ring/little）指定してください`);
+    }
+    chains.forEach((chain, idx) => {
+      if (!chain || !Array.isArray(chain.points) || chain.points.length < 1 || chain.points.length > 4) {
+        throw new Error(`Line ${line}: kind=hand の chains[${idx}].points は 1〜4 点で指定してください`);
+      }
+      if (!chain.name) {
+        chain.name = expectedNames[idx];
+      }
+    });
+  }
+  if (appendage.kind === "tail") {
+    if (chains.length !== 1) {
+      throw new Error(`Line ${line}: kind=tail は chains を1本指定してください`);
+    }
+    if (!Array.isArray(chains[0].points) || chains[0].points.length < 2) {
+      throw new Error(`Line ${line}: kind=tail の chains[0].points は 2 点以上で指定してください`);
+    }
+  }
+}
 function normalizeAppendages(value, line) {
   if (value === undefined || value === null || value === "") return [];
   if (!Array.isArray(value)) throw new Error(`Line ${line}: actor.appendages は配列で指定してください`);
@@ -756,16 +831,25 @@ function normalizeAppendages(value, line) {
     if (appendage.anchor === undefined || appendage.anchor === null || appendage.anchor === "") {
       throw new Error(`Line ${line}: actor.appendages[].anchor は必須です`);
     }
-    const hasChains = appendage.chains !== undefined && appendage.chains !== null && appendage.chains !== "";
-    const hasDigits = appendage.digits !== undefined && appendage.digits !== null && appendage.digits !== "";
+    const hasIndexedField = (fieldName) => Object.keys(appendage).some((key) => new RegExp(`^${fieldName}\\[\\d+\\]\\.`).test(key));
+    const hasChains = (appendage.chains !== undefined && appendage.chains !== null && appendage.chains !== "") || hasIndexedField("chains");
+    const hasDigits = (appendage.digits !== undefined && appendage.digits !== null && appendage.digits !== "") || hasIndexedField("digits");
     if (!hasChains && !hasDigits) {
       throw new Error(`Line ${line}: actor.appendages[].chains または actor.appendages[].digits のいずれかは必須です`);
     }
-    return {
+    const kind = String(appendage.kind);
+    const indexedChains = parseIndexedAppendageChains(appendage, line, "chains", kind);
+    const indexedDigits = parseIndexedAppendageChains(appendage, line, "digits", kind);
+    const normalizedAppendage = {
       ...appendage,
-      chains: parseAppendagePointGroups(appendage.chains, line, "chains"),
-      digits: parseAppendagePointGroups(appendage.digits, line, "digits"),
+      kind,
+      chains: indexedChains
+        ?? parseAppendagePointGroups(appendage.chains, line, "chains").map((points, index) => ({ name: `chain-${index}`, points })),
+      digits: indexedDigits
+        ?? parseAppendagePointGroups(appendage.digits, line, "digits").map((points, index) => ({ name: `digit-${index}`, points })),
     };
+    validateAppendageChainsByKind(normalizedAppendage, line);
+    return normalizedAppendage;
   });
 }
 function resolveActorInheritance(actors, meta = {}) {
@@ -1704,7 +1788,8 @@ function resolveActorAppendages(actor) {
     const anchorPoint = resolveAttachmentAnchorPoint(actor, appendage.anchor, poseScale);
     const buildPolyline = (pointGroups, className, width) => pointGroups
       .map((group) => {
-        const points = group
+        const chainPoints = Array.isArray(group?.points) ? group.points : group;
+        const points = chainPoints
           .map((point) => `${anchorPoint.x + point.x * appendageScale},${anchorPoint.y + point.y * appendageScale}`)
           .join(" ");
         return `<polyline class="${className}" points="${points}" fill="none" stroke="black" stroke-width="${width}" stroke-linecap="round" stroke-linejoin="round"/>`;
