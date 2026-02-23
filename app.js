@@ -3372,7 +3372,7 @@ function nextIdForType(type, count) {
   return `${prefix}${renumberedValue}`;
 }
 function serializeValue(value, indentLevel) {
-  if (Array.isArray(value)) return serializeList(value, indentLevel);
+  if (Array.isArray(value)) return serializeList(value, indentLevel + 2);
   if (typeof value === "string" && value.includes("\n")) {
     const body = value.split("\n").map((line) => `${" ".repeat(indentLevel + 2)}${line}`).join("\n");
     return `|\n${body}`;
