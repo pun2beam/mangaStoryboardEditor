@@ -912,14 +912,11 @@ function normalizeAppendages(value, line, pathLabel = "actor.appendages") {
     if (appendage.id === undefined || appendage.id === null || appendage.id === "") {
       throw new Error(`Line ${appendageLine}: ${pathLabel}[].id は必須です`);
     }
-    if (appendage.kind === undefined || appendage.kind === null || appendage.kind === "") {
-      throw new Error(`Line ${appendageLine}: ${pathLabel}[].kind は必須です`);
-    }
     if (appendage.anchor === undefined || appendage.anchor === null || appendage.anchor === "") {
       throw new Error(`Line ${appendageLine}: ${pathLabel}[].anchor は必須です`);
     }
     const hasIndexedField = (fieldName) => Object.keys(appendage).some((key) => new RegExp(`^${fieldName}\[\d+\]\.`).test(key));
-    const kind = String(appendage.kind);
+    const kind = String(appendage.kind || "appendage");
     const indexedChains = parseIndexedAppendageChains(appendage, appendageLine, "chains", kind);
     const indexedDigits = parseIndexedAppendageChains(appendage, appendageLine, "digits", kind);
     const hasChains = (appendage.chains !== undefined && appendage.chains !== null && appendage.chains !== "") || hasIndexedField("chains");
@@ -3257,19 +3254,19 @@ function setupObjectDrag() {
           const resolvedAppendage = state.appendage && typeof state.appendage === "object" ? state.appendage : null;
           const isHandAppendage = appendage.kind === "hand" || (appendage.ref !== undefined && resolvedAppendage?.kind === "hand");
           if (!isHandAppendage) return;
-          if (appendage.kind !== "hand") {
-            appendage.kind = "hand";
-          }
           if (!Array.isArray(appendage.chains) || appendage.chains.length === 0) {
             const sourceChains = Array.isArray(resolvedAppendage?.chains) ? resolvedAppendage.chains : null;
             appendage.chains = sourceChains
-              ? sourceChains.map((chain, chainIndex) => ({
-                name: chain?.name ?? HAND_CHAIN_NAMES[chainIndex] ?? `chain-${chainIndex}`,
+              ? sourceChains.map((chain) => ({
                 points: Array.isArray(chain?.points)
                   ? chain.points.map((point) => ({ x: point.x, y: point.y }))
                   : [],
               }))
-              : defaultHandChainsForPreset(normalizeHandPreset(appendage.preset ?? resolvedAppendage?.preset));
+              : defaultHandChainsForPreset(normalizeHandPreset(appendage.preset ?? resolvedAppendage?.preset)).map((chain) => ({
+                points: Array.isArray(chain?.points)
+                  ? chain.points.map((point) => ({ x: point.x, y: point.y }))
+                  : [],
+              }));
           }
           const chain = appendage?.chains?.[state.chainIndex];
           const chainPoint = chain?.points?.[state.chainPointIndex];

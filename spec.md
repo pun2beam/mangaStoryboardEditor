@@ -262,14 +262,14 @@ panel:
   * `id`（任意。継承マージ用キー。未指定時は `ref` をキーに扱う）
   * `ref`（任意。トップレベル `appendage.id` を参照）
   * `id` または `ref` のどちらか一方は必須
-  * `kind`（必須。例: `hand` / `foot` / `tail`）
+  * `kind`（任意。未指定時は `appendage`。`hand` / `foot` / `tail` など）
   * `anchor`（必須。既存ジョイント名: `head,lh,rh,le,re,neck,waist,groin,lk,rk,lf,rf`）
   * `flipX`（任意、左右反転）
   * `z`（任意、actor内相対レイヤ）
   * `rotAnchor`（任意、`anchor` を中心にした回転角。既定 `0°`）
   * `chains` または `digits`（いずれか必須）
     * 既存: `chains: "x1,y1 x2,y2 | ..."` のグループ指定（各グループ2点以上）
-    * 新形式: `chains[N].name`, `chains[N].points`（例: `chains[0].name: thumb`, `chains[0].points: x1,y1 x2,y2`）
+    * 新形式: `chains[N].name`, `chains[N].points`（`name` は任意。未指定可）
     * `kind=hand` は `chains` を5本（`thumb/index/middle/ring/little`）推奨し、各 chain の点数は 1〜4 を許容
     * `kind=tail` は `chains` 1本、点数 2以上を許容
   * 点群座標系は `anchor` 原点のローカル座標（`x,y`）として解釈する
@@ -538,10 +538,10 @@ balloon:
 * `actor` は `panel` を持つ場合のみ参照先 `panel` が存在する
 * `asset` は `panel` を持つ場合のみ参照先 `panel` が存在する
 * `appendage` の各 `id` は一意である
-* `appendage` は各要素に `id`,`kind`,`anchor` があり、`chains` または `digits` のいずれかを持つ
+* `appendage` は各要素に `id`,`anchor` があり、`kind` は任意（未指定時 `appendage`）。`chains` または `digits` のいずれかを持つ
 * `actor.attachments[].ref` の参照先 `asset` が存在する
 * `actor.appendages[]` 指定時、各要素は `id` または `ref` のいずれかを持ち、`ref` 指定時は参照先 `appendage` が存在する
-* `actor.appendages[]` は `ref` 展開後に `kind`,`anchor` と `chains` または `digits` のいずれかを満たす
+* `actor.appendages[]` は `ref` 展開後に `anchor` と `chains` または `digits` のいずれかを満たす（`kind` は任意）
 * `actor.appendages[].anchor` は既存ジョイント集合（`head,lh,rh,le,re,neck,waist,groin,lk,rk,lf,rf`）に含まれること
 * 既存 `chains`/`digits` 文字列形式では、各点列グループが2点以上であること
 * `actor.appendages[].chains` / `digits` の数値列は `x,y` ペア（偶数個）であること
