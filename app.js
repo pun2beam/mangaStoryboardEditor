@@ -1980,15 +1980,18 @@ function resolveActorAppendages(actor) {
         const endpointOutlineWidth = perPointOutlineWidths
           ? Math.max(0, num(perPointOutlineWidths[scaledPoints.length - 1], 0))
           : uniformOutlineWidth;
-        const endpointCap = drawOutline && endpointOutlineWidth > 0
-          ? `<circle class="${className}-outline-endpoint" cx="${endpoint.x}" cy="${endpoint.y}" r="${0.5 * (width + endpointOutlineWidth)}" fill="black"/>`
+        const endpointOuterRadius = 0.5 * (width + endpointOutlineWidth);
+        const endpointInnerRadius = 0.5 * width;
+        const endpointOutlineCap = drawOutline && endpointOutlineWidth > 0
+          ? `<circle class="${className}-outline-endpoint" cx="${endpoint.x}" cy="${endpoint.y}" r="${endpointOuterRadius}" fill="black"/>`
           : "";
+        const endpointFillCap = `<circle class="${className}-endpoint" cx="${endpoint.x}" cy="${endpoint.y}" r="${endpointInnerRadius}" fill="${strokeColor}"/>`;
         if (!perPointOutlineWidths) {
           const outlineMarkup = drawOutline && uniformOutlineWidth > 0
             ? `<polyline class="${className}-outline" points="${points}" fill="none" stroke="black" stroke-width="${width + uniformOutlineWidth}" stroke-linecap="butt" stroke-linejoin="round"/>`
             : "";
           const strokeMarkup = `<polyline class="${className}" points="${points}" fill="none" stroke="${strokeColor}" stroke-width="${width}" stroke-linecap="butt" stroke-linejoin="round"/>`;
-          return `${outlineMarkup}${strokeMarkup}${endpointCap}`;
+          return `${endpointOutlineCap}${outlineMarkup}${strokeMarkup}${endpointFillCap}`;
         }
         const segments = [];
         for (let i = 0; i < scaledPoints.length - 1; i += 1) {
@@ -2001,7 +2004,7 @@ function resolveActorAppendages(actor) {
           const segmentStroke = `<line class="${className}" x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="${strokeColor}" stroke-width="${width}" stroke-linecap="butt" stroke-linejoin="round"/>`;
           segments.push(`${segmentOutline}${segmentStroke}`);
         }
-        return `${segments.join("")}${endpointCap}`;
+        return `${endpointOutlineCap}${segments.join("")}${endpointFillCap}`;
       })
       .join("");
     const strokeColor = appendage.stroke || actor.stroke;
@@ -2204,29 +2207,38 @@ function poseLinesWithZ(pointResolver, pointZ, pointOutlineWidth, strokeWidth, s
       ].join(""),
     });
   }
-  const endpointCaps = drawOutline
-    ? endpointNames.flatMap((name, index) => {
-      const endpoint = pointResolver(name);
-      if (!endpoint) return [];
-      const z = num(pointZ?.[name], 0);
-      const endpointOutlineWidth = Math.max(0, num(pointOutlineWidth?.[name], 2));
-      if (endpointOutlineWidth <= 0) return [];
-      const radius = 0.5 * (strokeWidth + endpointOutlineWidth);
-      return [{
-        z,
-        order: lineDefs.length + index,
-        markup: `<circle data-endpoint-cap="${name}" cx="${endpoint.x}" cy="${endpoint.y}" r="${radius}" fill="black"/>`,
-      }];
-    })
-    : [];
+  const endpointOutlineCaps = endpointNames.flatMap((name, index) => {
+    const endpoint = pointResolver(name);
+    if (!endpoint) return [];
+    const z = num(pointZ?.[name], 0);
+    const endpointOutlineWidth = Math.max(0, num(pointOutlineWidth?.[name], 2));
+    if (!drawOutline || endpointOutlineWidth <= 0) return [];
+    const outerRadius = 0.5 * (strokeWidth + endpointOutlineWidth);
+    return [{
+      z,
+      order: lineDefs.length + index,
+      markup: `<circle data-endpoint-cap-outline="${name}" cx="${endpoint.x}" cy="${endpoint.y}" r="${outerRadius}" fill="black"/>`,
+    }];
+  });
   const jointMasks = Array.from(jointMap.entries())
     .filter(([, data]) => data.degree >= 2)
     .map(([name, data], index) => ({
       z: data.z,
-      order: lineDefs.length + endpointCaps.length + index,
+      order: lineDefs.length + endpointOutlineCaps.length + index,
       markup: `<circle data-joint-mask="${name}" cx="${data.point.x}" cy="${data.point.y}" r="${jointRadius}" fill="${strokeColor}"/>`,
     }));
-  return [...segments, ...endpointCaps, ...jointMasks];
+  const endpointFillCaps = endpointNames.flatMap((name, index) => {
+    const endpoint = pointResolver(name);
+    if (!endpoint) return [];
+    const z = num(pointZ?.[name], 0);
+    const innerRadius = 0.5 * strokeWidth;
+    return [{
+      z,
+      order: lineDefs.length + endpointOutlineCaps.length + jointMasks.length + index,
+      markup: `<circle data-endpoint-cap="${name}" cx="${endpoint.x}" cy="${endpoint.y}" r="${innerRadius}" fill="${strokeColor}"/>`,
+    }];
+  });
+  return [...segments, ...endpointOutlineCaps, ...jointMasks, ...endpointFillCaps];
 }
 function eyePath(eye, s, headPoint = { x: 0, y: -s * 2.2 }) {
   const headY = headPoint.y;
