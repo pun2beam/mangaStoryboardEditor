@@ -73,8 +73,6 @@ const els = {
   dragHandleToggle: document.getElementById("showDragHandles"),
   poseEditorToggle: document.getElementById("showPoseEditor"),
   handDetailEditorToggle: document.getElementById("showHandDetailEditor"),
-  handPresetSelect: document.getElementById("handPresetSelect"),
-  handAppendageToggle: document.getElementById("showHandAppendage"),
   renumberBtn: document.getElementById("renumberIdsBtn"),
   split: document.querySelector(".split-root"),
 };
@@ -94,12 +92,6 @@ function isPoseEditModeEnabled() {
 }
 function isHandDetailEditModeEnabled() {
   return isPoseEditModeEnabled() && Boolean(els.handDetailEditorToggle?.checked);
-}
-function isHandAppendageVisibleInUi() {
-  return Boolean(els.handAppendageToggle?.checked);
-}
-function selectedHandPresetValue() {
-  return normalizeHandPreset(els.handPresetSelect?.value);
 }
 function dragHandleRectFor(kind, item, panelRect, unit) {
   const target = rectTarget(panelRect);
@@ -2781,26 +2773,11 @@ function escapeXml(str) {
 function syncDragHandleModeClass() {
   els.canvas.classList.toggle("drag-handle-active", isDragHandleModeEnabled() || isPoseEditModeEnabled());
 }
-function syncHandUiFromSelectedActor() {
-  if (!currentScene || !selectedActorId) return;
-  const actor = currentScene.actors?.find((entry) => String(entry.id) === String(selectedActorId));
-  if (!actor) return;
-  const hand = actor.appendages?.find((appendage) => appendage?.kind === "hand");
-  if (!hand) return;
-  if (els.handPresetSelect) {
-    els.handPresetSelect.value = normalizeHandPreset(hand.preset);
-  }
-  if (els.handAppendageToggle) {
-    els.handAppendageToggle.checked = hand.handVisible !== false;
-  }
-}
 function applyHandUiStateToActorBlock(actorBlock, actorId) {
   if (!actorBlock || actorBlock.type !== "actor" || String(actorBlock.props.id) !== String(actorId)) return;
   if (!Array.isArray(actorBlock.props.appendages)) return;
   for (const appendage of actorBlock.props.appendages) {
     if (!appendage || typeof appendage !== "object" || appendage.kind !== "hand") continue;
-    appendage.preset = selectedHandPresetValue();
-    appendage.handVisible = isHandAppendageVisibleInUi();
     const hasExplicitChains = Array.isArray(appendage.chains) && appendage.chains.length > 0;
     const detailEdited = parseBooleanLike(appendage.handDetailEdited, hasExplicitChains);
     if (detailEdited) {
@@ -2821,7 +2798,6 @@ function update() {
     els.canvas.innerHTML = svg;
     els.errorBox.hidden = true;
     els.banner.hidden = true;
-    syncHandUiFromSelectedActor();
   } catch (err) {
     if (lastGoodSvg) {
       els.canvas.innerHTML = lastGoodSvg;
@@ -2977,7 +2953,6 @@ function setupObjectDrag() {
     if (kind === "actor" && id) {
       const selectionChanged = String(selectedActorId) !== String(id);
       selectedActorId = id;
-      syncHandUiFromSelectedActor();
       if (selectionChanged && isPoseEditModeEnabled() && !target.dataset.posePoint) {
         update();
       }
@@ -3312,15 +3287,6 @@ function setupObjectDrag() {
   els.canvas.addEventListener("pointerup", finishDrag);
   els.canvas.addEventListener("pointercancel", finishDrag);
 }
-function persistSelectedActorHandUiState() {
-  if (!selectedActorId) return;
-  const blocks = parseBlocks(els.input.value);
-  const actorBlock = blocks.find((block) => block.type === "actor" && String(block.props.id) === String(selectedActorId));
-  if (!actorBlock) return;
-  applyHandUiStateToActorBlock(actorBlock, selectedActorId);
-  els.input.value = stringifyBlocks(blocks);
-  update();
-}
 function setupDragHandleToggle() {
   if (els.dragHandleToggle) {
     els.dragHandleToggle.addEventListener("change", () => {
@@ -3337,16 +3303,6 @@ function setupDragHandleToggle() {
   if (els.handDetailEditorToggle) {
     els.handDetailEditorToggle.addEventListener("change", () => {
       update();
-    });
-  }
-  if (els.handPresetSelect) {
-    els.handPresetSelect.addEventListener("change", () => {
-      persistSelectedActorHandUiState();
-    });
-  }
-  if (els.handAppendageToggle) {
-    els.handAppendageToggle.addEventListener("change", () => {
-      persistSelectedActorHandUiState();
     });
   }
   syncDragHandleModeClass();
