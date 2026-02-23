@@ -83,6 +83,7 @@ page:
 - `pose.points` は指定した `actor` に対してのみ `pose` プリセットを上書きします。未指定の `actor` は既存の `pose` プリセットをそのまま利用します。
 - 棒人間の線色は `meta.actor.stroke`（全体既定）と `actor.stroke`（個別上書き）で指定できます（既定: `black`）。
 - 棒人間の線の太さは `meta.actor.strokeWidth`（全体既定）と `actor.strokeWidth`（個別上書き）で指定できます。
+- 棒人間の縁取りは `meta.actor.outline`（全体既定）と `actor.outline`（個別上書き）で `on/off` 指定できます（既定: `on`）。
 - `pose.points` は24値（12点）で指定し、先頭の `head(x,y)` を頭の位置と首への接続起点として使います。
 - `pose.points.z` は12値（`head,lh,rh,le,re,neck,waist,groin,lk,rk,lf,rf` 順）で指定できます。`pose.points` の各部位線分の前後関係に使われます。`neck-head` 線分は `head` の値を使って前後関係を指定できます。
 - `actor.attachments[].z` も同じ actor 内の描画順ソートに含まれます（`pose.points.z` の線分と同じ z 軸で前後関係を決定）。
