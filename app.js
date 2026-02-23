@@ -1885,8 +1885,9 @@ function renderHandPointHandles(actor, appendages, kind, id) {
   return appendages.map((appendage) => {
     if (appendage.kind !== "hand") return "";
     const actorAppendage = actor.appendages?.[appendage.appendageIndex];
-    if (!actorAppendage || actorAppendage.kind !== "hand") return "";
-    const chains = Array.isArray(actorAppendage.chains) ? actorAppendage.chains : [];
+    const chains = Array.isArray(appendage.chains)
+      ? appendage.chains
+      : (Array.isArray(actorAppendage?.chains) ? actorAppendage.chains : []);
     const circles = chains.map((chain, chainIndex) => {
       const chainPoints = Array.isArray(chain?.points) ? chain.points : [];
       if (chainPoints.length === 0) return "";
@@ -1971,6 +1972,7 @@ function resolveActorAppendages(actor) {
       id: appendage.id,
       kind: appendage.kind,
       z: appendage.z,
+      chains: appendage.chains,
       anchorPoint,
       markup: `<g data-appendage-id="${escapeXml(String(appendage.id))}" data-appendage-kind="${escapeXml(String(appendage.kind))}"${transform}>${chainMarkup}${digitsMarkup}</g>`,
     }];
@@ -3029,9 +3031,13 @@ function setupObjectDrag() {
       const parsedChainPointIndex = Number.parseInt(chainPointIndex, 10);
       if (!Number.isInteger(parsedAppendageIndex) || !Number.isInteger(parsedChainIndex) || !Number.isInteger(parsedChainPointIndex)) return;
       const actorAppendage = actorInfo.actor.appendages?.[parsedAppendageIndex];
-      const chain = actorAppendage?.chains?.[parsedChainIndex];
+      const resolvedAppendage = resolveActorAppendages(actorInfo.actor)
+        .find((appendage) => appendage.appendageIndex === parsedAppendageIndex);
+      const handAppendage = resolvedAppendage || actorAppendage;
+      const chain = handAppendage?.chains?.[parsedChainIndex];
       const pointInChain = chain?.points?.[parsedChainPointIndex];
-      if (!actorAppendage || actorAppendage.kind !== "hand" || !pointInChain) return;
+      const isHandAppendage = handAppendage?.kind === "hand" || actorAppendage?.kind === "hand";
+      if (!handAppendage || !isHandAppendage || !pointInChain) return;
       const start = scenePointFromEvent(event);
       if (!start) return;
       const chainPointTargets = Array.from(els.canvas.querySelectorAll(
@@ -3050,7 +3056,7 @@ function setupObjectDrag() {
         appendageIndex: parsedAppendageIndex,
         chainIndex: parsedChainIndex,
         chainPointIndex: parsedChainPointIndex,
-        appendage: actorAppendage,
+        appendage: handAppendage,
         start,
         panelRect: actorInfo.panelRect,
         unit: actorInfo.unit,
