@@ -2180,6 +2180,10 @@ function poseLinesWithZ(pointResolver, pointZ, pointOutlineWidth, strokeWidth, s
   const segments = [];
   const jointMap = new Map();
   const jointRadius = positiveNum(jointMaskRadius, Math.max(0.5, strokeWidth * 0.6));
+  const ORDER_ENDPOINT_OUTLINE_BASE = -200;
+  const ORDER_SEGMENT_BASE = 0;
+  const ORDER_JOINT_MASK_BASE = 200;
+  const ORDER_ENDPOINT_FILL_BASE = 400;
   for (let i = 0; i < lineDefs.length; i += 1) {
     const [from, to, zKey] = lineDefs[i];
     const start = pointResolver(from);
@@ -2198,7 +2202,7 @@ function poseLinesWithZ(pointResolver, pointZ, pointOutlineWidth, strokeWidth, s
     const outlineWidth = Math.max(0, num(pointOutlineWidth?.[zKey], 2));
     segments.push({
       z,
-      order: i,
+      order: ORDER_SEGMENT_BASE + i,
       markup: [
         drawOutline && outlineWidth > 0
           ? `<line x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="black" stroke-width="${strokeWidth + outlineWidth}" stroke-linecap="butt" stroke-linejoin="butt"/>`
@@ -2216,7 +2220,7 @@ function poseLinesWithZ(pointResolver, pointZ, pointOutlineWidth, strokeWidth, s
     const outerRadius = 0.5 * (strokeWidth + endpointOutlineWidth);
     return [{
       z,
-      order: lineDefs.length + index,
+      order: ORDER_ENDPOINT_OUTLINE_BASE + index,
       markup: `<circle data-endpoint-cap-outline="${name}" cx="${endpoint.x}" cy="${endpoint.y}" r="${outerRadius}" fill="black"/>`,
     }];
   });
@@ -2224,7 +2228,7 @@ function poseLinesWithZ(pointResolver, pointZ, pointOutlineWidth, strokeWidth, s
     .filter(([, data]) => data.degree >= 2)
     .map(([name, data], index) => ({
       z: data.z,
-      order: lineDefs.length + endpointOutlineCaps.length + index,
+      order: ORDER_JOINT_MASK_BASE + index,
       markup: `<circle data-joint-mask="${name}" cx="${data.point.x}" cy="${data.point.y}" r="${jointRadius}" fill="${strokeColor}"/>`,
     }));
   const endpointFillCaps = endpointNames.flatMap((name, index) => {
@@ -2234,7 +2238,7 @@ function poseLinesWithZ(pointResolver, pointZ, pointOutlineWidth, strokeWidth, s
     const innerRadius = 0.5 * strokeWidth;
     return [{
       z,
-      order: lineDefs.length + endpointOutlineCaps.length + jointMasks.length + index,
+      order: ORDER_ENDPOINT_FILL_BASE + index,
       markup: `<circle data-endpoint-cap="${name}" cx="${endpoint.x}" cy="${endpoint.y}" r="${innerRadius}" fill="${strokeColor}"/>`,
     }];
   });
