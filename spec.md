@@ -116,6 +116,7 @@ SVG描画順は原則：
 * `author`（任意）
 * `version`（任意）
 * `actor.name.visible`（任意、`on`/`off`。`on` の場合、`actor.name` をキャラクターの上部に表示）
+* `actor.stroke`（任意、色。棒人間の線色の既定値。既定: `black`）
 * `actor.strokeWidth`（任意、数値。棒人間の線の太さの既定値。既定: `2`）
 * `text.direction`（任意、`horizontal`/`vertical`。既定: `horizontal`。全体の文字方向）
 * `base.panel.direction`（任意、`right.bottom`/`left.bottom`。panel自動配置の既定方向。既定: `right.bottom`）
@@ -246,6 +247,7 @@ panel:
   * 互換モードとして `meta.actor.inheritPanel:on` で `panel` 継承を有効化可能（既定 `off`）
 * `x,y`（足元の基準点を推奨）
 * `scale`（既定1.0）
+* `stroke`（任意、色。棒人間の線色。未指定時は `meta.actor.stroke`、さらに未指定なら `black`）
 * `strokeWidth`（任意、数値。棒人間の線の太さ。未指定時は `meta.actor.strokeWidth`、さらに未指定なら `2`）
 * `rot`（度。足元基準で回転。既定0）
 * `facing`（`left`/`right`/`back`、既定`right`）
@@ -258,7 +260,7 @@ panel:
 * `name`（任意、デバッグ用）
 * `lookAt`（`actor:<id>` または `point(x,y)`、任意）
 * `attachments`（任意、**asset参照専用**の配列。`asset`の`id`を`ref`で参照し、`dx`,`dy`,`s`,`rot`,`anchorRot`,`z`,`flipX`で相対配置。`asset`側の同名設定がある場合は `attachments` 側を優先）
-* `appendages`（任意、配列。`appendage` の `id` を `ref` で参照し、必要に応じて `kind`,`anchor`,`chains`,`digits`,`flipX`,`z`,`rotAnchor` などを上書き）
+* `appendages`（任意、配列。`appendage` の `id` を `ref` で参照し、必要に応じて `kind`,`anchor`,`chains`,`digits`,`flipX`,`z`,`rotAnchor`,`stroke` などを上書き）
   * `id`（任意。継承マージ用キー。未指定時は `ref` をキーに扱う）
   * `ref`（任意。トップレベル `appendage.id` を参照）
   * `id` または `ref` のどちらか一方は必須
@@ -267,6 +269,7 @@ panel:
   * `flipX`（任意、左右反転）
   * `z`（任意、actor内相対レイヤ）
   * `rotAnchor`（任意、`anchor` を中心にした回転角。既定 `0°`）
+  * `stroke`（任意、色。未指定時は `actor.stroke` を使用）
   * `chains` または `digits`（いずれか必須）
     * 既存: `chains: "x1,y1 x2,y2 | ..."` のグループ指定（各グループ2点以上）
     * 新形式: `chains[N].name`, `chains[N].points`（`name` は任意。未指定可）
@@ -547,6 +550,8 @@ balloon:
 * `actor.appendages[].chains` / `digits` の数値列は `x,y` ペア（偶数個）であること
 * `chains[N].name`/`chains[N].points` 形式を指定した場合、`chains[N].points` は点列として解釈される
 * `actor.appendages[].rotAnchor` 未指定時は `0°` を既定値とする
+* `actor.stroke` 未指定時は `meta.actor.stroke`（さらに未指定なら `black`）を使用する
+* `actor.appendages[].stroke` 未指定時は `actor.stroke` を使用する
 * `kind=hand` のとき、`chains` は 5 本（`thumb/index/middle/ring/little`）で、各 chain は 1〜4 点
 * `kind=tail` のとき、`chains` は 1 本で、2 点以上
 * `actor.extends` の参照先 `actor` が存在し、循環継承しない

@@ -566,6 +566,7 @@ function validateAndBuild(blocks) {
     actor["head.shape"] = HEAD_SHAPES.has(actor["head.shape"]) ? actor["head.shape"] : "circle";
     actor.x = num(actor.x, 0);
     actor.y = num(actor.y, 0);
+    actor.stroke = actor.stroke || scene.meta?.["actor.stroke"] || "black";
     actor.strokeWidth = positiveNum(actor.strokeWidth, positiveNum(scene.meta?.["actor.strokeWidth"], 2));
     actor.attachments = normalizeAttachments(actor.attachments, actor._line);
     actor.appendages = normalizeAppendageRefs(actor.appendages, actor._line, "actor.appendages");
@@ -680,6 +681,7 @@ function validateAndBuild(blocks) {
     appendageDef.z = typeof appendageDef.z === "number" ? appendageDef.z : 0;
     appendageDef.flipX = appendageDef.flipX === true;
     appendageDef.rotAnchor = typeof appendageDef.rotAnchor === "number" ? appendageDef.rotAnchor : 0;
+    appendageDef.stroke = appendageDef.stroke || null;
   }
   const appendageDefs = normalizeAppendages(scene.appendages, 0, "appendage");
   scene.appendages = appendageDefs;
@@ -718,6 +720,7 @@ function validateAndBuild(blocks) {
       appendage.z = typeof appendage.z === "number" ? appendage.z : 0;
       appendage.flipX = appendage.flipX === true;
       appendage.rotAnchor = typeof appendage.rotAnchor === "number" ? appendage.rotAnchor : 0;
+      appendage.stroke = appendage.stroke || null;
     }
   }
   autoPlacePanelItems(scene, dicts);
@@ -1832,8 +1835,8 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
   const rot = num(actor.rot, 0);
   const mirror = actor.facing === "left" ? -1 : 1;
   const pose = hasPosePoints(actor._posePoints)
-    ? poseSegmentsFromPoints(actor._posePoints, actor._posePointZ, s, actor.strokeWidth)
-    : poseSegments(actor.pose, actor._posePointZ, s, actor.strokeWidth);
+    ? poseSegmentsFromPoints(actor._posePoints, actor._posePointZ, s, actor.strokeWidth, actor.stroke)
+    : poseSegments(actor.pose, actor._posePointZ, s, actor.strokeWidth, actor.stroke);
   const headPoint = resolveHeadPoint(actor._posePoints, s);
   const neckPoint = resolvePosePoint(actor._posePoints, "neck", s) || { x: 0, y: -s * 0.8 };
   const attachments = resolveActorAttachments(actor, assetMap);
@@ -1852,7 +1855,7 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
   const appendageHandles = renderAppendagePointHandles(actor, appendages, kind, id);
   const groupTransform = rot ? `translate(${p.x},${p.y}) rotate(${rot})` : `translate(${p.x},${p.y})`;
   const attrs = renderDataAttrs(kind, id);
-  const neckHeadLine = `<line x1="${headPoint.x}" y1="${headPoint.y}" x2="${neckPoint.x}" y2="${neckPoint.y}" stroke="black" stroke-width="${actor.strokeWidth}" stroke-linecap="round"/>`;
+  const neckHeadLine = `<line x1="${headPoint.x}" y1="${headPoint.y}" x2="${neckPoint.x}" y2="${neckPoint.y}" stroke="${actor.stroke}" stroke-width="${actor.strokeWidth}" stroke-linecap="round"/>`;
   const actorLayers = [
     ...attachments.map((attachment, index) => ({ z: num(attachment.z, 0), order: 100 + index, markup: attachment.markup })),
     ...appendages.map((appendage, index) => ({ z: num(appendage.z, 0), order: 150 + index, markup: appendage.markup })),
@@ -1877,17 +1880,18 @@ function resolveActorAppendages(actor) {
   const appendageScale = actor.scale;
   return actor.appendages.flatMap((appendage, appendageIndex) => {
     const anchorPoint = resolveAttachmentAnchorPoint(actor, appendage.anchor, poseScale);
-    const buildPolyline = (pointGroups, className, width) => pointGroups
+    const buildPolyline = (pointGroups, className, width, strokeColor) => pointGroups
       .map((group) => {
         const chainPoints = Array.isArray(group?.points) ? group.points : group;
         const points = chainPoints
           .map((point) => `${anchorPoint.x + point.x * appendageScale},${anchorPoint.y + point.y * appendageScale}`)
           .join(" ");
-        return `<polyline class="${className}" points="${points}" fill="none" stroke="black" stroke-width="${width}" stroke-linecap="round" stroke-linejoin="round"/>`;
+        return `<polyline class="${className}" points="${points}" fill="none" stroke="${strokeColor}" stroke-width="${width}" stroke-linecap="round" stroke-linejoin="round"/>`;
       })
       .join("");
-    const chainMarkup = buildPolyline(appendage.chains || [], "appendage-chain", Math.max(1, actor.strokeWidth * 0.9));
-    const digitsMarkup = buildPolyline(appendage.digits || [], "appendage-digit", Math.max(1, actor.strokeWidth * 0.7));
+    const strokeColor = appendage.stroke || actor.stroke;
+    const chainMarkup = buildPolyline(appendage.chains || [], "appendage-chain", Math.max(1, actor.strokeWidth * 0.9), strokeColor);
+    const digitsMarkup = buildPolyline(appendage.digits || [], "appendage-digit", Math.max(1, actor.strokeWidth * 0.7), strokeColor);
     const transform = appendageTransformAttr(appendage, anchorPoint);
     return [{
       appendageIndex,
@@ -2024,17 +2028,17 @@ function posePresetPoints(pose, s) {
     rf: leg.rf,
   };
 }
-function poseSegments(pose, pointZ, s, strokeWidth) {
+function poseSegments(pose, pointZ, s, strokeWidth, strokeColor = "black") {
   const presetPoints = posePresetPoints(pose, s);
   const point = (name) => presetPoints[name] || null;
-  return poseLinesWithZ(point, pointZ, strokeWidth);
+  return poseLinesWithZ(point, pointZ, strokeWidth, strokeColor);
 }
-function poseSegmentsFromPoints(points, pointZ, s, strokeWidth) {
+function poseSegmentsFromPoints(points, pointZ, s, strokeWidth, strokeColor = "black") {
   const presetPoints = posePresetPoints("stand", s);
   const point = (name) => resolvePosePoint(points, name, s) || presetPoints[name] || null;
-  return poseLinesWithZ(point, pointZ, strokeWidth);
+  return poseLinesWithZ(point, pointZ, strokeWidth, strokeColor);
 }
-function poseLinesWithZ(pointResolver, pointZ, strokeWidth) {
+function poseLinesWithZ(pointResolver, pointZ, strokeWidth, strokeColor = "black") {
   const lineDefs = [
     ["neck", "le", "le"],
     ["le", "lh", "lh"],
@@ -2056,7 +2060,7 @@ function poseLinesWithZ(pointResolver, pointZ, strokeWidth) {
     segments.push({
       z: num(pointZ?.[zKey], 0),
       order: i,
-      markup: `<line x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="black" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round"/>`,
+      markup: `<line x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="${strokeColor}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round"/>`,
     });
   }
   return segments;
