@@ -42,8 +42,8 @@ panel:
   actor:
     id: a1001
     extends: a0000
-    x: 10
-    y: 90
+    x: 10.38
+    y: 88.41
     attachments:
       - ref: as1000
       - ref: as1101
@@ -53,11 +53,20 @@ panel:
       - ref: as1501
       - ref: as1601
       - ref: as1901
+    appendages:
+      - ref: hand
+        anchor: lh
+        flipX: true
+        rotAnchor: -30
+      - ref: hand
+        rotAnchor: 60
+    pose.points: 0.27,-2.19,-0.9,-1.69,0.56,-1.23,-0.52,-1.35,0.31,-1.12,0,-1.6,0.04,-1.03,0,-0.8,-0.05,-0.3,0.17,-0.43,-0.5,0,0.33,0.01
+    rot: 0.47
   actor:
     id: a1002
     extends: a0000
     x: 20
-    y: 90
+    y: 90.54
     attachments:
       - ref: as1000
       - ref: as1102
@@ -1044,3 +1053,8 @@ asset:
   rot: 0
   z: 1
   src: ./assets/nose3.svg
+
+appendage:
+  id: hand
+  anchor: rh
+  chains: 0,0 -1.65,-2.11 -3.46,-2.58 -4.45,-4.52 | 0,0 -1.28,-4.67 -2.53,-8.56 | 0,0 0.3,-5.42 -0.23,-10.17 | 0,0 1.98,-4.94 2.09,-9.33 | 0,0 2.02,-0.92 3.48,-4.22 4.67,-7.77
