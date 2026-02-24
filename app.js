@@ -587,6 +587,8 @@ function validateAndBuild(blocks) {
     actor.strokeWidth = positiveNum(actor.strokeWidth, positiveNum(scene.meta?.["actor.strokeWidth"], 2));
     actor.jointMaskRadius = positiveNum(actor.jointMaskRadius, positiveNum(scene.meta?.["actor.jointMaskRadius"], actor.strokeWidth * 0.6));
     actor.outline = parseBooleanLike(actor.outline, parseBooleanLike(scene.meta?.["actor.outline"], true));
+    actor.outerOutline = parseBooleanLike(actor.outerOutline, parseBooleanLike(scene.meta?.["actor.outerOutline"], false));
+    actor.outerOutlineWidth = positiveNum(actor.outerOutlineWidth, positiveNum(scene.meta?.["actor.outerOutlineWidth"], 2));
     actor.attachments = normalizeAttachments(actor.attachments, actor._line);
     actor.appendages = normalizeAppendageRefs(actor.appendages, actor._line, "actor.appendages");
     actor._posePoints = parsePosePoints(actor["pose.points"], actor._line);
@@ -1956,13 +1958,20 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
   const rot = num(actor.rot, 0);
   const mirror = actor.facing === "left" ? -1 : 1;
   const drawOutline = parseBooleanLike(actor.outline, true);
+  const drawOuterOutline = parseBooleanLike(actor.outerOutline, false);
+  const outerOutlineWidth = Math.max(0, num(actor.outerOutlineWidth, 2));
   const pose = hasPosePoints(actor._posePoints)
     ? poseSegmentsFromPoints(actor._posePoints, actor._posePointZ, actor._posePointOutlineWidth, s, actor.strokeWidth, actor.stroke, drawOutline, actor.jointMaskRadius)
     : poseSegments(actor.pose, actor._posePointZ, actor._posePointOutlineWidth, s, actor.strokeWidth, actor.stroke, drawOutline, actor.jointMaskRadius);
+  const outerPose = drawOuterOutline
+    ? (hasPosePoints(actor._posePoints)
+      ? poseOuterSilhouetteSegmentsFromPoints(actor._posePoints, s, actor.strokeWidth, outerOutlineWidth)
+      : poseOuterSilhouetteSegments(actor.pose, s, actor.strokeWidth, outerOutlineWidth))
+    : [];
   const headPoint = resolveHeadPoint(actor._posePoints, s);
   const neckPoint = resolvePosePoint(actor._posePoints, "neck", s) || { x: 0, y: -s * 0.8 };
   const attachments = resolveActorAttachments(actor, assetMap);
-  const appendages = resolveActorAppendages(actor);
+  const appendages = resolveActorAppendages(actor, drawOuterOutline, outerOutlineWidth);
   const hideHeadAndFace = actor.emotion === "none";
   const faceMarkup = actor.facing === "back" || hideHeadAndFace
     ? ""
@@ -1984,6 +1993,14 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
       : "",
     `<line x1="${headPoint.x}" y1="${headPoint.y}" x2="${neckPoint.x}" y2="${neckPoint.y}" stroke="${actor.stroke}" stroke-width="${actor.strokeWidth}" stroke-linecap="butt" stroke-linejoin="round"/>`,
   ].join("");
+  const silhouetteLayers = [
+    ...outerPose,
+    ...appendages.flatMap((appendage, index) => (appendage.outerLayers || []).map((layer, layerIndex) => ({
+      z: num(layer.z, -10000),
+      order: -1000 + index + (layerIndex / 1000),
+      markup: layer.markup,
+    }))),
+  ].sort((a, b) => (a.z - b.z) || (a.order - b.order)).map((layer) => layer.markup).join("");
   const actorLayers = [
     ...attachments.map((attachment, index) => ({ z: num(attachment.z, 0), order: 100 + index, markup: attachment.markup })),
     ...appendages.flatMap((appendage, index) => {
@@ -1999,6 +2016,7 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
   ].sort((a, b) => (a.z - b.z) || (a.order - b.order)).map((layer) => layer.markup).join("");
   return `<g transform="${groupTransform}"${attrs}>
     <g transform="scale(${mirror},1)">
+      ${silhouetteLayers}
       ${actorLayers}
       ${attachmentHandles}
       ${appendageHandles}
@@ -2007,7 +2025,7 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
     ${poseHandles}
   </g>`;
 }
-function resolveActorAppendages(actor) {
+function resolveActorAppendages(actor, drawOuterOutline = false, outerOutlineWidth = 2) {
   if (!Array.isArray(actor.appendages) || actor.appendages.length === 0) return [];
   const poseScale = 20 * actor.scale;
   const appendageScale = actor.scale;
@@ -2028,6 +2046,7 @@ function resolveActorAppendages(actor) {
       return zSpec.groups[offset + groupIndex] || null;
     };
     const layers = [];
+    const outerLayers = [];
     const buildPolyline = (pointGroups, className, width, strokeColor) => pointGroups
       .map((group, groupIndex) => {
         const chainPoints = Array.isArray(group?.points) ? group.points : group;
@@ -2061,6 +2080,14 @@ function resolveActorAppendages(actor) {
             : "";
           const strokeMarkup = `<polyline class="${className}" points="${points}" fill="none" stroke="${strokeColor}" stroke-width="${width}" stroke-linecap="butt" stroke-linejoin="round"/>`;
           layers.push({ z: uniformZ, markup: `${endpointOutlineCap}${outlineMarkup}${strokeMarkup}${jointMasks}${endpointFillCap}` });
+          if (drawOuterOutline) {
+            const outerStrokeWidth = width + Math.max(0, outerOutlineWidth);
+            const outerEndpointRadius = 0.5 * outerStrokeWidth;
+            outerLayers.push({
+              z: -10000,
+              markup: `<polyline class="${className}-outer" points="${points}" fill="none" stroke="black" stroke-width="${outerStrokeWidth}" stroke-linecap="butt" stroke-linejoin="round"/><circle class="${className}-outer-endpoint" cx="${endpoint.x}" cy="${endpoint.y}" r="${outerEndpointRadius}" fill="black"/>`,
+            });
+          }
           return "";
         }
         const segments = [];
@@ -2077,6 +2104,16 @@ function resolveActorAppendages(actor) {
             ? `${endpointOutlineCap}${segmentOutline}${segmentStroke}${jointMasks}${endpointFillCap}`
             : `${segmentOutline}${segmentStroke}`;
           layers.push({ z: segmentZ, markup: withCaps });
+          if (drawOuterOutline) {
+            const outerStrokeWidth = width + Math.max(0, outerOutlineWidth);
+            const outerSegment = `<line class="${className}-outer" x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="black" stroke-width="${outerStrokeWidth}" stroke-linecap="butt" stroke-linejoin="round"/>`;
+            if (i === (scaledPoints.length - 2)) {
+              const outerEndpointRadius = 0.5 * outerStrokeWidth;
+              outerLayers.push({ z: -10000, markup: `${outerSegment}<circle class="${className}-outer-endpoint" cx="${endpoint.x}" cy="${endpoint.y}" r="${outerEndpointRadius}" fill="black"/>` });
+            } else {
+              outerLayers.push({ z: -10000, markup: outerSegment });
+            }
+          }
           segments.push(`${segmentOutline}${segmentStroke}`);
         }
         return segments.join("");
@@ -2100,6 +2137,10 @@ function resolveActorAppendages(actor) {
       chains: appendage.chains,
       anchorPoint,
       layers: normalizedLayers,
+      outerLayers: outerLayers.map((layer) => ({
+        z: layer.z,
+        markup: `<g data-appendage-id="${escapeXml(String(appendage.id))}"${transform}>${layer.markup}</g>`,
+      })),
       markup: normalizedLayers.map((layer) => layer.markup).join(""),
     }];
   });
@@ -2235,6 +2276,53 @@ function poseSegmentsFromPoints(points, pointZ, pointOutlineWidth, s, strokeWidt
   const presetPoints = posePresetPoints("stand", s);
   const point = (name) => resolvePosePoint(points, name, s) || presetPoints[name] || null;
   return poseLinesWithZ(point, pointZ, pointOutlineWidth, strokeWidth, strokeColor, drawOutline, jointMaskRadius);
+}
+function poseOuterSilhouetteSegments(pose, s, strokeWidth = 2, outerOutlineWidth = 2) {
+  const presetPoints = posePresetPoints(pose, s);
+  const point = (name) => presetPoints[name] || null;
+  return poseOuterSilhouetteLines(point, strokeWidth, outerOutlineWidth);
+}
+function poseOuterSilhouetteSegmentsFromPoints(points, s, strokeWidth = 2, outerOutlineWidth = 2) {
+  const presetPoints = posePresetPoints("stand", s);
+  const point = (name) => resolvePosePoint(points, name, s) || presetPoints[name] || null;
+  return poseOuterSilhouetteLines(point, strokeWidth, outerOutlineWidth);
+}
+function poseOuterSilhouetteLines(pointResolver, strokeWidth, outerOutlineWidth) {
+  const lineDefs = [
+    ["neck", "le"],
+    ["le", "lh"],
+    ["neck", "re"],
+    ["re", "rh"],
+    ["neck", "waist"],
+    ["waist", "groin"],
+    ["groin", "lk"],
+    ["lk", "lf"],
+    ["groin", "rk"],
+    ["rk", "rf"],
+  ];
+  const endpointNames = ["lh", "rh", "lf", "rf"];
+  const z = -10000;
+  const thick = Math.max(0.1, strokeWidth + Math.max(0, outerOutlineWidth));
+  const segments = lineDefs.flatMap(([from, to], index) => {
+    const start = pointResolver(from);
+    const end = pointResolver(to);
+    if (!start || !end) return [];
+    return [{
+      z,
+      order: -500 + index,
+      markup: `<line x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="black" stroke-width="${thick}" stroke-linecap="butt" stroke-linejoin="butt"/>`,
+    }];
+  });
+  const caps = endpointNames.flatMap((name, index) => {
+    const endpoint = pointResolver(name);
+    if (!endpoint) return [];
+    return [{
+      z,
+      order: -300 + index,
+      markup: `<circle data-outer-endpoint-cap="${name}" cx="${endpoint.x}" cy="${endpoint.y}" r="${0.5 * thick}" fill="black"/>`,
+    }];
+  });
+  return [...segments, ...caps];
 }
 function poseLinesWithZ(pointResolver, pointZ, pointOutlineWidth, strokeWidth, strokeColor = "black", drawOutline = true, jointMaskRadius = null) {
   const lineDefs = [
