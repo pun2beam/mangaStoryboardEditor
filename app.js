@@ -2194,7 +2194,7 @@ function renderAppendageEndpointCap(className, point, radius, fill, endpointCap,
   if (cap === "square") {
     const capThickness = radius * 2;
     const capLength = Math.max(1, capThickness * 0.3);
-    return `<rect class="${className}${suffix}-endpoint" x="${point.x - capLength * 0.5}" y="${point.y - capThickness * 0.5}" width="${capLength}" height="${capThickness}" fill="${fill}" transform="rotate(${angleDeg} ${point.x} ${point.y})"/>`;
+    return `<rect class="${className}${suffix}-endpoint" x="${point.x}" y="${point.y - capThickness * 0.5}" width="${capLength}" height="${capThickness}" fill="${fill}" transform="rotate(${angleDeg} ${point.x} ${point.y})"/>`;
   }
   return `<circle class="${className}${suffix}-endpoint" cx="${point.x}" cy="${point.y}" r="${radius}" fill="${fill}"/>`;
 }
