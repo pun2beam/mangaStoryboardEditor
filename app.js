@@ -2083,6 +2083,8 @@ function resolveActorAppendages(actor, drawOuterOutline = false, outerOutlineWid
         if (scaledPoints.length === 0) return "";
         const points = scaledPoints.map((point) => `${point.x},${point.y}`).join(" ");
         const endpoint = scaledPoints[scaledPoints.length - 1];
+        const endpointPrevious = scaledPoints[Math.max(0, scaledPoints.length - 2)] || endpoint;
+        const endpointAngleDeg = (Math.atan2(endpoint.y - endpointPrevious.y, endpoint.x - endpointPrevious.x) * 180) / Math.PI;
         const jointMaskRadius = positiveNum(appendage.jointMaskRadius, Math.max(0.5, width * 0.6));
         const jointMasks = scaledPoints.slice(1, -1)
           .map((joint, jointIndex) => `<circle class="${className}-joint-mask" data-appendage-joint-mask="${groupIndex}-${jointIndex + 1}" cx="${joint.x}" cy="${joint.y}" r="${jointMaskRadius}" fill="${strokeColor}"/>`)
@@ -2098,9 +2100,9 @@ function resolveActorAppendages(actor, drawOuterOutline = false, outerOutlineWid
         const endpointOuterRadius = 0.5 * (width + endpointOutlineWidth);
         const endpointInnerRadius = 0.5 * width;
         const endpointOutlineCap = drawOutline && endpointOutlineWidth > 0
-          ? renderAppendageEndpointCap(className, endpoint, endpointOuterRadius, "black", endpointCap, "outline")
+          ? renderAppendageEndpointCap(className, endpoint, endpointOuterRadius, "black", endpointCap, endpointAngleDeg, "outline")
           : "";
-        const endpointFillCap = renderAppendageEndpointCap(className, endpoint, endpointInnerRadius, strokeColor, endpointCap);
+        const endpointFillCap = renderAppendageEndpointCap(className, endpoint, endpointInnerRadius, strokeColor, endpointCap, endpointAngleDeg);
         if (!perPointOutlineWidths && !perPointZ) {
           const outlineMarkup = drawOutline && uniformOutlineWidth > 0
             ? `<polyline class="${className}-outline" points="${points}" fill="none" stroke="black" stroke-width="${width + uniformOutlineWidth}" stroke-linecap="butt" stroke-linejoin="round"/>`
@@ -2116,7 +2118,7 @@ function resolveActorAppendages(actor, drawOuterOutline = false, outerOutlineWid
               .join("");
             outerLayers.push({
               z: -10000,
-              markup: `<polyline class="${className}-outer" points="${points}" fill="none" stroke="black" stroke-width="${outerStrokeWidth}" stroke-linecap="butt" stroke-linejoin="round"/>${outerJointCaps}${renderAppendageEndpointCap(className, endpoint, outerEndpointRadius, "black", endpointCap, "outer")}`,
+              markup: `<polyline class="${className}-outer" points="${points}" fill="none" stroke="black" stroke-width="${outerStrokeWidth}" stroke-linecap="butt" stroke-linejoin="round"/>${outerJointCaps}${renderAppendageEndpointCap(className, endpoint, outerEndpointRadius, "black", endpointCap, endpointAngleDeg, "outer")}`,
             });
           }
           return "";
@@ -2146,7 +2148,7 @@ function resolveActorAppendages(actor, drawOuterOutline = false, outerOutlineWid
               const outerEndpointRadius = 0.5 * outerStrokeWidth;
               outerLayers.push({
                 z: -10000,
-                markup: `${outerSegment}${outerJointCap}${renderAppendageEndpointCap(className, endpoint, outerEndpointRadius, "black", endpointCap, "outer")}`,
+                markup: `${outerSegment}${outerJointCap}${renderAppendageEndpointCap(className, endpoint, outerEndpointRadius, "black", endpointCap, endpointAngleDeg, "outer")}`,
               });
             } else if (outerJointCap) {
               outerLayers.push({ z: -10000, markup: `${outerSegment}${outerJointCap}` });
@@ -2186,12 +2188,12 @@ function resolveActorAppendages(actor, drawOuterOutline = false, outerOutlineWid
     }];
   });
 }
-function renderAppendageEndpointCap(className, point, radius, fill, endpointCap, variant = "") {
+function renderAppendageEndpointCap(className, point, radius, fill, endpointCap, angleDeg = 0, variant = "") {
   const cap = endpointCap === "square" ? "square" : "round";
   const suffix = variant ? `-${variant}` : "";
   if (cap === "square") {
     const side = radius * 2;
-    return `<rect class="${className}${suffix}-endpoint" x="${point.x - radius}" y="${point.y - radius}" width="${side}" height="${side}" fill="${fill}"/>`;
+    return `<rect class="${className}${suffix}-endpoint" x="${point.x - radius}" y="${point.y - radius}" width="${side}" height="${side}" fill="${fill}" transform="rotate(${angleDeg} ${point.x} ${point.y})"/>`;
   }
   return `<circle class="${className}${suffix}-endpoint" cx="${point.x}" cy="${point.y}" r="${radius}" fill="${fill}"/>`;
 }
