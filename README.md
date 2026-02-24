@@ -99,6 +99,7 @@ page:
 - `actor.appendages[].strokeWidth`（および参照元 `appendage.strokeWidth`）で appendage ごとの線幅を指定できます。未指定時は `actor.strokeWidth` を使います。
 - `actor.appendages[].outlineWidth` で appendage の縁取り太さを指定できます。単一数値（従来どおり）に加えて、`|` 区切りで各点列グループごとの数値列（例: `0,0,0,1 | 0,0,1`）も指定できます。数値列形式では各グループの要素数を対応する点列の点数と一致させ、各線分の縁取り太さは「終点側の値」を使います。未指定時は `2`、`0` で縁取りなしになります。
 - `actor.appendages[].jointMaskRadius`（および参照元 `appendage.jointMaskRadius`）で appendage の関節補正マスク半径を指定できます（既定: `Math.max(0.5, 線幅 * 0.6)`、対象は内部点のみ）。
+- `actor.appendages[].endpointCap`（および参照元 `appendage.endpointCap`）で末端形状を `round` / `square` から選択できます（既定: `round`）。`outline` / `outerOutline` も同じ端点形状で描画されます。
 - 将来の単位指定拡張や GUI でのポーズ編集は、DSLコアとは分離した別機能として段階的に導入する方針です。
 
 asset 単体の最小例（asset側で左右反転）:

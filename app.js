@@ -5,6 +5,7 @@ const EMOTIONS = new Set(["neutral", "angry", "sad", "panic", "smile", "none"]);
 const EYE_TYPES = new Set(["right", "left", "up", "down", "cry", "close", "wink"]);
 const FACING_TYPES = new Set(["left", "right", "back"]);
 const HEAD_SHAPES = new Set(["circle", "square", "none"]);
+const APPENDAGE_ENDPOINT_CAPS = new Set(["round", "square"]);
 const TEXT_DIRECTIONS = new Set(["horizontal", "vertical"]);
 const HORIZONTAL_ALIGNS = new Set(["left", "center", "right"]);
 const VERTICAL_ALIGNS = new Set(["top", "center", "bottom"]);
@@ -989,6 +990,11 @@ function normalizeAppendages(value, line, pathLabel = "actor.appendages") {
       chains,
       digits: parseAppendagePointGroups(appendage.digits, appendageLine, "digits").map((points, index) => ({ name: `digit-${index}`, points })),
     };
+    normalizedAppendage.endpointCap = normalizeAppendageEndpointCap(
+      normalizedAppendage.endpointCap,
+      appendageLine,
+      pathLabel,
+    );
     normalizedAppendage._outlineWidthSpec = parseAppendageOutlineWidthSpec(
       normalizedAppendage.outlineWidth,
       appendageLine,
@@ -1030,6 +1036,12 @@ function normalizeAppendages(value, line, pathLabel = "actor.appendages") {
     }
     return normalizedAppendage;
   });
+}
+function normalizeAppendageEndpointCap(rawValue, line, pathLabel) {
+  if (rawValue === undefined || rawValue === null || rawValue === "") return "round";
+  const value = String(rawValue).trim().toLowerCase();
+  if (APPENDAGE_ENDPOINT_CAPS.has(value)) return value;
+  throw new Error(`Line ${line}: ${pathLabel}[].endpointCap は ${Array.from(APPENDAGE_ENDPOINT_CAPS).join(",")} のいずれかで指定してください`);
 }
 function parseBooleanLike(value, defaultValue = false) {
   if (value === undefined || value === null || value === "") return defaultValue;
@@ -2082,12 +2094,13 @@ function resolveActorAppendages(actor, drawOuterOutline = false, outerOutlineWid
         const endpointOutlineWidth = perPointOutlineWidths
           ? Math.max(0, num(perPointOutlineWidths[scaledPoints.length - 1], 0))
           : uniformOutlineWidth;
+        const endpointCap = appendage.endpointCap || "round";
         const endpointOuterRadius = 0.5 * (width + endpointOutlineWidth);
         const endpointInnerRadius = 0.5 * width;
         const endpointOutlineCap = drawOutline && endpointOutlineWidth > 0
-          ? `<circle class="${className}-outline-endpoint" cx="${endpoint.x}" cy="${endpoint.y}" r="${endpointOuterRadius}" fill="black"/>`
+          ? renderAppendageEndpointCap(className, endpoint, endpointOuterRadius, "black", endpointCap, "outline")
           : "";
-        const endpointFillCap = `<circle class="${className}-endpoint" cx="${endpoint.x}" cy="${endpoint.y}" r="${endpointInnerRadius}" fill="${strokeColor}"/>`;
+        const endpointFillCap = renderAppendageEndpointCap(className, endpoint, endpointInnerRadius, strokeColor, endpointCap);
         if (!perPointOutlineWidths && !perPointZ) {
           const outlineMarkup = drawOutline && uniformOutlineWidth > 0
             ? `<polyline class="${className}-outline" points="${points}" fill="none" stroke="black" stroke-width="${width + uniformOutlineWidth}" stroke-linecap="butt" stroke-linejoin="round"/>`
@@ -2103,7 +2116,7 @@ function resolveActorAppendages(actor, drawOuterOutline = false, outerOutlineWid
               .join("");
             outerLayers.push({
               z: -10000,
-              markup: `<polyline class="${className}-outer" points="${points}" fill="none" stroke="black" stroke-width="${outerStrokeWidth}" stroke-linecap="butt" stroke-linejoin="round"/>${outerJointCaps}<circle class="${className}-outer-endpoint" cx="${endpoint.x}" cy="${endpoint.y}" r="${outerEndpointRadius}" fill="black"/>`,
+              markup: `<polyline class="${className}-outer" points="${points}" fill="none" stroke="black" stroke-width="${outerStrokeWidth}" stroke-linecap="butt" stroke-linejoin="round"/>${outerJointCaps}${renderAppendageEndpointCap(className, endpoint, outerEndpointRadius, "black", endpointCap, "outer")}`,
             });
           }
           return "";
@@ -2131,7 +2144,10 @@ function resolveActorAppendages(actor, drawOuterOutline = false, outerOutlineWid
               : "";
             if (i === (scaledPoints.length - 2)) {
               const outerEndpointRadius = 0.5 * outerStrokeWidth;
-              outerLayers.push({ z: -10000, markup: `${outerSegment}${outerJointCap}<circle class="${className}-outer-endpoint" cx="${endpoint.x}" cy="${endpoint.y}" r="${outerEndpointRadius}" fill="black"/>` });
+              outerLayers.push({
+                z: -10000,
+                markup: `${outerSegment}${outerJointCap}${renderAppendageEndpointCap(className, endpoint, outerEndpointRadius, "black", endpointCap, "outer")}`,
+              });
             } else if (outerJointCap) {
               outerLayers.push({ z: -10000, markup: `${outerSegment}${outerJointCap}` });
             } else {
@@ -2169,6 +2185,15 @@ function resolveActorAppendages(actor, drawOuterOutline = false, outerOutlineWid
       markup: normalizedLayers.map((layer) => layer.markup).join(""),
     }];
   });
+}
+function renderAppendageEndpointCap(className, point, radius, fill, endpointCap, variant = "") {
+  const cap = endpointCap === "square" ? "square" : "round";
+  const suffix = variant ? `-${variant}` : "";
+  if (cap === "square") {
+    const side = radius * 2;
+    return `<rect class="${className}${suffix}-endpoint" x="${point.x - radius}" y="${point.y - radius}" width="${side}" height="${side}" fill="${fill}"/>`;
+  }
+  return `<circle class="${className}${suffix}-endpoint" cx="${point.x}" cy="${point.y}" r="${radius}" fill="${fill}"/>`;
 }
 function resolvePosePoint(points, name, scale) {
   const raw = points?.[name];

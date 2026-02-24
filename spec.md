@@ -269,7 +269,7 @@ panel:
 * `name`（任意、デバッグ用）
 * `lookAt`（`actor:<id>` または `point(x,y)`、任意）
 * `attachments`（任意、**asset参照専用**の配列。`asset`の`id`を`ref`で参照し、`dx`,`dy`,`s`,`rot`,`anchorRot`,`z`,`flipX`で相対配置。`asset`側の同名設定がある場合は `attachments` 側を優先）
-* `appendages`（任意、配列。`appendage` の `id` を `ref` で参照し、必要に応じて `anchor`,`chains`,`digits`,`flipX`,`z`,`rotAnchor`,`stroke`,`jointMaskRadius` などを上書き）
+* `appendages`（任意、配列。`appendage` の `id` を `ref` で参照し、必要に応じて `anchor`,`chains`,`digits`,`flipX`,`z`,`rotAnchor`,`stroke`,`jointMaskRadius`,`endpointCap` などを上書き）
   * `id`（任意。継承マージ用キー。未指定時は `ref` をキーに扱う）
   * `ref`（任意。トップレベル `appendage.id` を参照）
   * `id` または `ref` のどちらか一方は必須
@@ -591,6 +591,7 @@ balloon:
 * `actor.appendages[].stroke` 未指定時は `actor.stroke` を使用する
 * `appendage.strokeWidth` / `actor.appendages[].strokeWidth` 未指定時は `actor.strokeWidth` を使用する
 * `actor.appendages[].outlineWidth` は単一数値または `|` 区切りの数値列グループを受け付ける（数値列時は `chains`→`digits` 順でグループ数を一致させ、各グループ要素数は対応点列の点数と一致）
+* `actor.appendages[].endpointCap` / `appendage.endpointCap` は `round` または `square` を受け付ける（未指定時 `round`）
 * `actor.appendages[].z` は単一数値または `|` 区切りの数値列グループを受け付ける（数値列時は `chains`→`digits` 順でグループ数を一致させ、各グループ要素数は対応点列の点数と一致）
 * appendage の終端（接続数1）は endpoint-cap で丸め、関節補正が必要な場合のみ内部点（接続数2以上）をマスク対象とする
 * `appendage.jointMaskRadius` / `actor.appendages[].jointMaskRadius` は正の数値のみ有効（未指定時は `Math.max(0.5, 線幅 * 0.6)`）
