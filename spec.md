@@ -119,6 +119,8 @@ SVG描画順は原則：
 * `actor.stroke`（任意、色。棒人間の線色の既定値。既定: `black`）
 * `actor.strokeWidth`（任意、数値。棒人間の線の太さの既定値。既定: `2`）
 * `actor.outline`（任意、`on`/`off`。棒人間の縁取り表示の既定値。既定: `on`）
+* `actor.outerOutline`（任意、`on`/`off`。棒人間シルエットの外側縁取り表示の既定値。既定: `off`）
+* `actor.outerOutlineWidth`（任意、数値。`actor.outerOutline:on` 時に使う追加外縁の太さ。既定: `2`）
 * `actor.jointMaskRadius`（任意、数値。関節補正用マスク円半径の既定値。既定: `Math.max(0.5, actor.strokeWidth * 0.6)`。degree=1 の末端点は対象外）
 * `text.direction`（任意、`horizontal`/`vertical`。既定: `horizontal`。全体の文字方向）
 * `base.panel.direction`（任意、`right.bottom`/`left.bottom`。panel自動配置の既定方向。既定: `right.bottom`）
@@ -252,6 +254,8 @@ panel:
 * `stroke`（任意、色。棒人間の線色。未指定時は `meta.actor.stroke`、さらに未指定なら `black`）
 * `strokeWidth`（任意、数値。棒人間の線の太さ。未指定時は `meta.actor.strokeWidth`、さらに未指定なら `2`）
 * `outline`（任意、`on`/`off`。棒人間の縁取り表示。未指定時は `meta.actor.outline`、さらに未指定なら `on`）
+* `outerOutline`（任意、`on`/`off`。棒人間シルエットの外側縁取り表示。未指定時は `meta.actor.outerOutline`、さらに未指定なら `off`）
+* `outerOutlineWidth`（任意、数値。`outerOutline:on` 時の追加外縁太さ。未指定時は `meta.actor.outerOutlineWidth`、さらに未指定なら `2`）
 * `jointMaskRadius`（任意、数値。関節補正用マスク円半径。未指定時は `meta.actor.jointMaskRadius`、さらに未指定なら `Math.max(0.5, strokeWidth * 0.6)`。degree=1 の末端点は endpoint-cap で描画）
 * `rot`（度。足元基準で回転。既定0）
 * `facing`（`left`/`right`/`back`、既定`right`）
@@ -265,11 +269,10 @@ panel:
 * `name`（任意、デバッグ用）
 * `lookAt`（`actor:<id>` または `point(x,y)`、任意）
 * `attachments`（任意、**asset参照専用**の配列。`asset`の`id`を`ref`で参照し、`dx`,`dy`,`s`,`rot`,`anchorRot`,`z`,`flipX`で相対配置。`asset`側の同名設定がある場合は `attachments` 側を優先）
-* `appendages`（任意、配列。`appendage` の `id` を `ref` で参照し、必要に応じて `kind`,`anchor`,`chains`,`digits`,`flipX`,`z`,`rotAnchor`,`stroke`,`jointMaskRadius` などを上書き）
+* `appendages`（任意、配列。`appendage` の `id` を `ref` で参照し、必要に応じて `anchor`,`chains`,`digits`,`flipX`,`z`,`rotAnchor`,`stroke`,`jointMaskRadius` などを上書き）
   * `id`（任意。継承マージ用キー。未指定時は `ref` をキーに扱う）
   * `ref`（任意。トップレベル `appendage.id` を参照）
   * `id` または `ref` のどちらか一方は必須
-  * `kind`（任意。未指定時は `appendage`。`hand` / `foot` / `tail` など）
   * `anchor`（必須。既存ジョイント名: `head,lh,rh,le,re,neck,waist,groin,lk,rk,lf,rf`）
   * `flipX`（任意、左右反転）
   * `z`（任意、数値または点列ごとの数値列。単一数値は appendage 全体の前後順。数値列は `|` 区切りで `chains`→`digits` 順にグループ対応し、各グループ要素数は対応点列の点数と一致させる。各線分の z は終点側の値を使用）
@@ -280,8 +283,6 @@ panel:
   * `chains` または `digits`（いずれか必須）
     * 既存: `chains: "x1,y1 x2,y2 | ..."` のグループ指定（各グループ2点以上）
     * 新形式: `chains[N].name`, `chains[N].points`（`name` は任意。未指定可）
-    * `kind=hand` は `chains` を5本（`thumb/index/middle/ring/little`）推奨し、各 chain の点数は 1〜4 を許容
-    * `kind=tail` は `chains` 1本、点数 2以上を許容
   * 点群座標系は `anchor` 原点のローカル座標（`x,y`）として解釈する
   * 変換順序は `local points` → `flipX` → `rot`（+`rotAnchor`）→ actor 座標系への平行移動
   * `z` は actor 内の `pose.points.z` 線分および `attachments[].z` と同一ソート軸で扱う
@@ -518,6 +519,7 @@ balloon:
 * `rot`（回転角、既定0）
 * `z`（actor内相対レイヤ。`pose.points.z` の線分と同じ z 軸で前後ソート）
 * `flipX`（左右反転フラグ、既定false）
+* `dragBasis`（任意。Pose編集で attachment をドラッグしたときの `dx,dy` 基準。`top-left`（既定）/`center`）
 * `opacity`（既定1.0）
 * `clipToPanel`（既定true、単体表示時のみ有効）
 
@@ -536,6 +538,33 @@ balloon:
 
 ---
 
+### 5.12 `appendage`（任意）
+
+`actor.appendages[].ref` から参照できる再利用可能な可変点列パーツ定義。
+
+必須:
+
+* `id`
+* `anchor`（`head,lh,rh,le,re,neck,waist,groin,lk,rk,lf,rf`）
+* `chains` または `digits` のいずれか
+
+任意:
+
+* `chains`（文字列形式: `"x1,y1 x2,y2 | ..."`、または `chains[N].points` 形式）
+* `digits`（文字列形式: `"x1,y1 x2,y2 | ..."`、または `digits[N].points` 形式）
+* `flipX`（左右反転）
+* `z`（数値または `|` 区切り点列ごとの数値列）
+* `rotAnchor`（`anchor` 基準の回転角。既定 `0`）
+* `stroke`（線色。未指定時は参照先 actor の `stroke`）
+* `outlineWidth`（単一数値または `|` 区切り数値列。未指定時 `2`、`0` で縁取りなし）
+* `jointMaskRadius`（関節補正マスク半径。未指定時 `Math.max(0.5, 線幅 * 0.6)`）
+
+補足:
+
+* `actor.appendages[]` 側で同名キーを指定した場合は、`appendage` 定義より `actor.appendages[]` の値を優先する。
+
+---
+
 ## 6. バリデーション規則（v0.1）
 
 実装は最低限これを満たす。
@@ -548,10 +577,10 @@ balloon:
 * `actor` は `panel` を持つ場合のみ参照先 `panel` が存在する
 * `asset` は `panel` を持つ場合のみ参照先 `panel` が存在する
 * `appendage` の各 `id` は一意である
-* `appendage` は各要素に `id`,`anchor` があり、`kind` は任意（未指定時 `appendage`）。`chains` または `digits` のいずれかを持つ
+* `appendage` は各要素に `id`,`anchor` があり、`chains` または `digits` のいずれかを持つ
 * `actor.attachments[].ref` の参照先 `asset` が存在する
 * `actor.appendages[]` 指定時、各要素は `id` または `ref` のいずれかを持ち、`ref` 指定時は参照先 `appendage` が存在する
-* `actor.appendages[]` は `ref` 展開後に `anchor` と `chains` または `digits` のいずれかを満たす（`kind` は任意）
+* `actor.appendages[]` は `ref` 展開後に `anchor` と `chains` または `digits` のいずれかを満たす
 * `actor.appendages[].anchor` は既存ジョイント集合（`head,lh,rh,le,re,neck,waist,groin,lk,rk,lf,rf`）に含まれること
 * 既存 `chains`/`digits` 文字列形式では、各点列グループが2点以上であること
 * `actor.appendages[].chains` / `digits` の数値列は `x,y` ペア（偶数個）であること
@@ -565,8 +594,6 @@ balloon:
 * `appendage.jointMaskRadius` / `actor.appendages[].jointMaskRadius` は正の数値のみ有効（未指定時は `Math.max(0.5, 線幅 * 0.6)`）
 * `actor.appendages[].outlineWidth` 未指定時は `2` を使用し、`0` 以下は縁取りなしとして扱う
 * `actor.outline` 未指定時は `meta.actor.outline`（さらに未指定なら `on`）を使用する
-* `kind=hand` のとき、`chains` は 5 本（`thumb/index/middle/ring/little`）で、各 chain は 1〜4 点
-* `kind=tail` のとき、`chains` は 1 本で、2 点以上
 * `actor.extends` の参照先 `actor` が存在し、循環継承しない
 * `actor` 継承時、既定では `panel` は継承しない（`meta.actor.inheritPanel:on` 時のみ継承）
 * `actor` 継承時、`x,y` は継承しない（子で明示指定または自動配置で決定）
