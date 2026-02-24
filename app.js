@@ -876,8 +876,6 @@ function parseAppendagePointSequence(raw, line, fieldName, options = {}) {
   }
   return points;
 }
-function validateAppendageChainsByKind() {
-}
 function normalizeAppendageRefs(value, line, pathLabel = "actor.appendages") {
   if (value === undefined || value === null || value === "") return [];
   if (!Array.isArray(value)) throw new Error(`Line ${line}: ${pathLabel} は配列で指定してください`);
@@ -1024,7 +1022,6 @@ function normalizeAppendages(value, line, pathLabel = "actor.appendages") {
         }
       });
     }
-    validateAppendageChainsByKind(normalizedAppendage, appendageLine);
     return normalizedAppendage;
   });
 }
@@ -1956,7 +1953,7 @@ function renderAppendagePointHandles(actor, appendages, kind, id) {
       return chainPoints.map((point, pointIndex) => {
         const x = appendage.anchorPoint.x + point.x * appendageScale;
         const y = appendage.anchorPoint.y + point.y * appendageScale;
-        return `<circle class="hand-chain-point-handle" data-kind="actor" data-id="${escapeXml(String(id))}" data-appendage-index="${appendage.appendageIndex}" data-chain-index="${chainIndex}" data-chain-point-index="${pointIndex}" cx="${x}" cy="${y}" r="4"/>`;
+        return `<circle class="appendage-chain-point-handle" data-kind="actor" data-id="${escapeXml(String(id))}" data-appendage-index="${appendage.appendageIndex}" data-chain-index="${chainIndex}" data-chain-point-index="${pointIndex}" cx="${x}" cy="${y}" r="4"/>`;
       }).join("");
     }).join("");
     if (!circles) return "";
@@ -3113,11 +3110,6 @@ function applyAppendageUiStateToActorBlock(actorBlock, actorId) {
     if (!hasExplicitChains) {
       delete appendage.chains;
     }
-    delete appendage.handDetailEdited;
-    delete appendage.handVisible;
-    delete appendage.preset;
-    delete appendage.handPreset;
-    delete appendage.kind;
   }
 }
 function update() {
@@ -3396,7 +3388,7 @@ function setupObjectDrag() {
         targets: [],
         kind: "actor",
         id,
-        handleType: "hand-chain-point",
+        handleType: "appendage-chain-point",
         actor: actorInfo.actor,
         appendageIndex: parsedAppendageIndex,
         chainIndex: parsedChainIndex,
@@ -3517,7 +3509,7 @@ function setupObjectDrag() {
         handle.setAttribute("cx", String(delta.localPoint.x));
         handle.setAttribute("cy", String(delta.localPoint.y));
       }
-    } else if (state.handleType === "hand-chain-point") {
+    } else if (state.handleType === "appendage-chain-point") {
       const localPoint = actorLocalPointFromScene(point, state.actor, state.panelRect, state.unit);
       const { anchorPoint, pointX, pointY } = chainPointFromActorLocal(localPoint, {
         actor: state.actor,
@@ -3580,7 +3572,7 @@ function setupObjectDrag() {
           const updatedBlocks = blocks;
           els.input.value = stringifyBlocks(updatedBlocks);
           update();
-        } else if (state.handleType === "hand-chain-point") {
+        } else if (state.handleType === "appendage-chain-point") {
           const appendages = block.props.appendages;
           if (!Array.isArray(appendages)) return;
           const appendage = appendages[state.appendageIndex];
