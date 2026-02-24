@@ -915,6 +915,36 @@ function parseAppendageOutlineWidthSpec(raw, line, pathLabel) {
   return { mode: "point-sequence", groups };
 }
 
+function parseAppendageZSpec(raw, line, pathLabel) {
+  if (raw === undefined || raw === null || raw === "") return { mode: "uniform", z: 0 };
+  if (typeof raw === "number") {
+    if (!Number.isFinite(raw)) {
+      throw new Error(`Line ${line}: ${pathLabel}[].z は数値で指定してください`);
+    }
+    return { mode: "uniform", z: raw };
+  }
+  const source = Array.isArray(raw) ? raw.join(" ") : String(raw).trim();
+  if (!source) return { mode: "uniform", z: 0 };
+  const numeric = Number(source);
+  if (Number.isFinite(numeric)) return { mode: "uniform", z: numeric };
+  const groups = source
+    .split("|")
+    .map((segment) => segment.trim())
+    .filter(Boolean)
+    .map((segment, groupIndex) => {
+      const tokens = segment.split(/[\s,]+/).filter(Boolean);
+      const values = tokens.map((token) => Number(token));
+      if (values.length === 0 || values.some((value) => !Number.isFinite(value))) {
+        throw new Error(`Line ${line}: ${pathLabel}[].z[${groupIndex}] は数値列で指定してください`);
+      }
+      return values;
+    });
+  if (groups.length === 0) {
+    throw new Error(`Line ${line}: ${pathLabel}[].z の形式が不正です`);
+  }
+  return { mode: "point-sequence", groups };
+}
+
 function normalizeAppendages(value, line, pathLabel = "actor.appendages") {
   if (value === undefined || value === null || value === "") return [];
   if (!Array.isArray(value)) throw new Error(`Line ${line}: ${pathLabel} は配列で指定してください`);
@@ -947,11 +977,19 @@ function normalizeAppendages(value, line, pathLabel = "actor.appendages") {
       appendageLine,
       pathLabel,
     );
+    normalizedAppendage._zSpec = parseAppendageZSpec(
+      normalizedAppendage.z,
+      appendageLine,
+      pathLabel,
+    );
+    if (normalizedAppendage._zSpec.mode === "uniform") {
+      normalizedAppendage.z = num(normalizedAppendage._zSpec.z, 0);
+    }
+    const lineGroups = [
+      ...normalizedAppendage.chains.map((group) => group.points),
+      ...normalizedAppendage.digits.map((group) => group.points),
+    ];
     if (normalizedAppendage._outlineWidthSpec.mode === "point-sequence") {
-      const lineGroups = [
-        ...normalizedAppendage.chains.map((group) => group.points),
-        ...normalizedAppendage.digits.map((group) => group.points),
-      ];
       const outlineGroups = normalizedAppendage._outlineWidthSpec.groups;
       if (outlineGroups.length !== lineGroups.length) {
         throw new Error(`Line ${appendageLine}: ${pathLabel}[].outlineWidth のグループ数は chains+digits と一致させてください`);
@@ -959,6 +997,17 @@ function normalizeAppendages(value, line, pathLabel = "actor.appendages") {
       outlineGroups.forEach((outlineGroup, index) => {
         if (outlineGroup.length !== lineGroups[index].length) {
           throw new Error(`Line ${appendageLine}: ${pathLabel}[].outlineWidth[${index}] の要素数は対応する点列と一致させてください`);
+        }
+      });
+    }
+    if (normalizedAppendage._zSpec.mode === "point-sequence") {
+      const zGroups = normalizedAppendage._zSpec.groups;
+      if (zGroups.length !== lineGroups.length) {
+        throw new Error(`Line ${appendageLine}: ${pathLabel}[].z のグループ数は chains+digits と一致させてください`);
+      }
+      zGroups.forEach((zGroup, index) => {
+        if (zGroup.length !== lineGroups[index].length) {
+          throw new Error(`Line ${appendageLine}: ${pathLabel}[].z[${index}] の要素数は対応する点列と一致させてください`);
         }
       });
     }
@@ -1937,7 +1986,12 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
   ].join("");
   const actorLayers = [
     ...attachments.map((attachment, index) => ({ z: num(attachment.z, 0), order: 100 + index, markup: attachment.markup })),
-    ...appendages.map((appendage, index) => ({ z: num(appendage.z, 0), order: 150 + index, markup: appendage.markup })),
+    ...appendages.flatMap((appendage, index) => {
+      if (Array.isArray(appendage.layers) && appendage.layers.length > 0) {
+        return appendage.layers.map((layer, layerIndex) => ({ z: num(layer.z, 0), order: 150 + index + (layerIndex / 1000), markup: layer.markup }));
+      }
+      return [{ z: num(appendage.z, 0), order: 150 + index, markup: appendage.markup }];
+    }),
     { z: num(actor._posePointZ?.head, 0), order: 0, markup: neckHeadLine },
     ...pose,
     { z: 0, order: 10, markup: headMarkup },
@@ -1961,12 +2015,19 @@ function resolveActorAppendages(actor) {
   return actor.appendages.flatMap((appendage, appendageIndex) => {
     const anchorPoint = resolveAttachmentAnchorPoint(actor, appendage.anchor, poseScale);
     const outlineSpec = appendage._outlineWidthSpec || { mode: "uniform", width: num(appendage.outlineWidth, 2) };
+    const zSpec = appendage._zSpec || { mode: "uniform", z: num(appendage.z, 0) };
     const chainCount = Array.isArray(appendage.chains) ? appendage.chains.length : 0;
     const resolvePerPointOutlineWidths = (className, groupIndex) => {
       if (outlineSpec.mode !== "point-sequence") return null;
       const offset = className === "appendage-chain" ? 0 : chainCount;
       return outlineSpec.groups[offset + groupIndex] || null;
     };
+    const resolvePerPointZ = (className, groupIndex) => {
+      if (zSpec.mode !== "point-sequence") return null;
+      const offset = className === "appendage-chain" ? 0 : chainCount;
+      return zSpec.groups[offset + groupIndex] || null;
+    };
+    const layers = [];
     const buildPolyline = (pointGroups, className, width, strokeColor) => pointGroups
       .map((group, groupIndex) => {
         const chainPoints = Array.isArray(group?.points) ? group.points : group;
@@ -1982,6 +2043,8 @@ function resolveActorAppendages(actor) {
           .map((joint, jointIndex) => `<circle class="${className}-joint-mask" data-appendage-joint-mask="${groupIndex}-${jointIndex + 1}" cx="${joint.x}" cy="${joint.y}" r="${jointMaskRadius}" fill="${strokeColor}"/>`)
           .join("");
         const perPointOutlineWidths = resolvePerPointOutlineWidths(className, groupIndex);
+        const perPointZ = resolvePerPointZ(className, groupIndex);
+        const uniformZ = zSpec.mode === "point-sequence" ? 0 : num(zSpec.z, num(appendage.z, 0));
         const uniformOutlineWidth = Math.max(0, num(outlineSpec.width, 2));
         const endpointOutlineWidth = perPointOutlineWidths
           ? Math.max(0, num(perPointOutlineWidths[scaledPoints.length - 1], 0))
@@ -1992,31 +2055,41 @@ function resolveActorAppendages(actor) {
           ? `<circle class="${className}-outline-endpoint" cx="${endpoint.x}" cy="${endpoint.y}" r="${endpointOuterRadius}" fill="black"/>`
           : "";
         const endpointFillCap = `<circle class="${className}-endpoint" cx="${endpoint.x}" cy="${endpoint.y}" r="${endpointInnerRadius}" fill="${strokeColor}"/>`;
-        if (!perPointOutlineWidths) {
+        if (!perPointOutlineWidths && !perPointZ) {
           const outlineMarkup = drawOutline && uniformOutlineWidth > 0
             ? `<polyline class="${className}-outline" points="${points}" fill="none" stroke="black" stroke-width="${width + uniformOutlineWidth}" stroke-linecap="butt" stroke-linejoin="round"/>`
             : "";
           const strokeMarkup = `<polyline class="${className}" points="${points}" fill="none" stroke="${strokeColor}" stroke-width="${width}" stroke-linecap="butt" stroke-linejoin="round"/>`;
-          return `${endpointOutlineCap}${outlineMarkup}${strokeMarkup}${jointMasks}${endpointFillCap}`;
+          layers.push({ z: uniformZ, markup: `${endpointOutlineCap}${outlineMarkup}${strokeMarkup}${jointMasks}${endpointFillCap}` });
+          return "";
         }
         const segments = [];
         for (let i = 0; i < scaledPoints.length - 1; i += 1) {
           const start = scaledPoints[i];
           const end = scaledPoints[i + 1];
-          const segmentOutlineWidth = Math.max(0, num(perPointOutlineWidths[i + 1], 0));
+          const segmentOutlineWidth = perPointOutlineWidths ? Math.max(0, num(perPointOutlineWidths[i + 1], 0)) : uniformOutlineWidth;
           const segmentOutline = drawOutline && segmentOutlineWidth > 0
             ? `<line class="${className}-outline" x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="black" stroke-width="${width + segmentOutlineWidth}" stroke-linecap="butt" stroke-linejoin="round"/>`
             : "";
           const segmentStroke = `<line class="${className}" x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="${strokeColor}" stroke-width="${width}" stroke-linecap="butt" stroke-linejoin="round"/>`;
+          const segmentZ = perPointZ ? num(perPointZ[i + 1], 0) : uniformZ;
+          const withCaps = i === (scaledPoints.length - 2)
+            ? `${segmentOutline}${segmentStroke}${jointMasks}${endpointOutlineCap}${endpointFillCap}`
+            : `${segmentOutline}${segmentStroke}`;
+          layers.push({ z: segmentZ, markup: withCaps });
           segments.push(`${segmentOutline}${segmentStroke}`);
         }
-        return `${endpointOutlineCap}${segments.join("")}${jointMasks}${endpointFillCap}`;
+        return segments.join("");
       })
       .join("");
     const strokeColor = appendage.stroke || actor.stroke;
-    const chainMarkup = buildPolyline(appendage.chains || [], "appendage-chain", Math.max(1, actor.strokeWidth * 0.9), strokeColor);
-    const digitsMarkup = buildPolyline(appendage.digits || [], "appendage-digit", Math.max(1, actor.strokeWidth * 0.7), strokeColor);
+    buildPolyline(appendage.chains || [], "appendage-chain", Math.max(1, actor.strokeWidth * 0.9), strokeColor);
+    buildPolyline(appendage.digits || [], "appendage-digit", Math.max(1, actor.strokeWidth * 0.7), strokeColor);
     const transform = appendageTransformAttr(appendage, anchorPoint);
+    const normalizedLayers = layers.map((layer) => ({
+      z: layer.z,
+      markup: `<g data-appendage-id="${escapeXml(String(appendage.id))}"${transform}>${layer.markup}</g>`,
+    }));
     return [{
       appendageIndex,
       id: appendage.id,
@@ -2026,7 +2099,8 @@ function resolveActorAppendages(actor) {
       flipX: appendage.flipX,
       chains: appendage.chains,
       anchorPoint,
-      markup: `<g data-appendage-id="${escapeXml(String(appendage.id))}"${transform}>${chainMarkup}${digitsMarkup}</g>`,
+      layers: normalizedLayers,
+      markup: normalizedLayers.map((layer) => layer.markup).join(""),
     }];
   });
 }

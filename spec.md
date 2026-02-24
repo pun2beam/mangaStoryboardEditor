@@ -272,7 +272,7 @@ panel:
   * `kind`（任意。未指定時は `appendage`。`hand` / `foot` / `tail` など）
   * `anchor`（必須。既存ジョイント名: `head,lh,rh,le,re,neck,waist,groin,lk,rk,lf,rf`）
   * `flipX`（任意、左右反転）
-  * `z`（任意、actor内相対レイヤ）
+  * `z`（任意、数値または点列ごとの数値列。単一数値は appendage 全体の前後順。数値列は `|` 区切りで `chains`→`digits` 順にグループ対応し、各グループ要素数は対応点列の点数と一致させる。各線分の z は終点側の値を使用）
   * `rotAnchor`（任意、`anchor` を中心にした回転角。既定 `0°`）
   * `stroke`（任意、色。未指定時は `actor.stroke` を使用）
   * `outlineWidth`（任意。単一数値または点列ごとの数値列。単一数値は appendage 全体の縁取り太さ（`strokeWidth` への加算値）。数値列は `|` 区切りで `chains`→`digits` 順にグループ対応し、各グループ要素数は対応点列の点数と一致させる。各線分の縁取り太さは終点側の値を使用。未指定時は `2`、`0` で縁取りなし）
@@ -560,6 +560,7 @@ balloon:
 * `actor.stroke` 未指定時は `meta.actor.stroke`（さらに未指定なら `black`）を使用する
 * `actor.appendages[].stroke` 未指定時は `actor.stroke` を使用する
 * `actor.appendages[].outlineWidth` は単一数値または `|` 区切りの数値列グループを受け付ける（数値列時は `chains`→`digits` 順でグループ数を一致させ、各グループ要素数は対応点列の点数と一致）
+* `actor.appendages[].z` は単一数値または `|` 区切りの数値列グループを受け付ける（数値列時は `chains`→`digits` 順でグループ数を一致させ、各グループ要素数は対応点列の点数と一致）
 * appendage の終端（接続数1）は endpoint-cap で丸め、関節補正が必要な場合のみ内部点（接続数2以上）をマスク対象とする
 * `appendage.jointMaskRadius` / `actor.appendages[].jointMaskRadius` は正の数値のみ有効（未指定時は `Math.max(0.5, 線幅 * 0.6)`）
 * `actor.appendages[].outlineWidth` 未指定時は `2` を使用し、`0` 以下は縁取りなしとして扱う
