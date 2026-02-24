@@ -38,6 +38,23 @@ actor:
   emotion: none
   facing: right
   name: ポーズ用
+  appendages:
+    - ref: hand-par
+    - ref: hand-point
+    - ref: shirt-sode
+    - ref: shirt-body
+    - ref: zubon
+      chains: 0.34,-1.85 0.51,7.96 -3.58,11.67
+    - ref: zubon
+      chains: 1.31,-0.82 4.15,6.24 5.72,11.35
+    - ref: shoe
+      anchor: lf
+      chains: -0.65,-1.3 0,0 3.68,1.6
+    - ref: shoe
+      anchor: rf
+      chains: -1.11,1.68 -0.54,1.69 3.46,1.38
+  pose.points.z: 12,4,4,4,4,4,4,4,4,4,4,0
+  pose.points.outlineWidth: 4,2,2,2,2,0,0,0,2,2,2,2
 
 panel:
   id: 1400
@@ -51,48 +68,13 @@ panel:
     y: 90
     attachments:
       - ref: as1000
-        z: 15
       - ref: as1101
-        z: 15
       - ref: as1201
-        z: 15
       - ref: as1301
-        z: 15
       - ref: as1401
-        z: 15
       - ref: as1501
-        z: 15
       - ref: as1601
-        z: 15
       - ref: as1901
-        z: 15
-    appendages:
-      - ref: hand-par
-        anchor: lh
-        flipX: true
-        rotAnchor: -150
-      - ref: hand-point
-        anchor: rh
-        flipX: false
-        rotAnchor: 130
-        z: 4,4,5,6 | 4,4,5 | 4,4,5 | 4,4,5 | 4,4,4,5
-      - ref: shirt-sode
-        chains: -2.38,2.09 -5.23,4.02 -8.31,7.35 -8.99,10.93 | 0.59,3.56 4.74,5.45 6.46,8.89 9.42,10.76
-      - ref: shirt-body
-        chains: 0.18,12.15 -0.36,9.74 0.2,2.75
-      - ref: zubon
-        chains: 0.34,-1.85 0.51,7.96 -3.58,11.67
-      - ref: zubon
-        chains: 1.31,-0.82 4.15,6.24 5.64,11.08
-      - ref: shoe
-        anchor: lf
-        chains: -1.23,-2.31 0,0 3.68,1.6
-      - ref: shoe
-        anchor: rf
-        chains: -2.54,1.64 -0.54,1.69 3.46,1.38
-    pose.points.z: 12,4,4,4,4,4,4,4,4,4,4,0
-    pose.points.outlineWidth: 4,2,2,2,2,0,0,0,2,2,2,2
-    rot: 358.66
   actor:
     id: a1002
     extends: a0000
@@ -584,7 +566,7 @@ asset:
   dy: -18.5
   s: 0.6
   rot: 0
-  z: 1
+  z: 15
   flipX: true
   src: ./assets/facebase1.svg
 
@@ -596,7 +578,7 @@ asset:
   dy: -18.5
   s: 0.6
   rot: 0
-  z: 1
+  z: 15
   flipX: true
   src: ./assets/facebase2.svg
 
@@ -608,7 +590,7 @@ asset:
   dy: -11.5
   s: 0.3
   rot: 0
-  z: 2
+  z: 16
   src: ./assets/eyes1.svg
 
 asset:
@@ -619,7 +601,7 @@ asset:
   dy: -11.5
   s: 0.3
   rot: 0
-  z: 2
+  z: 16
   src: ./assets/eyes2.svg
 
 asset:
@@ -630,7 +612,7 @@ asset:
   dy: -11.5
   s: 0.3
   rot: 0
-  z: 2
+  z: 16
   src: ./assets/eyes3.svg
 
 asset:
@@ -641,7 +623,7 @@ asset:
   dy: -11.5
   s: 0.3
   rot: 0
-  z: 2
+  z: 16
   src: ./assets/eyes4.svg
 
 asset:
@@ -652,7 +634,7 @@ asset:
   dy: -11.5
   s: 0.32
   rot: 0
-  z: 2
+  z: 16
   src: ./assets/eyes5.svg
 
 asset:
@@ -663,7 +645,7 @@ asset:
   dy: -11
   s: 0.32
   rot: 0
-  z: 2
+  z: 16
   src: ./assets/eyes6.svg
 
 asset:
@@ -674,7 +656,7 @@ asset:
   dy: -51.5
   s: 1.5
   rot: 0
-  z: 2
+  z: 16
   src: ./assets/hair1.svg
 
 asset:
@@ -685,7 +667,7 @@ asset:
   dy: -24.5
   s: 0.53
   rot: 0
-  z: 2
+  z: 16
   src: ./assets/hair2.svg
 
 asset:
@@ -696,7 +678,7 @@ asset:
   dy: -27.5
   s: 0.5
   rot: 0
-  z: 2
+  z: 16
   src: ./assets/hair3.svg
 
 asset:
@@ -707,7 +689,7 @@ asset:
   dy: -24
   s: 0.15
   rot: 0
-  z: 2
+  z: 16
   src: ./assets/hair4.svg
 
 asset:
@@ -718,7 +700,7 @@ asset:
   dy: -19.5
   s: 0.65
   rot: 0
-  z: -1
+  z: -14
   src: ./assets/hair5.svg
 
 asset:
@@ -729,7 +711,7 @@ asset:
   dy: -25
   s: 0.47
   rot: 0
-  z: 2
+  z: 16
   src: ./assets/hair6.svg
 
 asset:
@@ -740,7 +722,7 @@ asset:
   dy: -23.5
   s: 0.48
   rot: 0
-  z: 2
+  z: 16
   src: ./assets/hair7.svg
 
 asset:
@@ -751,7 +733,7 @@ asset:
   dy: -19.5
   s: 0.6
   rot: 0
-  z: -1
+  z: 14
   src: ./assets/hair8.svg
 
 asset:
@@ -762,7 +744,7 @@ asset:
   dy: -26.8
   s: 0.5
   rot: 0
-  z: 2
+  z: 16
   src: ./assets/hair9.svg
 
 asset:
@@ -773,7 +755,7 @@ asset:
   dy: -20.4
   s: 0.55
   rot: 0
-  z: 2
+  z: 16
   src: ./assets/hair10.svg
 
 asset:
@@ -784,7 +766,7 @@ asset:
   dy: 3
   s: 0.1
   rot: 0
-  z: 2
+  z: 16
   flipX: true
   src: ./assets/mouse1.svg
 
@@ -796,7 +778,7 @@ asset:
   dy: 2.5
   s: 0.15
   rot: 0
-  z: 2
+  z: 16
   src: ./assets/mouse2.svg
 
 asset:
@@ -807,7 +789,7 @@ asset:
   dy: 3.5
   s: 0.1
   rot: 0
-  z: 2
+  z: 16
   flipX: true
   src: ./assets/mouse3.svg
 
@@ -819,7 +801,7 @@ asset:
   dy: 3.5
   s: 0.1
   rot: 0
-  z: 2
+  z: 16
   flipX: true
   src: ./assets/mouse4.svg
 
@@ -831,7 +813,7 @@ asset:
   dy: 3.5
   s: 0.1
   rot: 0
-  z: 2
+  z: 16
   flipX: true
   src: ./assets/mouse5.svg
 
@@ -843,7 +825,7 @@ asset:
   dy: 3.5
   s: 0.1
   rot: 0
-  z: 2
+  z: 16
   src: ./assets/mouse6.svg
 
 asset:
@@ -854,7 +836,7 @@ asset:
   dy: 2.5
   s: 0.15
   rot: 0
-  z: 2
+  z: 16
   flipX: true
   src: ./assets/mouse7.svg
 
@@ -866,7 +848,7 @@ asset:
   dy: 3.5
   s: 0.1
   rot: 0
-  z: 2
+  z: 16
   flipX: true
   src: ./assets/mouse8.svg
 
@@ -878,7 +860,7 @@ asset:
   dy: 4.5
   s: 0.1
   rot: 0
-  z: 2
+  z: 16
   flipX: true
   src: ./assets/mouse9.svg
 
@@ -890,7 +872,7 @@ asset:
   dy: 4.5
   s: 0.1
   rot: 0
-  z: 2
+  z: 16
   flipX: true
   src: ./assets/mouse10.svg
 
@@ -902,7 +884,7 @@ asset:
   dy: 4.5
   s: 0.1
   rot: 0
-  z: 2
+  z: 16
   flipX: true
   src: ./assets/mouse11.svg
 
@@ -914,7 +896,7 @@ asset:
   dy: 2.5
   s: 0.2
   rot: 0
-  z: 2
+  z: 16
   flipX: true
   src: ./assets/mouse12.svg
 
@@ -926,7 +908,7 @@ asset:
   dy: 4.5
   s: 0.13
   rot: 0
-  z: 2
+  z: 16
   flipX: true
   src: ./assets/mouse13.svg
 
@@ -938,7 +920,7 @@ asset:
   dy: -17.5
   s: 0.35
   rot: 0
-  z: 2
+  z: 16
   src: ./assets/eyebrows1.svg
 
 asset:
@@ -960,7 +942,7 @@ asset:
   dy: -13.5
   s: 0.3
   rot: 0
-  z: 2
+  z: 16
   src: ./assets/eyelines1.svg
 
 asset:
@@ -971,7 +953,7 @@ asset:
   dy: -14.6
   s: 0.35
   rot: 0
-  z: 2
+  z: 16
   src: ./assets/eyelines2.svg
 
 asset:
@@ -982,7 +964,7 @@ asset:
   dy: -13.5
   s: 0.37
   rot: 0
-  z: 2
+  z: 16
   src: ./assets/eyelines3.svg
 
 asset:
@@ -993,7 +975,7 @@ asset:
   dy: -17
   s: 0.37
   rot: 180
-  z: 2
+  z: 16
   src: ./assets/eyelines1.svg
 
 asset:
@@ -1004,7 +986,7 @@ asset:
   dy: -6.5
   s: 0.3
   rot: 0
-  z: 2
+  z: 16
   src: ./assets/cheeks1.svg
 
 asset:
@@ -1015,7 +997,7 @@ asset:
   dy: -9.5
   s: 0.4
   rot: 0
-  z: 1
+  z: 16
   src: ./assets/cheeks2.svg
 
 asset:
@@ -1026,7 +1008,7 @@ asset:
   dy: -30.5
   s: 0.5
   rot: -10
-  z: 1
+  z: 16
   src: ./assets/hat1.svg
 
 asset:
@@ -1037,7 +1019,7 @@ asset:
   dy: -1.5
   s: 0.11
   rot: 0
-  z: 1
+  z: 16
   src: ./assets/shadow1.svg
 
 asset:
@@ -1048,7 +1030,7 @@ asset:
   dy: -10.5
   s: 0.11
   rot: 0
-  z: 1
+  z: 15
   src: ./assets/shadow1.svg
 
 asset:
@@ -1059,7 +1041,7 @@ asset:
   dy: -1.5
   s: 0.1
   rot: 0
-  z: 1
+  z: 15
   flipX: true
   src: ./assets/nose1.svg
 
@@ -1071,7 +1053,7 @@ asset:
   dy: -1.5
   s: 0.09
   rot: 0
-  z: 1
+  z: 15
   flipX: true
   src: ./assets/nose2.svg
 
@@ -1083,36 +1065,38 @@ asset:
   dy: -0.5
   s: 0.1
   rot: 0
-  z: 1
+  z: 15
   src: ./assets/nose3.svg
 
 appendage:
-  id: hand
-  anchor: rh
-  chains: 0,0 -1.65,-2.11 -3.46,-2.58 -4.45,-4.52 | 0,0 -1.28,-4.67 -2.53,-8.56 | 0,0 0.3,-5.42 -0.23,-10.17 | 0,0 1.98,-4.94 2.09,-9.33 | 0,0 2.02,-0.92 3.48,-4.22 4.67,-7.77
-
-appendage:
   id: hand-par
-  rotAnchor: -10
+  anchor: lh
+  rotAnchor: -150
   z: 4,4,5,6 | 4,4,5 | 4,4,5 | 4,4,5 | 4,4,4,5
   chains: 0,0 -1.74,-2.13 -3.52,-2.9 -6.27,-3.52 | 0,0 -1.25,-6.01 -3.52,-10.41 | 0,0 0.45,-5.9 0.54,-11.07 | 0,0 2.45,-5.16 3.28,-9.86 | 0,0 2.29,-1.32 3.94,-4.12 5.56,-7.03
   outlineWidth: 0,0,4,4 | 0,0,4| 0,0,4 | 0,0,4 | 0,0,0,4
-  jointMaskRadius: 4
+  strokeWidth: 6
+  jointMaskRadius: 2
+  s: 0.5
 
 appendage:
   id: hand-point
-  rotAnchor: 60
+  anchor: rh
+  flipX: false
+  rotAnchor: 130
   z: 4,4,5,6 | 4,4,5 | 4,4,5 | 4,4,5 | 4,4,4,5
   chains: 0,0 -2.73,-0.98 -4.79,-1.86 -5.16,-4.97 | 0,0 -4.31,-5.4 -6.3,-10.11 | 0,0 -2.75,-6.8 -2.08,-3.91 | 0,0 -0.86,-7.63 -0.49,-4.16 | 0,0 1.35,-2.11 1.01,-7.38 1.1,-4.42
   outlineWidth: 0,0,0,4 | 0,0,4| 0,0,4 | 0,0,4 | 0,0,0,4
-  jointMaskRadius: 4
+  strokeWidth: 6
+  jointMaskRadius: 2
+  s: 0.5
 
 appendage:
   id: shirt-sode
   anchor: neck
   rotAnchor: 0
   z: 10,10,10,10 | 10,10,10,10
-  chains: 0.86,2.81 -7.47,2.9 -14.05,5.1 -18.8,2.09 | -1.59,2.4 6.73,5.13 10.15,7.04 13.15,7.04
+  chains: -2.38,2.09 -5.23,4.02 -8.31,7.35 -8.99,10.93 | 0.59,3.56 4.74,5.45 6.46,8.89 9.42,10.76
   outlineWidth: 0,0,4,4 |  0,0,4,4
   jointMaskRadius: 14
   stroke: #e0e0e0
@@ -1124,7 +1108,7 @@ appendage:
   anchor: neck
   rotAnchor: 0
   z: 11,11,11
-  chains: 0,1 -0.72,8.01 -1.24,13.8
+  chains: 0.18,12.15 -0.36,9.74 0.2,2.75
   outlineWidth: 0,0,0
   jointMaskRadius: 18
   stroke: #e0e0e0
