@@ -73,6 +73,7 @@ const els = {
   dragHandleToggle: document.getElementById("showDragHandles"),
   poseEditorToggle: document.getElementById("showPoseEditor"),
   handDetailEditorToggle: document.getElementById("showHandDetailEditor"),
+  attachmentEditorToggle: document.getElementById("showAttachmentEditor"),
   renumberBtn: document.getElementById("renumberIdsBtn"),
   split: document.querySelector(".split-root"),
 };
@@ -89,7 +90,10 @@ function isPoseEditModeEnabled() {
   return Boolean(els.poseEditorToggle?.checked);
 }
 function isHandDetailEditModeEnabled() {
-  return isPoseEditModeEnabled() && Boolean(els.handDetailEditorToggle?.checked);
+  return Boolean(els.handDetailEditorToggle?.checked);
+}
+function isAttachmentEditModeEnabled() {
+  return Boolean(els.attachmentEditorToggle?.checked);
 }
 function dragHandleRectFor(kind, item, panelRect, unit) {
   const target = rectTarget(panelRect);
@@ -1926,7 +1930,7 @@ function renderPosePointHandles(actor, kind, id, scale) {
   }).join("");
 }
 function renderAttachmentPointHandles(attachments, kind, id) {
-  if (!isPoseEditModeEnabled()) return "";
+  if (!isAttachmentEditModeEnabled()) return "";
   if (kind !== "actor" || !id || String(id) !== String(selectedActorId)) return "";
   return attachments.map((attachment) => {
     const handlePoint = attachment.handlePoint || attachment.centerPoint || attachment.anchorPoint;
@@ -3313,7 +3317,7 @@ function setupObjectDrag() {
     const attachmentIndex = target.dataset.attachmentIndex;
     const attachmentRef = target.dataset.attachmentRef;
     if (attachmentIndex !== undefined) {
-      if (!isPoseEditModeEnabled() || kind !== "actor" || !id) return;
+      if (!isAttachmentEditModeEnabled() || kind !== "actor" || !id) return;
       if (attachmentRef === undefined) return;
       const actorInfo = actorWithPanel(id);
       if (!actorInfo) return;
@@ -3675,6 +3679,11 @@ function setupDragHandleToggle() {
   }
   if (els.handDetailEditorToggle) {
     els.handDetailEditorToggle.addEventListener("change", () => {
+      update();
+    });
+  }
+  if (els.attachmentEditorToggle) {
+    els.attachmentEditorToggle.addEventListener("change", () => {
       update();
     });
   }
