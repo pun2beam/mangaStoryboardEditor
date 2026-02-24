@@ -556,6 +556,7 @@ balloon:
 * `z`（数値または `|` 区切り点列ごとの数値列）
 * `rotAnchor`（`anchor` 基準の回転角。既定 `0`）
 * `stroke`（線色。未指定時は参照先 actor の `stroke`）
+* `strokeWidth`（線幅。未指定時は参照先 actor の `strokeWidth`）
 * `outlineWidth`（単一数値または `|` 区切り数値列。未指定時 `2`、`0` で縁取りなし）
 * `jointMaskRadius`（関節補正マスク半径。未指定時 `Math.max(0.5, 線幅 * 0.6)`）
 
@@ -588,6 +589,7 @@ balloon:
 * `actor.appendages[].rotAnchor` 未指定時は `0°` を既定値とする
 * `actor.stroke` 未指定時は `meta.actor.stroke`（さらに未指定なら `black`）を使用する
 * `actor.appendages[].stroke` 未指定時は `actor.stroke` を使用する
+* `appendage.strokeWidth` / `actor.appendages[].strokeWidth` 未指定時は `actor.strokeWidth` を使用する
 * `actor.appendages[].outlineWidth` は単一数値または `|` 区切りの数値列グループを受け付ける（数値列時は `chains`→`digits` 順でグループ数を一致させ、各グループ要素数は対応点列の点数と一致）
 * `actor.appendages[].z` は単一数値または `|` 区切りの数値列グループを受け付ける（数値列時は `chains`→`digits` 順でグループ数を一致させ、各グループ要素数は対応点列の点数と一致）
 * appendage の終端（接続数1）は endpoint-cap で丸め、関節補正が必要な場合のみ内部点（接続数2以上）をマスク対象とする
