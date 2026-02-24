@@ -740,7 +740,9 @@ function validateAndBuild(blocks) {
     actor.appendages = normalizeAppendages(resolvedActorAppendages, actor._line, "actor.appendages");
     for (const appendage of actor.appendages) {
       appendage.anchor = normalizeAssetAnchorPoint(appendage.anchor, actor._line);
-      appendage.z = typeof appendage.z === "number" ? appendage.z : 0;
+      if (appendage._zSpec?.mode === "uniform") {
+        appendage.z = num(appendage._zSpec.z, 0);
+      }
       appendage.flipX = appendage.flipX === true;
       appendage.rotAnchor = typeof appendage.rotAnchor === "number" ? appendage.rotAnchor : 0;
       appendage.stroke = appendage.stroke || null;
