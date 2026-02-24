@@ -2111,12 +2111,15 @@ function resolveActorAppendages(actor, drawOuterOutline = false, outerOutlineWid
           if (drawOuterOutline) {
             const outerStrokeWidth = width + Math.max(0, outerOutlineWidth);
             const outerSegment = `<line class="${className}-outer" x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="black" stroke-width="${outerStrokeWidth}" stroke-linecap="butt" stroke-linejoin="round"/>`;
+            const outerJointRadius = 0.5 * outerStrokeWidth * (outerOutlineWidth > 0 ? 1.03 : 1);
+            const outerJointCap = i > 0
+              ? `<circle class="${className}-outer-joint" data-appendage-outer-joint="${groupIndex}-${i}" cx="${start.x}" cy="${start.y}" r="${outerJointRadius}" fill="black"/>`
+              : "";
             if (i === (scaledPoints.length - 2)) {
               const outerEndpointRadius = 0.5 * outerStrokeWidth;
-              outerLayers.push({ z: -10000, markup: `${outerSegment}<circle class="${className}-outer-endpoint" cx="${endpoint.x}" cy="${endpoint.y}" r="${outerEndpointRadius}" fill="black"/>` });
-            } else if (i > 0) {
-              const outerJointRadius = 0.5 * outerStrokeWidth * (outerOutlineWidth > 0 ? 1.03 : 1);
-              outerLayers.push({ z: -10000, markup: `${outerSegment}<circle class="${className}-outer-joint" data-appendage-outer-joint="${groupIndex}-${i}" cx="${start.x}" cy="${start.y}" r="${outerJointRadius}" fill="black"/>` });
+              outerLayers.push({ z: -10000, markup: `${outerSegment}${outerJointCap}<circle class="${className}-outer-endpoint" cx="${endpoint.x}" cy="${endpoint.y}" r="${outerEndpointRadius}" fill="black"/>` });
+            } else if (outerJointCap) {
+              outerLayers.push({ z: -10000, markup: `${outerSegment}${outerJointCap}` });
             } else {
               outerLayers.push({ z: -10000, markup: outerSegment });
             }
