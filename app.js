@@ -2074,7 +2074,7 @@ function resolveActorAppendages(actor) {
           const segmentStroke = `<line class="${className}" x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="${strokeColor}" stroke-width="${width}" stroke-linecap="butt" stroke-linejoin="round"/>`;
           const segmentZ = perPointZ ? num(perPointZ[i + 1], 0) : uniformZ;
           const withCaps = i === (scaledPoints.length - 2)
-            ? `${segmentOutline}${segmentStroke}${jointMasks}${endpointOutlineCap}${endpointFillCap}`
+            ? `${endpointOutlineCap}${segmentOutline}${segmentStroke}${jointMasks}${endpointFillCap}`
             : `${segmentOutline}${segmentStroke}`;
           layers.push({ z: segmentZ, markup: withCaps });
           segments.push(`${segmentOutline}${segmentStroke}`);
