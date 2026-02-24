@@ -735,7 +735,7 @@ function validateAndBuild(blocks) {
       if (!source) {
         throw new Error(`Line ${actor._line}: 未定義 appendage 参照 ${appendage.ref}`);
       }
-      return { ...source, ...appendage };
+      return mergeAppendageRefWithOverride(source, appendage);
     });
     actor.appendages = normalizeAppendages(resolvedActorAppendages, actor._line, "actor.appendages");
     for (const appendage of actor.appendages) {
@@ -765,6 +765,16 @@ function normalizeAttachments(value, line) {
     return { ...attachment };
   });
 }
+
+function mergeAppendageRefWithOverride(source, override) {
+  const merged = { ...source };
+  Object.entries(override || {}).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === "") return;
+    merged[key] = value;
+  });
+  return merged;
+}
+
 function parseAppendagePointGroups(raw, line, fieldName) {
   if (raw === undefined || raw === null || raw === "") return [];
   const parsePointSequenceTokens = (source, sequenceName) => {
