@@ -2082,6 +2082,9 @@ function resolveActorAppendages(actor, drawOuterOutline = false, outerOutlineWid
         }));
         if (scaledPoints.length === 0) return "";
         const points = scaledPoints.map((point) => `${point.x},${point.y}`).join(" ");
+        const startpoint = scaledPoints[0];
+        const startpointNext = scaledPoints[Math.min(1, scaledPoints.length - 1)] || startpoint;
+        const startpointAngleDeg = (Math.atan2(startpoint.y - startpointNext.y, startpoint.x - startpointNext.x) * 180) / Math.PI;
         const endpoint = scaledPoints[scaledPoints.length - 1];
         const endpointPrevious = scaledPoints[Math.max(0, scaledPoints.length - 2)] || endpoint;
         const endpointAngleDeg = (Math.atan2(endpoint.y - endpointPrevious.y, endpoint.x - endpointPrevious.x) * 180) / Math.PI;
@@ -2102,13 +2105,17 @@ function resolveActorAppendages(actor, drawOuterOutline = false, outerOutlineWid
         const endpointOutlineCap = drawOutline && endpointOutlineWidth > 0
           ? renderAppendageEndpointCap(className, endpoint, endpointOuterRadius, "black", endpointCap, endpointAngleDeg, "outline")
           : "";
+        const startpointOutlineCap = drawOutline && endpointOutlineWidth > 0
+          ? renderAppendageEndpointCap(className, startpoint, endpointOuterRadius, "black", endpointCap, startpointAngleDeg, "outline-start")
+          : "";
         const endpointFillCap = renderAppendageEndpointCap(className, endpoint, endpointInnerRadius, strokeColor, endpointCap, endpointAngleDeg);
+        const startpointFillCap = renderAppendageEndpointCap(className, startpoint, endpointInnerRadius, strokeColor, endpointCap, startpointAngleDeg, "start");
         if (!perPointOutlineWidths && !perPointZ) {
           const outlineMarkup = drawOutline && uniformOutlineWidth > 0
             ? `<polyline class="${className}-outline" points="${points}" fill="none" stroke="black" stroke-width="${width + uniformOutlineWidth}" stroke-linecap="butt" stroke-linejoin="round"/>`
             : "";
           const strokeMarkup = `<polyline class="${className}" points="${points}" fill="none" stroke="${strokeColor}" stroke-width="${width}" stroke-linecap="butt" stroke-linejoin="round"/>`;
-          layers.push({ z: uniformZ, markup: `${endpointOutlineCap}${outlineMarkup}${strokeMarkup}${jointMasks}${endpointFillCap}` });
+          layers.push({ z: uniformZ, markup: `${startpointOutlineCap}${endpointOutlineCap}${outlineMarkup}${strokeMarkup}${jointMasks}${startpointFillCap}${endpointFillCap}` });
           if (drawOuterOutline) {
             const outerStrokeWidth = width + Math.max(0, outerOutlineWidth);
             const outerEndpointRadius = 0.5 * outerStrokeWidth;
@@ -2118,7 +2125,7 @@ function resolveActorAppendages(actor, drawOuterOutline = false, outerOutlineWid
               .join("");
             outerLayers.push({
               z: -10000,
-              markup: `<polyline class="${className}-outer" points="${points}" fill="none" stroke="black" stroke-width="${outerStrokeWidth}" stroke-linecap="butt" stroke-linejoin="round"/>${outerJointCaps}${renderAppendageEndpointCap(className, endpoint, outerEndpointRadius, "black", endpointCap, endpointAngleDeg, "outer")}`,
+              markup: `<polyline class="${className}-outer" points="${points}" fill="none" stroke="black" stroke-width="${outerStrokeWidth}" stroke-linecap="butt" stroke-linejoin="round"/>${outerJointCaps}${renderAppendageEndpointCap(className, startpoint, outerEndpointRadius, "black", endpointCap, startpointAngleDeg, "outer-start")}${renderAppendageEndpointCap(className, endpoint, outerEndpointRadius, "black", endpointCap, endpointAngleDeg, "outer")}`,
             });
           }
           return "";
@@ -2134,7 +2141,7 @@ function resolveActorAppendages(actor, drawOuterOutline = false, outerOutlineWid
           const segmentStroke = `<line class="${className}" x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="${strokeColor}" stroke-width="${width}" stroke-linecap="butt" stroke-linejoin="round"/>`;
           const segmentZ = perPointZ ? num(perPointZ[i + 1], 0) : uniformZ;
           const withCaps = i === (scaledPoints.length - 2)
-            ? `${endpointOutlineCap}${segmentOutline}${segmentStroke}${jointMasks}${endpointFillCap}`
+            ? `${startpointOutlineCap}${endpointOutlineCap}${segmentOutline}${segmentStroke}${jointMasks}${startpointFillCap}${endpointFillCap}`
             : `${segmentOutline}${segmentStroke}`;
           layers.push({ z: segmentZ, markup: withCaps });
           if (drawOuterOutline) {
@@ -2148,7 +2155,7 @@ function resolveActorAppendages(actor, drawOuterOutline = false, outerOutlineWid
               const outerEndpointRadius = 0.5 * outerStrokeWidth;
               outerLayers.push({
                 z: -10000,
-                markup: `${outerSegment}${outerJointCap}${renderAppendageEndpointCap(className, endpoint, outerEndpointRadius, "black", endpointCap, endpointAngleDeg, "outer")}`,
+                markup: `${outerSegment}${outerJointCap}${renderAppendageEndpointCap(className, startpoint, outerEndpointRadius, "black", endpointCap, startpointAngleDeg, "outer-start")}${renderAppendageEndpointCap(className, endpoint, outerEndpointRadius, "black", endpointCap, endpointAngleDeg, "outer")}`,
               });
             } else if (outerJointCap) {
               outerLayers.push({ z: -10000, markup: `${outerSegment}${outerJointCap}` });
