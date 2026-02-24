@@ -8,7 +8,12 @@ meta:
   layout.page.mode: auto-extend
   layout.percent.reference: page-inner
   layout.page.persistGenerated: false
+  actor.stroke: #fff0b8
   actor.strokeWidth: 10
+  actor.outline: on
+  actor.jointMaskRadius: 5
+  actor.outerOutline: true
+  actor.outerOutlineWidth: 4
 
 panel:
   id: 1390
@@ -42,36 +47,57 @@ panel:
   actor:
     id: a1001
     extends: a0000
-    x: 10.38
-    y: 88.41
+    x: 10
+    y: 90
     attachments:
       - ref: as1000
+        z: 15
       - ref: as1101
+        z: 15
       - ref: as1201
+        z: 15
       - ref: as1301
+        z: 15
       - ref: as1401
+        z: 15
       - ref: as1501
+        z: 15
       - ref: as1601
+        z: 15
       - ref: as1901
+        z: 15
     appendages:
-      - ref: hand
+      - ref: hand-par
         anchor: lh
+        flipX: true
+        rotAnchor: -150
+      - ref: hand-point
+        anchor: rh
         flipX: false
-        rotAnchor: -10
-        z: 0,0,2,2 | 0,0,2 | 0,0,2 | 0,0,4 | 0,0,4,4
-        chains: 0,0 -1.65,-2.11 -1.58,-4.2 0.08,-4.75 | 0,0 -0.34,-6.11 5.14,-7.11 | 0,0 0.69,-5.66 2.25,-3.07 | 0,0 1.98,-4.94 3.84,-4.12 | 0,0 0.8,-1.4 4.52,-3.43 3.16,-0.8
-      - ref: hand
-        z: 4
-        rotAnchor: 60
-        chains: 0,0 -1.77,-1.01 -2.52,-2.27 -1.21,-3.1 | 0,0 -1.28,-4.67 -0.43,-3.38 | 0,0 0.3,-5.42 0.85,-3.6 | 0,0 1.98,-4.94 1.68,-3.23 | 0,0 2.02,-0.92 3.48,-4.22 2.99,-3.33
-    pose.points: 0.27,-2.19,-0.43,-1.84,0.56,-1.23,-0.39,-1.63,0.31,-1.12,0,-1.6,0.04,-1.03,0,-0.8,-0.05,-0.3,0.17,-0.43,-0.5,0,0.33,0.01
-    pose.points.z: 0,4,4,4,4,4,4,4,4,4,4,4
-    rot: 0.47
+        rotAnchor: 130
+        z: 4,4,5,6 | 4,4,5 | 4,4,5 | 4,4,5 | 4,4,4,5
+      - ref: shirt-sode
+        chains: 2.11,2.18 -6.26,4.59 -8.11,7.55 -8.77,10.14 | -3.01,2.27 3.34,4.42 6.42,10.49 9.41,10.96
+      - ref: shirt-body
+        chains: 0.28,15.55 -1.13,10.93 -0.9,6.71
+      - ref: zubon
+        chains: 0.4,-2.06 -0.54,6.66 -2.6,9.42
+      - ref: zubon
+        chains: -0.49,-1.47 5.52,7.47 6,12.29
+      - ref: shoe
+        anchor: lf
+        chains: -1.23,-2.31 0,0 3.68,1.6
+      - ref: shoe
+        anchor: rf
+        chains: -2.54,1.64 -0.54,1.69 3.46,1.38
+    pose.points.z: 12,4,4,4,4,4,4,4,4,4,4,0
+    pose.points.outlineWidth: 4,2,2,2,2,0,0,0,2,2,2,2
+    rot: 358.66
   actor:
     id: a1002
     extends: a0000
-    x: 21.69
-    y: 89.83
+    x: 20
+    y: 90
     attachments:
       - ref: as1000
       - ref: as1102
@@ -81,7 +107,6 @@ panel:
       - ref: as1502
       - ref: as1602
       - ref: as1902
-    rot: 351.48
   actor:
     id: a1003
     extends: a0000
@@ -95,6 +120,7 @@ panel:
       - ref: as1401
       - ref: as1601
       - ref: as1903
+    rot: 357.82
   actor:
     id: a1004
     extends: a0000
@@ -1064,3 +1090,66 @@ appendage:
   id: hand
   anchor: rh
   chains: 0,0 -1.65,-2.11 -3.46,-2.58 -4.45,-4.52 | 0,0 -1.28,-4.67 -2.53,-8.56 | 0,0 0.3,-5.42 -0.23,-10.17 | 0,0 1.98,-4.94 2.09,-9.33 | 0,0 2.02,-0.92 3.48,-4.22 4.67,-7.77
+
+appendage:
+  id: hand-par
+  rotAnchor: -10
+  z: 4,4,5,6 | 4,4,5 | 4,4,5 | 4,4,5 | 4,4,4,5
+  chains: 0,0 -1.74,-2.13 -3.52,-2.9 -6.27,-3.52 | 0,0 -1.25,-6.01 -3.52,-10.41 | 0,0 0.45,-5.9 0.54,-11.07 | 0,0 2.45,-5.16 3.28,-9.86 | 0,0 2.29,-1.32 3.94,-4.12 5.56,-7.03
+  outlineWidth: 0,0,4,4 | 0,0,4| 0,0,4 | 0,0,4 | 0,0,0,4
+  jointMaskRadius: 4
+
+appendage:
+  id: hand-point
+  rotAnchor: 60
+  z: 4,4,5,6 | 4,4,5 | 4,4,5 | 4,4,5 | 4,4,4,5
+  chains: 0,0 -2.73,-0.98 -4.79,-1.86 -5.16,-4.97 | 0,0 -4.31,-5.4 -6.3,-10.11 | 0,0 -2.75,-6.8 -2.08,-3.91 | 0,0 -0.86,-7.63 -0.49,-4.16 | 0,0 1.35,-2.11 1.01,-7.38 1.1,-4.42
+  outlineWidth: 0,0,0,4 | 0,0,4| 0,0,4 | 0,0,4 | 0,0,0,4
+  jointMaskRadius: 4
+
+appendage:
+  id: shirt-sode
+  anchor: neck
+  rotAnchor: 0
+  z: 10,10,10,10 | 10,10,10,10
+  chains: 0.86,2.81 -7.47,2.9 -14.05,5.1 -18.8,2.09 | -1.59,2.4 6.73,5.13 10.15,7.04 13.15,7.04
+  outlineWidth: 0,0,4,4 |  0,0,4,4
+  jointMaskRadius: 14
+  stroke: #e0e0e0
+  strokeWidth: 30
+  endpointCap: square
+
+appendage:
+  id: shirt-body
+  anchor: neck
+  rotAnchor: 0
+  z: 11,11,11
+  chains: 0,1 -0.72,8.01 -1.24,13.8
+  outlineWidth: 0,0,0
+  jointMaskRadius: 18
+  stroke: #e0e0e0
+  strokeWidth: 40
+  endpointCap: square
+
+appendage:
+  id: zubon
+  anchor: groin
+  rotAnchor: 0
+  z: 10,10,10
+  chains: 0,1 -0.72,8.01 -1.24,13.8
+  outlineWidth: 0,3,3
+  jointMaskRadius: 13
+  stroke: #e00000
+  strokeWidth: 30
+  endpointCap: square
+
+appendage:
+  id: shoe
+  rotAnchor: 0
+  z: 10,10,10
+  chains: -1,0 0,0 1,0
+  outlineWidth: 0,3,3
+  jointMaskRadius: 7
+  stroke: #0000e0
+  strokeWidth: 15
+  endpointCap: round
