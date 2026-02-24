@@ -2083,9 +2083,13 @@ function resolveActorAppendages(actor, drawOuterOutline = false, outerOutlineWid
           if (drawOuterOutline) {
             const outerStrokeWidth = width + Math.max(0, outerOutlineWidth);
             const outerEndpointRadius = 0.5 * outerStrokeWidth;
+            const outerJointRadius = outerEndpointRadius * (outerOutlineWidth > 0 ? 1.03 : 1);
+            const outerJointCaps = scaledPoints.slice(1, -1)
+              .map((joint, jointIndex) => `<circle class="${className}-outer-joint" data-appendage-outer-joint="${groupIndex}-${jointIndex + 1}" cx="${joint.x}" cy="${joint.y}" r="${outerJointRadius}" fill="black"/>`)
+              .join("");
             outerLayers.push({
               z: -10000,
-              markup: `<polyline class="${className}-outer" points="${points}" fill="none" stroke="black" stroke-width="${outerStrokeWidth}" stroke-linecap="butt" stroke-linejoin="round"/><circle class="${className}-outer-endpoint" cx="${endpoint.x}" cy="${endpoint.y}" r="${outerEndpointRadius}" fill="black"/>`,
+              markup: `<polyline class="${className}-outer" points="${points}" fill="none" stroke="black" stroke-width="${outerStrokeWidth}" stroke-linecap="butt" stroke-linejoin="round"/>${outerJointCaps}<circle class="${className}-outer-endpoint" cx="${endpoint.x}" cy="${endpoint.y}" r="${outerEndpointRadius}" fill="black"/>`,
             });
           }
           return "";
@@ -2110,6 +2114,9 @@ function resolveActorAppendages(actor, drawOuterOutline = false, outerOutlineWid
             if (i === (scaledPoints.length - 2)) {
               const outerEndpointRadius = 0.5 * outerStrokeWidth;
               outerLayers.push({ z: -10000, markup: `${outerSegment}<circle class="${className}-outer-endpoint" cx="${endpoint.x}" cy="${endpoint.y}" r="${outerEndpointRadius}" fill="black"/>` });
+            } else if (i > 0) {
+              const outerJointRadius = 0.5 * outerStrokeWidth * (outerOutlineWidth > 0 ? 1.03 : 1);
+              outerLayers.push({ z: -10000, markup: `${outerSegment}<circle class="${className}-outer-joint" data-appendage-outer-joint="${groupIndex}-${i}" cx="${start.x}" cy="${start.y}" r="${outerJointRadius}" fill="black"/>` });
             } else {
               outerLayers.push({ z: -10000, markup: outerSegment });
             }
@@ -2300,19 +2307,42 @@ function poseOuterSilhouetteLines(pointResolver, strokeWidth, outerOutlineWidth)
     ["groin", "rk"],
     ["rk", "rf"],
   ];
-  const endpointNames = ["lh", "rh", "lf", "rf"];
+  const jointDegreeMap = lineDefs.reduce((map, [from, to]) => {
+    map.set(from, (map.get(from) || 0) + 1);
+    map.set(to, (map.get(to) || 0) + 1);
+    return map;
+  }, new Map());
+  const endpointNames = Array.from(jointDegreeMap.entries())
+    .filter(([, degree]) => degree === 1)
+    .map(([name]) => name);
   const z = -10000;
   const thick = Math.max(0.1, strokeWidth + Math.max(0, outerOutlineWidth));
+  const outerJointRadius = 0.5 * thick * (outerOutlineWidth > 0 ? 1.03 : 1);
+  const jointMap = new Map();
   const segments = lineDefs.flatMap(([from, to], index) => {
     const start = pointResolver(from);
     const end = pointResolver(to);
     if (!start || !end) return [];
+    const recordJoint = (name, point) => {
+      const degree = jointDegreeMap.get(name) || 0;
+      if (degree < 2) return;
+      jointMap.set(name, { point, degree });
+    };
+    recordJoint(from, start);
+    recordJoint(to, end);
     return [{
       z,
       order: -500 + index,
       markup: `<line x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="black" stroke-width="${thick}" stroke-linecap="butt" stroke-linejoin="butt"/>`,
     }];
   });
+  const joints = Array.from(jointMap.entries())
+    .filter(([, data]) => data.degree >= 2)
+    .map(([name, data], index) => ({
+      z,
+      order: -380 + index,
+      markup: `<circle data-outer-joint-cap="${name}" cx="${data.point.x}" cy="${data.point.y}" r="${outerJointRadius}" fill="black"/>`,
+    }));
   const caps = endpointNames.flatMap((name, index) => {
     const endpoint = pointResolver(name);
     if (!endpoint) return [];
@@ -2322,7 +2352,7 @@ function poseOuterSilhouetteLines(pointResolver, strokeWidth, outerOutlineWidth)
       markup: `<circle data-outer-endpoint-cap="${name}" cx="${endpoint.x}" cy="${endpoint.y}" r="${0.5 * thick}" fill="black"/>`,
     }];
   });
-  return [...segments, ...caps];
+  return [...segments, ...joints, ...caps];
 }
 function poseLinesWithZ(pointResolver, pointZ, pointOutlineWidth, strokeWidth, strokeColor = "black", drawOutline = true, jointMaskRadius = null) {
   const lineDefs = [
