@@ -2192,8 +2192,10 @@ function renderAppendageEndpointCap(className, point, radius, fill, endpointCap,
   const cap = endpointCap === "square" ? "square" : "round";
   const suffix = variant ? `-${variant}` : "";
   if (cap === "square") {
-    const side = radius * 2;
-    return `<rect class="${className}${suffix}-endpoint" x="${point.x - radius}" y="${point.y - radius}" width="${side}" height="${side}" fill="${fill}" transform="rotate(${angleDeg} ${point.x} ${point.y})"/>`;
+    const capThickness = radius * 2;
+    const capLength = Math.max(1.2, capThickness * 0.45);
+    const seamOverlap = Math.max(0.6, capThickness * 0.08);
+    return `<rect class="${className}${suffix}-endpoint" x="${point.x - seamOverlap}" y="${point.y - capThickness * 0.5}" width="${capLength + seamOverlap}" height="${capThickness}" fill="${fill}" transform="rotate(${angleDeg} ${point.x} ${point.y})"/>`;
   }
   return `<circle class="${className}${suffix}-endpoint" cx="${point.x}" cy="${point.y}" r="${radius}" fill="${fill}"/>`;
 }
