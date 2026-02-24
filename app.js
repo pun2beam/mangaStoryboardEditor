@@ -703,6 +703,7 @@ function validateAndBuild(blocks) {
     appendageDef.flipX = appendageDef.flipX === true;
     appendageDef.rotAnchor = typeof appendageDef.rotAnchor === "number" ? appendageDef.rotAnchor : 0;
     appendageDef.stroke = appendageDef.stroke || null;
+    appendageDef.strokeWidth = positiveNum(appendageDef.strokeWidth, null);
     appendageDef.jointMaskRadius = positiveNum(appendageDef.jointMaskRadius, null);
   }
   const appendageDefs = normalizeAppendages(scene.appendages, 0, "appendage");
@@ -745,6 +746,7 @@ function validateAndBuild(blocks) {
       appendage.flipX = appendage.flipX === true;
       appendage.rotAnchor = typeof appendage.rotAnchor === "number" ? appendage.rotAnchor : 0;
       appendage.stroke = appendage.stroke || null;
+      appendage.strokeWidth = positiveNum(appendage.strokeWidth, null);
       appendage.jointMaskRadius = positiveNum(appendage.jointMaskRadius, null);
     }
   }
@@ -2141,8 +2143,9 @@ function resolveActorAppendages(actor, drawOuterOutline = false, outerOutlineWid
       })
       .join("");
     const strokeColor = appendage.stroke || actor.stroke;
-    buildPolyline(appendage.chains || [], "appendage-chain", Math.max(1, actor.strokeWidth * 0.9), strokeColor);
-    buildPolyline(appendage.digits || [], "appendage-digit", Math.max(1, actor.strokeWidth * 0.7), strokeColor);
+    const appendageStrokeWidth = positiveNum(appendage.strokeWidth, actor.strokeWidth);
+    buildPolyline(appendage.chains || [], "appendage-chain", Math.max(1, appendageStrokeWidth * 0.9), strokeColor);
+    buildPolyline(appendage.digits || [], "appendage-digit", Math.max(1, appendageStrokeWidth * 0.7), strokeColor);
     const transform = appendageTransformAttr(appendage, anchorPoint);
     const normalizedLayers = layers.map((layer) => ({
       z: layer.z,
