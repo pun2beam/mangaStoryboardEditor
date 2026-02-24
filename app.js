@@ -705,6 +705,7 @@ function validateAndBuild(blocks) {
   }
   for (const appendageDef of scene.appendages) {
     appendageDef.anchor = normalizeAssetAnchorPoint(appendageDef.anchor, appendageDef._line);
+    appendageDef.s = num(appendageDef.s, 1);
     appendageDef.flipX = appendageDef.flipX === true;
     appendageDef.rotAnchor = typeof appendageDef.rotAnchor === "number" ? appendageDef.rotAnchor : 0;
     appendageDef.stroke = appendageDef.stroke || null;
@@ -748,6 +749,7 @@ function validateAndBuild(blocks) {
       if (appendage._zSpec?.mode === "uniform") {
         appendage.z = num(appendage._zSpec.z, 0);
       }
+      appendage.s = num(appendage.s, 1);
       appendage.flipX = appendage.flipX === true;
       appendage.rotAnchor = typeof appendage.rotAnchor === "number" ? appendage.rotAnchor : 0;
       appendage.stroke = appendage.stroke || null;
@@ -1959,8 +1961,8 @@ function appendageTransformAttr(appendage, anchorPoint) {
 function renderAppendagePointHandles(actor, appendages, kind, id) {
   if (!isHandDetailEditModeEnabled()) return "";
   if (kind !== "actor" || !id || String(id) !== String(selectedActorId)) return "";
-  const appendageScale = actor.scale;
   return appendages.map((appendage) => {
+    const appendageScale = actor.scale * (appendage.s ?? 1);
     const actorAppendage = actor.appendages?.[appendage.appendageIndex];
     const chains = Array.isArray(appendage.chains)
       ? appendage.chains
@@ -2054,9 +2056,9 @@ function renderActor(actor, panelRect, unit, showActorName, assetMap, kind, id) 
 function resolveActorAppendages(actor, drawOuterOutline = false, outerOutlineWidth = 2) {
   if (!Array.isArray(actor.appendages) || actor.appendages.length === 0) return [];
   const poseScale = 20 * actor.scale;
-  const appendageScale = actor.scale;
   const drawOutline = parseBooleanLike(actor.outline, true);
   return actor.appendages.flatMap((appendage, appendageIndex) => {
+    const appendageScale = actor.scale * (appendage.s ?? 1);
     const anchorPoint = resolveAttachmentAnchorPoint(actor, appendage.anchor, poseScale);
     const outlineSpec = appendage._outlineWidthSpec || { mode: "uniform", width: num(appendage.outlineWidth, 2) };
     const zSpec = appendage._zSpec || { mode: "uniform", z: num(appendage.z, 0) };
@@ -2193,6 +2195,7 @@ function resolveActorAppendages(actor, drawOuterOutline = false, outerOutlineWid
       anchor: appendage.anchor,
       rotAnchor: appendage.rotAnchor,
       flipX: appendage.flipX,
+      s: appendage.s,
       chains: appendage.chains,
       anchorPoint,
       layers: normalizedLayers,
@@ -3293,7 +3296,8 @@ function setupObjectDrag() {
   }
 
   function chainPointFromActorLocal(localPoint, appendage, actorScale) {
-    const safeScale = Math.max(Math.abs(actorScale), 1e-6);
+    const appendageScale = actorScale * (appendage.s ?? 1);
+    const safeScale = Math.max(Math.abs(appendageScale), 1e-6);
     const anchorPoint = resolveAttachmentAnchorPoint(appendage.actor, appendage.anchor, 20 * safeScale);
     let x = localPoint.x;
     let y = localPoint.y;
@@ -3647,6 +3651,7 @@ function setupObjectDrag() {
           const effectiveAnchor = appendage.anchor ?? resolvedAppendage?.anchor;
           const effectiveRotAnchor = appendage.rotAnchor ?? resolvedAppendage?.rotAnchor;
           const effectiveFlipX = appendage.flipX ?? resolvedAppendage?.flipX;
+          const effectiveScale = appendage.s ?? resolvedAppendage?.s;
           if (!Array.isArray(appendage.chains) || appendage.chains.length === 0) {
             const sourceChains = Array.isArray(resolvedAppendage?.chains) ? resolvedAppendage.chains : null;
             appendage.chains = sourceChains
@@ -3666,6 +3671,7 @@ function setupObjectDrag() {
             anchor: effectiveAnchor,
             rotAnchor: effectiveRotAnchor,
             flipX: effectiveFlipX,
+            s: effectiveScale,
           }, num(state.actor.scale, 0));
           const roundedX = roundedPoseCoord(pointX);
           const roundedY = roundedPoseCoord(pointY);

@@ -269,7 +269,7 @@ panel:
 * `name`（任意、デバッグ用）
 * `lookAt`（`actor:<id>` または `point(x,y)`、任意）
 * `attachments`（任意、**asset参照専用**の配列。`asset`の`id`を`ref`で参照し、`dx`,`dy`,`s`,`rot`,`anchorRot`,`z`,`flipX`で相対配置。`asset`側の同名設定がある場合は `attachments` 側を優先）
-* `appendages`（任意、配列。`appendage` の `id` を `ref` で参照し、必要に応じて `anchor`,`chains`,`digits`,`flipX`,`z`,`rotAnchor`,`stroke`,`jointMaskRadius`,`endpointCap` などを上書き）
+* `appendages`（任意、配列。`appendage` の `id` を `ref` で参照し、必要に応じて `anchor`,`chains`,`digits`,`flipX`,`z`,`rotAnchor`,`s`,`stroke`,`jointMaskRadius`,`endpointCap` などを上書き）
   * `id`（任意。継承マージ用キー。未指定時は `ref` をキーに扱う）
   * `ref`（任意。トップレベル `appendage.id` を参照）
   * `id` または `ref` のどちらか一方は必須
@@ -277,6 +277,7 @@ panel:
   * `flipX`（任意、左右反転）
   * `z`（任意、数値または点列ごとの数値列。単一数値は appendage 全体の前後順。数値列は `|` 区切りで `chains`→`digits` 順にグループ対応し、各グループ要素数は対応点列の点数と一致させる。各線分の z は終点側の値を使用）
   * `rotAnchor`（任意、`anchor` を中心にした回転角。既定 `0°`）
+  * `s`（任意、`actor.scale` に掛ける追加倍率。既定 `1`）
   * `stroke`（任意、色。未指定時は `actor.stroke` を使用）
   * `outlineWidth`（任意。単一数値または点列ごとの数値列。単一数値は appendage 全体の縁取り太さ（`strokeWidth` への加算値）。数値列は `|` 区切りで `chains`→`digits` 順にグループ対応し、各グループ要素数は対応点列の点数と一致させる。各線分の縁取り太さは終点側の値を使用。未指定時は `2`、`0` で縁取りなし）
   * `jointMaskRadius`（任意、数値。appendage の関節補正用マスク円半径。未指定時は `Math.max(0.5, 線幅 * 0.6)`。内部点のみ対象で末端点は endpoint-cap で描画）
@@ -284,7 +285,7 @@ panel:
     * 既存: `chains: "x1,y1 x2,y2 | ..."` のグループ指定（各グループ2点以上）
     * 新形式: `chains[N].name`, `chains[N].points`（`name` は任意。未指定可）
   * 点群座標系は `anchor` 原点のローカル座標（`x,y`）として解釈する
-  * 変換順序は `local points` → `flipX` → `rot`（+`rotAnchor`）→ actor 座標系への平行移動
+  * 変換順序は `local points` → `scale`（`actor.scale * s`）→ `flipX` → `rot`（+`rotAnchor`）→ actor 座標系への平行移動
   * `z` は actor 内の `pose.points.z` 線分および `attachments[].z` と同一ソート軸で扱う
 * `style`（後述 styleRef）
 
@@ -555,6 +556,7 @@ balloon:
 * `flipX`（左右反転）
 * `z`（数値または `|` 区切り点列ごとの数値列）
 * `rotAnchor`（`anchor` 基準の回転角。既定 `0`）
+* `s`（`actor.scale` に掛ける追加倍率。既定 `1`）
 * `stroke`（線色。未指定時は参照先 actor の `stroke`）
 * `strokeWidth`（線幅。未指定時は参照先 actor の `strokeWidth`）
 * `outlineWidth`（単一数値または `|` 区切り数値列。未指定時 `2`、`0` で縁取りなし）
@@ -587,6 +589,7 @@ balloon:
 * `actor.appendages[].chains` / `digits` の数値列は `x,y` ペア（偶数個）であること
 * `chains[N].name`/`chains[N].points` 形式を指定した場合、`chains[N].points` は点列として解釈される
 * `actor.appendages[].rotAnchor` 未指定時は `0°` を既定値とする
+* `appendage.s` / `actor.appendages[].s` 未指定時は `1` を使用する
 * `actor.stroke` 未指定時は `meta.actor.stroke`（さらに未指定なら `black`）を使用する
 * `actor.appendages[].stroke` 未指定時は `actor.stroke` を使用する
 * `appendage.strokeWidth` / `actor.appendages[].strokeWidth` 未指定時は `actor.strokeWidth` を使用する
