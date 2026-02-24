@@ -700,7 +700,6 @@ function validateAndBuild(blocks) {
   }
   for (const appendageDef of scene.appendages) {
     appendageDef.anchor = normalizeAssetAnchorPoint(appendageDef.anchor, appendageDef._line);
-    appendageDef.z = typeof appendageDef.z === "number" ? appendageDef.z : 0;
     appendageDef.flipX = appendageDef.flipX === true;
     appendageDef.rotAnchor = typeof appendageDef.rotAnchor === "number" ? appendageDef.rotAnchor : 0;
     appendageDef.stroke = appendageDef.stroke || null;
