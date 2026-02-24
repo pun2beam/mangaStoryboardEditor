@@ -3204,6 +3204,7 @@ function setupResize() {
 function setupPanZoom() {
   let dragging = false;
   let prev = null;
+  let suppressContextMenu = false;
   els.viewport.addEventListener("wheel", (e) => {
     if (!e.ctrlKey || !currentScene) return;
     e.preventDefault();
@@ -3212,11 +3213,19 @@ function setupPanZoom() {
   }, { passive: false });
   els.viewport.addEventListener("mousedown", (e) => {
     if (isObjectDragging) return;
+    if (e.button !== 2) return;
     if (e.target.closest?.("[data-kind][data-id]")) return;
+    e.preventDefault();
     dragging = true;
+    suppressContextMenu = true;
     prev = { x: e.clientX, y: e.clientY };
   });
-  window.addEventListener("mouseup", () => (dragging = false));
+  window.addEventListener("mouseup", (e) => {
+    if (e.button === 2) {
+      dragging = false;
+      prev = null;
+    }
+  });
   window.addEventListener("mousemove", (e) => {
     if (!dragging || !prev || !currentScene) return;
     const dx = e.clientX - prev.x;
@@ -3225,6 +3234,11 @@ function setupPanZoom() {
     viewState.panX += dx;
     viewState.panY += dy;
     update();
+  });
+  els.viewport.addEventListener("contextmenu", (e) => {
+    if (!suppressContextMenu) return;
+    e.preventDefault();
+    suppressContextMenu = false;
   });
 }
 function setupObjectDrag() {
