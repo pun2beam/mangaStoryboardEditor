@@ -265,7 +265,7 @@ panel:
 * `name`（任意、デバッグ用）
 * `lookAt`（`actor:<id>` または `point(x,y)`、任意）
 * `attachments`（任意、**asset参照専用**の配列。`asset`の`id`を`ref`で参照し、`dx`,`dy`,`s`,`rot`,`anchorRot`,`z`,`flipX`で相対配置。`asset`側の同名設定がある場合は `attachments` 側を優先）
-* `appendages`（任意、配列。`appendage` の `id` を `ref` で参照し、必要に応じて `kind`,`anchor`,`chains`,`digits`,`flipX`,`z`,`rotAnchor`,`stroke` などを上書き）
+* `appendages`（任意、配列。`appendage` の `id` を `ref` で参照し、必要に応じて `kind`,`anchor`,`chains`,`digits`,`flipX`,`z`,`rotAnchor`,`stroke`,`jointMaskRadius` などを上書き）
   * `id`（任意。継承マージ用キー。未指定時は `ref` をキーに扱う）
   * `ref`（任意。トップレベル `appendage.id` を参照）
   * `id` または `ref` のどちらか一方は必須
@@ -276,6 +276,7 @@ panel:
   * `rotAnchor`（任意、`anchor` を中心にした回転角。既定 `0°`）
   * `stroke`（任意、色。未指定時は `actor.stroke` を使用）
   * `outlineWidth`（任意。単一数値または点列ごとの数値列。単一数値は appendage 全体の縁取り太さ（`strokeWidth` への加算値）。数値列は `|` 区切りで `chains`→`digits` 順にグループ対応し、各グループ要素数は対応点列の点数と一致させる。各線分の縁取り太さは終点側の値を使用。未指定時は `2`、`0` で縁取りなし）
+  * `jointMaskRadius`（任意、数値。appendage の関節補正用マスク円半径。未指定時は `Math.max(0.5, 線幅 * 0.6)`。内部点のみ対象で末端点は endpoint-cap で描画）
   * `chains` または `digits`（いずれか必須）
     * 既存: `chains: "x1,y1 x2,y2 | ..."` のグループ指定（各グループ2点以上）
     * 新形式: `chains[N].name`, `chains[N].points`（`name` は任意。未指定可）
@@ -560,6 +561,7 @@ balloon:
 * `actor.appendages[].stroke` 未指定時は `actor.stroke` を使用する
 * `actor.appendages[].outlineWidth` は単一数値または `|` 区切りの数値列グループを受け付ける（数値列時は `chains`→`digits` 順でグループ数を一致させ、各グループ要素数は対応点列の点数と一致）
 * appendage の終端（接続数1）は endpoint-cap で丸め、関節補正が必要な場合のみ内部点（接続数2以上）をマスク対象とする
+* `appendage.jointMaskRadius` / `actor.appendages[].jointMaskRadius` は正の数値のみ有効（未指定時は `Math.max(0.5, 線幅 * 0.6)`）
 * `actor.appendages[].outlineWidth` 未指定時は `2` を使用し、`0` 以下は縁取りなしとして扱う
 * `actor.outline` 未指定時は `meta.actor.outline`（さらに未指定なら `on`）を使用する
 * `kind=hand` のとき、`chains` は 5 本（`thumb/index/middle/ring/little`）で、各 chain は 1〜4 点

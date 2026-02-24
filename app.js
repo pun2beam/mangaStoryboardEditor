@@ -702,6 +702,7 @@ function validateAndBuild(blocks) {
     appendageDef.flipX = appendageDef.flipX === true;
     appendageDef.rotAnchor = typeof appendageDef.rotAnchor === "number" ? appendageDef.rotAnchor : 0;
     appendageDef.stroke = appendageDef.stroke || null;
+    appendageDef.jointMaskRadius = positiveNum(appendageDef.jointMaskRadius, null);
   }
   const appendageDefs = normalizeAppendages(scene.appendages, 0, "appendage");
   scene.appendages = appendageDefs;
@@ -741,6 +742,7 @@ function validateAndBuild(blocks) {
       appendage.flipX = appendage.flipX === true;
       appendage.rotAnchor = typeof appendage.rotAnchor === "number" ? appendage.rotAnchor : 0;
       appendage.stroke = appendage.stroke || null;
+      appendage.jointMaskRadius = positiveNum(appendage.jointMaskRadius, null);
     }
   }
   autoPlacePanelItems(scene, dicts);
@@ -1975,6 +1977,10 @@ function resolveActorAppendages(actor) {
         if (scaledPoints.length === 0) return "";
         const points = scaledPoints.map((point) => `${point.x},${point.y}`).join(" ");
         const endpoint = scaledPoints[scaledPoints.length - 1];
+        const jointMaskRadius = positiveNum(appendage.jointMaskRadius, Math.max(0.5, width * 0.6));
+        const jointMasks = scaledPoints.slice(1, -1)
+          .map((joint, jointIndex) => `<circle class="${className}-joint-mask" data-appendage-joint-mask="${groupIndex}-${jointIndex + 1}" cx="${joint.x}" cy="${joint.y}" r="${jointMaskRadius}" fill="${strokeColor}"/>`)
+          .join("");
         const perPointOutlineWidths = resolvePerPointOutlineWidths(className, groupIndex);
         const uniformOutlineWidth = Math.max(0, num(outlineSpec.width, 2));
         const endpointOutlineWidth = perPointOutlineWidths
@@ -1991,7 +1997,7 @@ function resolveActorAppendages(actor) {
             ? `<polyline class="${className}-outline" points="${points}" fill="none" stroke="black" stroke-width="${width + uniformOutlineWidth}" stroke-linecap="butt" stroke-linejoin="round"/>`
             : "";
           const strokeMarkup = `<polyline class="${className}" points="${points}" fill="none" stroke="${strokeColor}" stroke-width="${width}" stroke-linecap="butt" stroke-linejoin="round"/>`;
-          return `${endpointOutlineCap}${outlineMarkup}${strokeMarkup}${endpointFillCap}`;
+          return `${endpointOutlineCap}${outlineMarkup}${strokeMarkup}${jointMasks}${endpointFillCap}`;
         }
         const segments = [];
         for (let i = 0; i < scaledPoints.length - 1; i += 1) {
@@ -2004,7 +2010,7 @@ function resolveActorAppendages(actor) {
           const segmentStroke = `<line class="${className}" x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="${strokeColor}" stroke-width="${width}" stroke-linecap="butt" stroke-linejoin="round"/>`;
           segments.push(`${segmentOutline}${segmentStroke}`);
         }
-        return `${endpointOutlineCap}${segments.join("")}${endpointFillCap}`;
+        return `${endpointOutlineCap}${segments.join("")}${jointMasks}${endpointFillCap}`;
       })
       .join("");
     const strokeColor = appendage.stroke || actor.stroke;
