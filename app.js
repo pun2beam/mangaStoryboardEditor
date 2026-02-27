@@ -3586,8 +3586,10 @@ function setupObjectDrag() {
         anchor: state.appendage.anchor,
         rotAnchor: state.appendage.rotAnchor,
         flipX: state.appendage.flipX,
+        s: state.appendage.s,
       }, num(state.actor.scale, 0));
-      const safeScale = Math.max(Math.abs(num(state.actor.scale, 0)), 1e-6);
+      const appendageScale = num(state.actor.scale, 0) * num(state.appendage?.s, 1);
+      const safeScale = Math.max(Math.abs(appendageScale), 1e-6);
       if (!Number.isFinite(pointX) || !Number.isFinite(pointY)) return;
       state.previewChainPoint = { x: roundedPoseCoord(pointX), y: roundedPoseCoord(pointY) };
       for (const handle of state.chainPointTargets) {
