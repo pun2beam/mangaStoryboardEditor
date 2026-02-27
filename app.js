@@ -3298,7 +3298,8 @@ function setupObjectDrag() {
   function chainPointFromActorLocal(localPoint, appendage, actorScale) {
     const appendageScale = actorScale * (appendage.s ?? 1);
     const safeScale = Math.max(Math.abs(appendageScale), 1e-6);
-    const anchorPoint = resolveAttachmentAnchorPoint(appendage.actor, appendage.anchor, 20 * safeScale);
+    const poseScale = 20 * Math.max(Math.abs(actorScale), 1e-6);
+    const anchorPoint = resolveAttachmentAnchorPoint(appendage.actor, appendage.anchor, poseScale);
     let x = localPoint.x;
     let y = localPoint.y;
     if (appendage.rotAnchor) {
