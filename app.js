@@ -3683,6 +3683,7 @@ function setupObjectDrag() {
           if (!resolvedAppendageId && !resolvedAppendageRefAnchorKey) return;
           const appendages = Array.isArray(block.props.appendages) ? block.props.appendages : [];
           block.props.appendages = appendages;
+          // 編集対象探索はフォールバックなしで固定: 1) id一致 2) ref+anchor一致。
           let appendage = appendages.find((candidate) => {
             if (!candidate || typeof candidate !== "object") return false;
             if (resolvedAppendageId && appendageId(candidate) === resolvedAppendageId) return true;
@@ -3691,6 +3692,7 @@ function setupObjectDrag() {
           });
           if (!appendage) {
             appendage = {};
+            // 新規作成時の識別子補完は最小ルールのみ: refを優先し、なければidを使う。
             if (resolvedAppendageRef) {
               appendage.ref = resolvedAppendageRef;
             } else if (resolvedAppendageId) {
@@ -3705,12 +3707,6 @@ function setupObjectDrag() {
           const effectiveRotAnchor = appendage.rotAnchor ?? resolvedAppendage?.rotAnchor;
           const effectiveFlipX = appendage.flipX ?? resolvedAppendage?.flipX;
           const effectiveScale = appendage.s ?? resolvedAppendage?.s;
-          if ((appendage.anchor === undefined || appendage.anchor === null || appendage.anchor === "") && effectiveAnchor !== undefined && effectiveAnchor !== null && effectiveAnchor !== "") {
-            appendage.anchor = effectiveAnchor;
-          }
-          if ((appendage.ref === undefined || appendage.ref === null || appendage.ref === "") && resolvedAppendage?.ref !== undefined && resolvedAppendage?.ref !== null && resolvedAppendage?.ref !== "") {
-            appendage.ref = resolvedAppendage.ref;
-          }
           if (!Array.isArray(appendage.chains) || appendage.chains.length === 0) {
             const sourceChains = Array.isArray(resolvedAppendage?.chains) ? resolvedAppendage.chains : null;
             appendage.chains = sourceChains
