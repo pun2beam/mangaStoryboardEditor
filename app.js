@@ -3646,11 +3646,16 @@ function setupObjectDrag() {
           els.input.value = stringifyBlocks(updatedBlocks);
           update();
         } else if (state.handleType === "appendage-chain-point") {
-          const appendages = block.props.appendages;
-          if (!Array.isArray(appendages)) return;
-          const appendage = appendages[state.appendageIndex];
-          if (!appendage || typeof appendage !== "object") return;
           const resolvedAppendage = state.appendage && typeof state.appendage === "object" ? state.appendage : null;
+          const resolvedAppendageId = resolvedAppendage?.id;
+          if (resolvedAppendageId === undefined || resolvedAppendageId === null || resolvedAppendageId === "") return;
+          const appendages = Array.isArray(block.props.appendages) ? block.props.appendages : [];
+          block.props.appendages = appendages;
+          let appendage = appendages.find((candidate) => candidate && typeof candidate === "object" && String(candidate.id) === String(resolvedAppendageId));
+          if (!appendage) {
+            appendage = { id: resolvedAppendageId };
+            appendages.push(appendage);
+          }
           const effectiveAnchor = appendage.anchor ?? resolvedAppendage?.anchor;
           const effectiveRotAnchor = appendage.rotAnchor ?? resolvedAppendage?.rotAnchor;
           const effectiveFlipX = appendage.flipX ?? resolvedAppendage?.flipX;
