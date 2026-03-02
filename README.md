@@ -159,6 +159,29 @@ actor:
       stroke: #ef4444
 ```
 
+## appendages 重複 `ref` ドラッグの再現・確認手順
+
+`extends` + `actor.appendages`（同一 `ref` を複数持つ）での再現サンプルとして、`example/appendage_ref_duplicate_drag_repro.msd` を追加しています。
+
+1. エディタを開き、`example/appendage_ref_duplicate_drag_repro.msd` を読み込む。
+2. `Hand詳細編集` を ON にする。
+3. `a-child-dup-ref` を選択し、同じ appendage の同一点ハンドル（`appendage-chain-point`）を連続でドラッグする。
+4. 左ペインに出力される `actor: id: a-child-dup-ref` の `appendages` を確認し、**要素数が増えていない**ことを確認する。
+
+補助チェック（静的比較）:
+
+```bash
+node tools/compare_appendages.js before.msd after.msd a-child-dup-ref
+```
+
+- `before.count` と `after.count` が一致すること。
+- `+keys` に `id` / `ref` / `anchor` 以外の暗黙生成キーが出ないこと。
+
+失敗時に優先確認する箇所:
+
+- `setupObjectDrag` の `appendage-chain-point` 終了処理（ドラッグ後に `block.props.appendages` を更新・再利用する分岐）。
+- `resolveActorAppendages` による参照解決後データで `ref` が期待どおり伝搬しているか（編集対象の識別キー `id` または `ref+anchor` が維持されているか）。
+
 
 ## ローカルでの動作確認
 
