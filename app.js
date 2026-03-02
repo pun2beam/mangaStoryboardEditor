@@ -1089,6 +1089,18 @@ function resolveActorInheritance(actors, meta = {}) {
       }
       return "";
     };
+    const isPlainObject = (value) => value && typeof value === "object" && !Array.isArray(value);
+    const mergeAppendageData = (baseValue, ownValue) => {
+      if (ownValue === undefined) return baseValue;
+      if (isPlainObject(baseValue) && isPlainObject(ownValue)) {
+        const mergedValue = { ...baseValue };
+        for (const [key, childOwnValue] of Object.entries(ownValue)) {
+          mergedValue[key] = mergeAppendageData(baseValue[key], childOwnValue);
+        }
+        return mergedValue;
+      }
+      return ownValue;
+    };
     const merged = [];
     const indexById = new Map();
     for (const appendage of baseAppendages) {
@@ -1109,7 +1121,7 @@ function resolveActorInheritance(actors, meta = {}) {
           indexById.set(mergeKey, merged.length - 1);
         }
       } else {
-        merged[baseIndex] = { ...merged[baseIndex], ...ownCopy };
+        merged[baseIndex] = mergeAppendageData(merged[baseIndex], ownCopy);
       }
     }
     return merged;
