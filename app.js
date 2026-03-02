@@ -2211,6 +2211,7 @@ function resolveActorAppendages(actor, drawOuterOutline = false, outerOutlineWid
     return [{
       appendageIndex,
       id: appendage.id,
+      ref: appendage.ref,
       z: appendage.z,
       anchor: appendage.anchor,
       rotAnchor: appendage.rotAnchor,
@@ -3667,15 +3668,33 @@ function setupObjectDrag() {
           update();
         } else if (state.handleType === "appendage-chain-point") {
           const resolvedAppendage = state.appendage && typeof state.appendage === "object" ? state.appendage : null;
-          const resolvedAppendageId = resolvedAppendage?.id;
-          if (resolvedAppendageId === undefined || resolvedAppendageId === null || resolvedAppendageId === "") return;
+          const normalizeKeyPart = (value) => (value === undefined || value === null || value === "" ? "" : String(value));
+          const appendageId = (appendage) => normalizeKeyPart(appendage?.id);
+          const appendageRefKey = (appendage) => normalizeKeyPart(appendage?.ref);
+          const appendageRefAnchorKey = (appendage) => {
+            const ref = appendageRefKey(appendage);
+            const anchor = normalizeKeyPart(appendage?.anchor);
+            if (!ref || !anchor) return "";
+            return `ref:${ref}|anchor:${anchor}`;
+          };
+          const resolvedAppendageId = appendageId(resolvedAppendage);
+          const resolvedAppendageRef = appendageRefKey(resolvedAppendage);
+          const resolvedAppendageRefAnchorKey = appendageRefAnchorKey(resolvedAppendage);
+          if (!resolvedAppendageId && !resolvedAppendageRefAnchorKey) return;
           const appendages = Array.isArray(block.props.appendages) ? block.props.appendages : [];
           block.props.appendages = appendages;
-          let appendage = appendages.find((candidate) => candidate && typeof candidate === "object" && String(candidate.id) === String(resolvedAppendageId));
+          let appendage = appendages.find((candidate) => {
+            if (!candidate || typeof candidate !== "object") return false;
+            if (resolvedAppendageId && appendageId(candidate) === resolvedAppendageId) return true;
+            if (resolvedAppendageRefAnchorKey && appendageRefAnchorKey(candidate) === resolvedAppendageRefAnchorKey) return true;
+            return false;
+          });
           if (!appendage) {
-            appendage = { id: resolvedAppendageId };
-            if (resolvedAppendage?.ref !== undefined && resolvedAppendage?.ref !== null && resolvedAppendage?.ref !== "") {
-              appendage.ref = resolvedAppendage.ref;
+            appendage = {};
+            if (resolvedAppendageRef) {
+              appendage.ref = resolvedAppendageRef;
+            } else if (resolvedAppendageId) {
+              appendage.id = resolvedAppendageId;
             }
             if (resolvedAppendage?.anchor !== undefined && resolvedAppendage?.anchor !== null && resolvedAppendage?.anchor !== "") {
               appendage.anchor = resolvedAppendage.anchor;
