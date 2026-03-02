@@ -3674,12 +3674,24 @@ function setupObjectDrag() {
           let appendage = appendages.find((candidate) => candidate && typeof candidate === "object" && String(candidate.id) === String(resolvedAppendageId));
           if (!appendage) {
             appendage = { id: resolvedAppendageId };
+            if (resolvedAppendage?.ref !== undefined && resolvedAppendage?.ref !== null && resolvedAppendage?.ref !== "") {
+              appendage.ref = resolvedAppendage.ref;
+            }
+            if (resolvedAppendage?.anchor !== undefined && resolvedAppendage?.anchor !== null && resolvedAppendage?.anchor !== "") {
+              appendage.anchor = resolvedAppendage.anchor;
+            }
             appendages.push(appendage);
           }
           const effectiveAnchor = appendage.anchor ?? resolvedAppendage?.anchor;
           const effectiveRotAnchor = appendage.rotAnchor ?? resolvedAppendage?.rotAnchor;
           const effectiveFlipX = appendage.flipX ?? resolvedAppendage?.flipX;
           const effectiveScale = appendage.s ?? resolvedAppendage?.s;
+          if ((appendage.anchor === undefined || appendage.anchor === null || appendage.anchor === "") && effectiveAnchor !== undefined && effectiveAnchor !== null && effectiveAnchor !== "") {
+            appendage.anchor = effectiveAnchor;
+          }
+          if ((appendage.ref === undefined || appendage.ref === null || appendage.ref === "") && resolvedAppendage?.ref !== undefined && resolvedAppendage?.ref !== null && resolvedAppendage?.ref !== "") {
+            appendage.ref = resolvedAppendage.ref;
+          }
           if (!Array.isArray(appendage.chains) || appendage.chains.length === 0) {
             const sourceChains = Array.isArray(resolvedAppendage?.chains) ? resolvedAppendage.chains : null;
             appendage.chains = sourceChains
