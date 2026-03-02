@@ -1080,14 +1080,13 @@ function resolveActorInheritance(actors, meta = {}) {
     return merged;
   };
   const mergeAppendagesById = (baseAppendages, ownAppendages) => {
-    const appendageMergeKey = (appendage) => {
-      if (appendage?.id !== undefined && appendage?.id !== null && appendage?.id !== "") {
-        return `id:${String(appendage.id)}`;
-      }
-      if (appendage?.ref !== undefined && appendage?.ref !== null && appendage?.ref !== "") {
-        return `ref:${String(appendage.ref)}`;
-      }
-      return "";
+    const normalizeKeyPart = (value) => (value === undefined || value === null || value === "" ? "" : String(value));
+    const appendageId = (appendage) => normalizeKeyPart(appendage?.id);
+    const appendageRefAnchorKey = (appendage) => {
+      const ref = normalizeKeyPart(appendage?.ref);
+      const anchor = normalizeKeyPart(appendage?.anchor);
+      if (!ref || !anchor) return "";
+      return `ref:${ref}|anchor:${anchor}`;
     };
     const isPlainObject = (value) => value && typeof value === "object" && !Array.isArray(value);
     const mergeAppendageData = (baseValue, ownValue) => {
@@ -1101,28 +1100,37 @@ function resolveActorInheritance(actors, meta = {}) {
       }
       return ownValue;
     };
-    const merged = [];
-    const indexById = new Map();
-    for (const appendage of baseAppendages) {
-      const copy = { ...appendage };
-      merged.push(copy);
-      const mergeKey = appendageMergeKey(copy);
-      if (mergeKey) {
-        indexById.set(mergeKey, merged.length - 1);
+    const merged = baseAppendages.map((appendage) => ({ ...appendage }));
+    const consumedBaseIndexes = new Set();
+    const findBaseIndexById = (ownAppendageId) => {
+      if (!ownAppendageId) return -1;
+      for (let i = 0; i < merged.length; i += 1) {
+        if (consumedBaseIndexes.has(i)) continue;
+        if (appendageId(merged[i]) === ownAppendageId) return i;
       }
-    }
+      return -1;
+    };
+    const findBaseIndexByRefAnchor = (ownRefAnchorKey) => {
+      if (!ownRefAnchorKey) return -1;
+      for (let i = 0; i < merged.length; i += 1) {
+        if (consumedBaseIndexes.has(i)) continue;
+        if (appendageId(merged[i])) continue;
+        if (appendageRefAnchorKey(merged[i]) === ownRefAnchorKey) return i;
+      }
+      return -1;
+    };
     for (const appendage of ownAppendages) {
-      const mergeKey = appendageMergeKey(appendage);
       const ownCopy = { ...appendage };
-      const baseIndex = mergeKey ? indexById.get(mergeKey) : undefined;
-      if (baseIndex === undefined) {
+      const ownAppendageId = appendageId(ownCopy);
+      const idMatchedBaseIndex = findBaseIndexById(ownAppendageId);
+      const refAnchorMatchedBaseIndex = idMatchedBaseIndex >= 0 ? -1 : findBaseIndexByRefAnchor(appendageRefAnchorKey(ownCopy));
+      const baseIndex = idMatchedBaseIndex >= 0 ? idMatchedBaseIndex : refAnchorMatchedBaseIndex;
+      if (baseIndex === -1) {
         merged.push(ownCopy);
-        if (mergeKey) {
-          indexById.set(mergeKey, merged.length - 1);
-        }
-      } else {
-        merged[baseIndex] = mergeAppendageData(merged[baseIndex], ownCopy);
+        continue;
       }
+      merged[baseIndex] = mergeAppendageData(merged[baseIndex], ownCopy);
+      consumedBaseIndexes.add(baseIndex);
     }
     return merged;
   };
