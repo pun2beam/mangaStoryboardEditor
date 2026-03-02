@@ -44,9 +44,6 @@ actor:
     - ref: shirt-sode
     - ref: shirt-body
     - ref: zubon
-      chains: 0.34,-1.85 0.51,7.96 -3.58,11.67
-    - ref: zubon
-      chains: 1.31,-0.82 4.15,6.24 5.72,11.35
     - ref: shoe
       anchor: lf
       chains: -0.65,-1.3 0,0 3.68,1.6
@@ -75,6 +72,7 @@ panel:
       - ref: as1501
       - ref: as1601
       - ref: as1901
+    rot: 357.23
   actor:
     id: a1002
     extends: a0000
@@ -1119,9 +1117,9 @@ appendage:
   id: zubon
   anchor: groin
   rotAnchor: 0
-  z: 10,10,10
-  chains: 0,1 -0.72,8.01 -1.24,13.8
-  outlineWidth: 0,3,3
+  z: 10,10,10|10,10,10
+  chains: 0.34,-1.85 0.51,7.96 -3.58,11.67 | 1.31,-0.82 4.15,6.24 5.76,12.55
+  outlineWidth: 0,3,3|0,3,3
   jointMaskRadius: 13
   stroke: #e00000
   strokeWidth: 30
