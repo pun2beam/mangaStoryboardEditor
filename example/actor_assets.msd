@@ -73,6 +73,10 @@ panel:
       - ref: as1601
       - ref: as1901
     rot: 357.23
+    appendages:
+      - ref: shoe
+        anchor: rf
+        chains: -1.11,1.68 -0.54,1.69 3.31,1.03
   actor:
     id: a1002
     extends: a0000
@@ -650,9 +654,9 @@ asset:
   id: as1201
   w: 55
   h: 55
-  dx: -40.8
-  dy: -51.5
-  s: 1.5
+  dx: -19.8
+  dy: -29
+  s: 0.55
   rot: 0
   z: 16
   src: ./assets/hair1.svg
