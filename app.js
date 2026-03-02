@@ -1114,8 +1114,22 @@ function resolveActorInheritance(actors, meta = {}) {
       if (!ownRefAnchorKey) return -1;
       for (let i = 0; i < merged.length; i += 1) {
         if (consumedBaseIndexes.has(i)) continue;
-        if (appendageId(merged[i])) continue;
         if (appendageRefAnchorKey(merged[i]) === ownRefAnchorKey) return i;
+      }
+      return -1;
+    };
+    const appendageRef = (appendage) => normalizeKeyPart(appendage?.ref);
+    const findUniqueBaseIndexByRef = (ownAppendageRef) => {
+      if (!ownAppendageRef) return -1;
+      const candidates = [];
+      for (let i = 0; i < merged.length; i += 1) {
+        if (consumedBaseIndexes.has(i)) continue;
+        if (appendageRef(merged[i]) !== ownAppendageRef) continue;
+        candidates.push(i);
+      }
+      if (candidates.length === 1) return candidates[0];
+      if (candidates.length > 1) {
+        throw new Error(`actor.appendages の継承マージで ref=${ownAppendageRef} が複数候補です。anchor か id を指定してください`);
       }
       return -1;
     };
@@ -1124,7 +1138,12 @@ function resolveActorInheritance(actors, meta = {}) {
       const ownAppendageId = appendageId(ownCopy);
       const idMatchedBaseIndex = findBaseIndexById(ownAppendageId);
       const refAnchorMatchedBaseIndex = idMatchedBaseIndex >= 0 ? -1 : findBaseIndexByRefAnchor(appendageRefAnchorKey(ownCopy));
-      const baseIndex = idMatchedBaseIndex >= 0 ? idMatchedBaseIndex : refAnchorMatchedBaseIndex;
+      const refMatchedBaseIndex = (idMatchedBaseIndex >= 0 || refAnchorMatchedBaseIndex >= 0)
+        ? -1
+        : findUniqueBaseIndexByRef(appendageRef(ownCopy));
+      const baseIndex = idMatchedBaseIndex >= 0
+        ? idMatchedBaseIndex
+        : (refAnchorMatchedBaseIndex >= 0 ? refAnchorMatchedBaseIndex : refMatchedBaseIndex);
       if (baseIndex === -1) {
         merged.push(ownCopy);
         continue;
