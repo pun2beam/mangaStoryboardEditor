@@ -2211,6 +2211,7 @@ function resolveActorAppendages(actor, drawOuterOutline = false, outerOutlineWid
     return [{
       appendageIndex,
       id: appendage.id,
+      ref: appendage.ref,
       z: appendage.z,
       anchor: appendage.anchor,
       rotAnchor: appendage.rotAnchor,
@@ -3679,29 +3680,19 @@ function setupObjectDrag() {
           const resolvedAppendageId = appendageId(resolvedAppendage);
           const resolvedAppendageRef = appendageRefKey(resolvedAppendage);
           const resolvedAppendageRefAnchorKey = appendageRefAnchorKey(resolvedAppendage);
-          if (!resolvedAppendageId && !resolvedAppendageRefAnchorKey && !resolvedAppendageRef) return;
+          if (!resolvedAppendageId && !resolvedAppendageRefAnchorKey) return;
           const appendages = Array.isArray(block.props.appendages) ? block.props.appendages : [];
           block.props.appendages = appendages;
-          const refOnlyMatchedCandidates = resolvedAppendageRef
-            ? appendages.filter((candidate) => candidate && typeof candidate === "object" && appendageRefKey(candidate) === resolvedAppendageRef)
-            : [];
           let appendage = appendages.find((candidate) => {
             if (!candidate || typeof candidate !== "object") return false;
             if (resolvedAppendageId && appendageId(candidate) === resolvedAppendageId) return true;
             if (resolvedAppendageRefAnchorKey && appendageRefAnchorKey(candidate) === resolvedAppendageRefAnchorKey) return true;
             return false;
           });
-          if (!appendage && refOnlyMatchedCandidates.length === 1) {
-            appendage = refOnlyMatchedCandidates[0];
-          }
           if (!appendage) {
             appendage = {};
-            const appendageDefExists = resolvedAppendageId
-              && Array.isArray(currentScene?.appendages)
-              && currentScene.appendages.some((entry) => String(entry?.id) === resolvedAppendageId);
-            const preferredRef = resolvedAppendageRef || (appendageDefExists ? resolvedAppendageId : "");
-            if (preferredRef) {
-              appendage.ref = preferredRef;
+            if (resolvedAppendageRef) {
+              appendage.ref = resolvedAppendageRef;
             } else if (resolvedAppendageId) {
               appendage.id = resolvedAppendageId;
             }
