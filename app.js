@@ -1,3 +1,5 @@
+import { preprocessMsdIncludes } from "./msdIncludePreprocessor.mjs";
+
 const DEFAULT_DSL_PATH = "./example/readme.msd";
 const PAGE_SIZES = { B5: [1760, 2500], A4: [2480, 3508] };
 const ACTOR_TYPES = new Set(["stand", "run", "sit", "point", "think", "surprise"]);
@@ -4122,11 +4124,14 @@ function setupRenumberIds() {
   });
 }
 async function loadDefaultDsl() {
-  const response = await fetch(DEFAULT_DSL_PATH, { cache: "no-store" });
-  if (!response.ok) {
-    throw new Error(`初期DSLの読み込みに失敗しました (${response.status})`);
-  }
-  return response.text();
+  const readFile = async (path) => {
+    const response = await fetch(path, { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error(`DSLファイルの読み込みに失敗しました (${response.status}): ${path}`);
+    }
+    return response.text();
+  };
+  return preprocessMsdIncludes(DEFAULT_DSL_PATH, { readFile, projectRoot: "." });
 }
 async function init() {
   try {

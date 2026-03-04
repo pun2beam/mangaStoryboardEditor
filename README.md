@@ -31,6 +31,13 @@ https://pun2beam.github.io//mangaStoryboardEditor/
 
 サンプル DSL は `example/readme.msd` などを参照してください。
 
+### `#include "..."` プリプロセス
+
+- 初期ロード時に `.msd` をパースする前に `#include "path/to/file.msd"` を展開します。
+- 解決順は **include元ファイルのディレクトリ** → **プロジェクト基準ディレクトリ**（`.`）です。
+- 同一ファイルの複数回 include は許可します（自動 de-dup は行いません）。
+- 循環 include（例: `A -> B -> A`）はエラーになり、ファイル名・行番号・includeチェーンを表示します。
+
 ## DSL 仕様
 
 詳細仕様は `spec.md` を参照してください。以下は最小例です。
